@@ -241,6 +241,13 @@ table.mtable input.adj{color:var(--blue);border-color:rgba(79,172,254,.4)}
 .pkFotoEmpty{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--faint);font-size:12px}
 .pkFotoEmpty svg{width:40px;height:40px;stroke:var(--faint);fill:none;stroke-width:1.2;opacity:.5}
 #pkExcluir{flex:0 0 auto;padding-left:16px;padding-right:16px}
+/* Gerenciar */
+.gerlist{display:flex;flex-direction:column;gap:9px}
+.gerrow{display:flex;align-items:center;gap:10px}
+.gerrow .gnum{font-family:'Space Grotesk';font-weight:700;font-size:14px;color:var(--cyan);min-width:44px;text-align:center}
+.gerrow .inp:first-of-type{flex:1;min-width:120px}
+.gerrow .icon-btn{flex-shrink:0}
+@media(max-width:560px){.gerrow{flex-wrap:wrap}.gerrow .inp:first-of-type{flex-basis:100%}}
 /* Empty / placeholder */
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--faint);min-height:52vh;text-align:center;padding:30px}
 .empty svg{width:56px;height:56px;stroke:var(--faint);fill:none;stroke-width:1.2;opacity:.6}
@@ -463,7 +470,7 @@ const PAINEIS = [
   {id:"catpeca",   nome:"Catálogo de Peças",sub:"Peças com foto",        ico:IC.catpeca, built:true},
   {id:"manut",     nome:"Manutenção",       sub:"Chamados e histórico",  ico:IC.manut,   built:false},
   {id:"relat",     nome:"Relatórios",       sub:"Produção por peça",     ico:IC.relat,   built:false},
-  {id:"ger",       nome:"Gerenciar",        sub:"Configurações do host", ico:IC.ger,     built:false, host:true},
+  {id:"ger",       nome:"Gerenciar",        sub:"Configurações do host", ico:IC.ger,     built:true, host:true},
 ];
 
 function novaCelula(num){
@@ -546,9 +553,15 @@ function saveDebounced(){ clearTimeout(_saveTimer); _saveTimer=setTimeout(()=>{s
 /* ============================================================
    LOGIN / MODOS
    ============================================================ */
+let _senhaHost=""; // senha extra configurada no painel Gerenciar (guardada no banco)
+async function precarregarConfig(){
+  try{ const r=await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main&select=conteudo",{headers:HEADERS_SB});
+    const d=await r.json(); const cfg=d&&d[0]&&d[0].conteudo&&d[0].conteudo.config; _senhaHost=(cfg&&cfg.senha)||""; }catch(e){}
+}
 function autoLogin(){
   const pw=document.getElementById("pwInput").value.trim(); const err=document.getElementById("loginErr");
-  if(pw===ADMIN_PW){ isHost=true; enterApp(); } else { err.textContent="Senha incorreta"; setTimeout(()=>err.textContent="",2500); }
+  if(pw===ADMIN_PW || (_senhaHost && pw===_senhaHost)){ isHost=true; enterApp(); }
+  else { err.textContent="Senha incorreta"; setTimeout(()=>err.textContent="",2500); }
 }
 function startViewer(){ isHost=false; enterApp(); }
 function enterApp(){
@@ -612,6 +625,7 @@ function renderMain(){
   else if(p.id==="ppeca") box.innerHTML=viewProducaoPeca();
   else if(p.id==="cadpeca") box.innerHTML=viewCadastroPecas();
   else if(p.id==="catpeca") box.innerHTML=viewCatalogoPecas();
+  else if(p.id==="ger") box.innerHTML=viewGerenciar();
   else box.innerHTML=viewPlaceholder(p);
 }
 
@@ -949,6 +963,48 @@ function deletePeca(cod){ if(!isHost) return;
   delete pecasObj()[cod]; closeModal("modalPeca"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Peça excluída",false,true));
 }
 
+/* ============================================================
+   GERENCIAR (host)
+   ============================================================ */
+function cfg(){ if(!dados.config) dados.config={}; return dados.config; }
+function diasComProducao(){ return Object.keys(prod().metas_dias).filter(k=>{ const p=k.split('_').map(Number); return p.length===3&&totalDia(p[0],p[1],p[2])>0; }).length; }
+function viewGerenciar(){
+  if(!isHost) return pageHead(IC.ger,"Gerenciar","Configurações do host")+`<div class="card glass empty"><svg viewBox="0 0 24 24">${IC.ger}</svg><div class="soon">Acesso restrito ao HOST</div></div>`;
+  const nCel=Object.keys(robos()).length, nPec=Object.keys(pecasObj()).length, nDias=diasComProducao();
+  const nChamados=((dados.manutencao&&dados.manutencao.chamados)||[]).length;
+  let linhas=Object.keys(robos()).sort((a,b)=>Number(a)-Number(b)).map(k=>{ const c=robos()[k], cor=STATUS_COR[c.status]||"var(--faint)";
+    return `<div class="gerrow">
+      <div class="gnum">${esc(k)}</div>
+      <input class="inp" value="${esc(c.nome||"")}" onchange="setField('${k}','nome',this.value)" placeholder="Nome">
+      <input class="inp" type="number" value="${esc(c.meta_hora||"")}" onchange="setField('${k}','meta_hora',this.value)" placeholder="Meta/h" style="max-width:100px">
+      <select class="inp" onchange="setField('${k}','status',this.value)" style="max-width:150px;color:${cor}">${STATUS_LIST.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join("")}</select>
+      <button type="button" class="icon-btn" title="Excluir célula" onclick="removeCell('${k}')"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button></div>`;
+  }).join("");
+  return pageHead(IC.ger,"Gerenciar","Configurações do host")
+    + `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">
+        ${gerMetric("Células",nCel,"var(--cyan)")}${gerMetric("Peças",nPec,"var(--blue)")}${gerMetric("Dias c/ produção",nDias,"var(--ok)")}${gerMetric("Chamados",nChamados,"var(--purple)")}
+      </div>`
+    + `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.robot}</svg>Células robóticas <span style="margin-left:auto"><button type="button" class="btn primary tiny" onclick="openAddCell()">+ Nova célula</button></span></h3>
+        <div class="gerlist">${linhas}</div></div>`
+    + `<div class="card glass"><h3><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Senha do HOST</h3>
+        <p style="color:var(--mut);font-size:13px;margin-bottom:14px;line-height:1.5">Defina uma senha própria (guardada no banco). A senha mestra do sistema continua funcionando como reserva. Deixe em branco para usar só a senha mestra.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="field" style="flex:1;min-width:180px"><label>Nova senha</label><input class="inp" id="gerSenha" value="${esc(cfg().senha||"")}" placeholder="senha do host"></div>
+          <button type="button" class="btn primary" onclick="salvarSenhaHost()">Salvar senha</button></div></div>`
+    + `<div class="card glass" style="border-color:rgba(251,113,133,.25)"><h3 style="color:var(--danger)"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>Zona de perigo</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button type="button" class="btn ghost" onclick="baixarBackup()">Baixar backup</button>
+          <button type="button" class="btn danger" onclick="limparProducao()">Limpar toda a produção</button>
+          <button type="button" class="btn danger" onclick="restaurarPadrao()">Restaurar padrão de fábrica</button></div></div>`;
+}
+function gerMetric(k,v,cor){ return `<div class="card glass" style="padding:16px 18px"><div style="font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--faint);font-weight:600">${k}</div><div style="font-family:'Space Grotesk';font-size:28px;font-weight:700;color:${cor};margin-top:4px">${v.toLocaleString("pt-BR")}</div></div>`; }
+function salvarSenhaHost(){ if(!isHost) return; const v=document.getElementById("gerSenha").value.trim();
+  if(v==="") delete cfg().senha; else cfg().senha=v; _senhaHost=v;
+  saveToAPI().then(()=>showToast(v?"Senha do host salva":"Senha do host removida",false,true)); }
+function limparProducao(){ if(!isHost) return;
+  if(!confirm("Apagar TODOS os apontamentos de produção? As células e peças permanecem. Não pode ser desfeito.")) return;
+  prod().metas_dias={}; _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Produção apagada",false,true)); }
+
 /* ---------- Placeholder ---------- */
 function viewPlaceholder(p){
   return pageHead(p.ico,p.nome,p.sub)
@@ -1041,6 +1097,9 @@ function showToast(msg,err=false,ok=false){ const wrap=document.getElementById("
   const t=document.createElement("div"); t.className="toast"+(err?" err":ok?" ok":""); t.textContent=msg; wrap.appendChild(t);
   setTimeout(()=>{ t.style.transition="opacity .3s,transform .3s"; t.style.opacity="0"; t.style.transform="translateY(10px)"; setTimeout(()=>{t.remove();_toastCount--;},300); },2200); }
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+/* pré-carrega a senha do host (para login antes de carregar todos os dados) */
+precarregarConfig();
 </script>
 </body>
 </html>

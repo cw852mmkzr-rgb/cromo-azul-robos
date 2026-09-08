@@ -25,16 +25,28 @@ Sempre responder e escrever textos em **português brasileiro**.
 ### Padrão "linha única com colunas JSON"
 
 - Tabela `dados`, linha `id = 'main'`
-- Cada funcionalidade vive numa coluna `jsonb` própria
-- Coluna atual: **`conteudo`** — objeto com todas as células, chaveado pelo número do robô
+- Tudo vive na coluna `jsonb` **`conteudo`**, que é um objeto **namespaced** por seção (não mais os robôs no topo):
 
 ```
 dados
 ├── id            text  (PK)      → sempre 'main'
-├── conteudo      jsonb           → { "800": {...célula}, "801": {...}, ... }
-├── imagens       jsonb           → reservado p/ fotos futuras (base64), fora do conteudo
+├── conteudo      jsonb           → { robos, producao, pecas, mapa, manutencao, config }
+├── imagens       jsonb           → reservado p/ fotos (base64) do Catálogo de Peças
 └── atualizado_em timestamptz
 ```
+
+```
+conteudo
+├── robos        { "800": {...célula}, "801": {...}, ... }
+├── producao     { metas_dias: { "ano_mes_dia": { "800": { cod, h0800, h0900, ... }, ... } } }
+├── pecas        { "CODIGO": {...} }        (Cadastro/Catálogo de Peças — próximas fases)
+├── mapa         { ... }                    (Mapa dos Robôs — próxima fase)
+├── manutencao   { chamados: [...] }        (Manutenção — próxima fase)
+└── config       { ... }                    (Gerenciar — próxima fase)
+```
+
+- **Migração automática**: `migrar()` converte o formato antigo (robôs no topo do `conteudo`) para o namespaced e preenche seções faltantes. Nunca acessar robôs direto — usar `robos()` / `prod()`.
+- **Produção**: valor por robô/hora é string; `#` no fim marca "ajuste técnico" (`parseCelVal`). Horas em `HORAS_DIA` (08–17) e `HORAS_NOITE` (18–22); campo = `campoH(hora)` → `h0800`. `totalRoboDia`/`totalDia` somam tudo. Produção Mensal e (futuros) relatórios leem daqui.
 
 - **RLS** ativado. Política única `anon full access dados` (SELECT/INSERT/UPDATE/DELETE para o role `anon`) —
   padrão de app público interno, sem login de usuário Supabase.
@@ -58,17 +70,38 @@ dados
 - **6 células robóticas**, robôs numerados de **800 a 805**
 - Todos **FANUC** — o campo `modelo` é editável no sistema (definir modelo real quando confirmado)
 
-## Escopo (só isto)
+## Escopo
 
-- **Módulo Células Robóticas** — cadastro/config das 6 células e monitoramento
-- **Tela de intro/login** animada (glassmorphism neon)
-- **Backup / Restaurar** backup (JSON local)
-- **Modo HOST** (edição) + **Visualizador** (somente leitura) + **Dashboard TV**
+Escopo original era enxuto (só Células), mas foi **ampliado**: o usuário pediu quase todos os painéis
+do Células na estética neon. Layout em **PAINÉIS + ROBÔS** com roteador (`renderMain` / `goto`).
 
-### NÃO incluir (por enquanto)
+### Painéis (menu lateral)
 
-Mapa de Produção · Gabaritagem · Controle de Componentes · Equipes · Relatórios ·
-Metas Diárias · Base de conhecimento IA / MR.ROBOT · Bot WhatsApp / Edge Functions · Armário de Gabaritos.
+| Painel            | id      | Status         |
+| ----------------- | ------- | -------------- |
+| Mapa dos Robôs    | mapa    | placeholder    |
+| **Produção Mensal** | mensal| **pronto** (Fase 1) |
+| **Meta Diária**   | meta    | **pronto** (Fase 1) |
+| Relatório Mensal  | relmes  | placeholder    |
+| Produção por Peça | ppeca   | placeholder    |
+| Relatório Anual   | anual   | placeholder    |
+| Cadastro de Peças | cadpeca | placeholder    |
+| Catálogo de Peças | catpeca | placeholder    |
+| Manutenção        | manut   | placeholder    |
+| Relatórios        | relat   | placeholder    |
+| Gerenciar (host)  | ger     | placeholder    |
+
+Painéis "placeholder" já têm entrada no menu e card neon "em construção" — implementar por fase,
+sempre lendo/gravando nas seções de `conteudo` acima.
+
+- **Robôs**: 800–805 (detalhe/cadastro da célula) — pronto
+- **Modos**: HOST (edição) · Visualizador (leitura) · Dashboard TV (produção de hoje por robô)
+- **Backup/Restaurar** (JSON local, cobre o `conteudo` inteiro)
+
+### NÃO incluir (o usuário excluiu explicitamente)
+
+**Armário de Gabaritos** e **Equipes**. Também fora: Gabaritagem, Controle de Componentes,
+Base de conhecimento IA / MR.ROBOT, Bot WhatsApp / Edge Functions.
 
 ## Acessos
 

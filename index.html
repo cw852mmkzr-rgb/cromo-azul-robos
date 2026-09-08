@@ -211,6 +211,36 @@ table.mtable input.adj{color:var(--blue);border-color:rgba(79,172,254,.4)}
 .ybar .yv{font-family:'Space Grotesk';font-size:10.5px;font-weight:600;color:var(--cyan);white-space:nowrap}
 .ybar .ym{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
 @media(max-width:560px){.barrow{grid-template-columns:92px 1fr auto;gap:9px}.ygrid{height:170px}.ybar .yv{display:none}}
+/* Peças — cadastro (lista) */
+.peclist{display:flex;flex-direction:column}
+.pecrow{display:flex;align-items:center;gap:14px;padding:11px 10px;border-radius:12px;transition:.15s}
+.pecrow:hover{background:rgba(255,255,255,.04)}
+.pecrow+.pecrow{border-top:1px solid rgba(255,255,255,.05)}
+.pecrow .pcod{font-family:'Space Grotesk';font-weight:700;font-size:15px;color:var(--cyan);min-width:88px}
+.pecrow .pinfo{flex:1;min-width:0}
+.pecrow .pn{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pecrow .pm{font-size:12px;color:var(--mut);margin-top:1px}
+.pecrow .pacts{display:flex;gap:7px}
+.pecrow .icon-btn{width:32px;height:32px}
+.pecrow .icon-btn svg{width:15px;height:15px}
+/* Peças — catálogo (cards) */
+.catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.catcard{overflow:hidden;cursor:pointer;transition:transform .22s cubic-bezier(.16,1,.3,1),box-shadow .22s;display:flex;flex-direction:column}
+@media(hover:hover){.catcard:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(2,6,23,.5),0 0 22px rgba(79,172,254,.18)}}
+.catfoto{aspect-ratio:4/3;background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.catfoto img{width:100%;height:100%;object-fit:cover}
+.catfoto svg{width:44px;height:44px;stroke:var(--faint);fill:none;stroke-width:1.2;opacity:.5}
+.catbody{padding:13px 15px}
+.catbody .ccod{font-family:'Space Grotesk';font-weight:700;font-size:15px;color:var(--cyan)}
+.catbody .cnome{font-size:13px;color:var(--txt);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.catbody .cmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.cchip{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.3);color:#d8b4fe}
+/* Modal peça foto */
+.pkfoto{position:relative;width:100%;aspect-ratio:4/3;border-radius:14px;overflow:hidden;border:1px solid var(--glass-bd2);background:rgba(255,255,255,.03);margin-bottom:12px;display:flex;align-items:center;justify-content:center}
+.pkfoto img{width:100%;height:100%;object-fit:cover}
+.pkFotoEmpty{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--faint);font-size:12px}
+.pkFotoEmpty svg{width:40px;height:40px;stroke:var(--faint);fill:none;stroke-width:1.2;opacity:.5}
+#pkExcluir{flex:0 0 auto;padding-left:16px;padding-right:16px}
 /* Empty / placeholder */
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--faint);min-height:52vh;text-align:center;padding:30px}
 .empty svg{width:56px;height:56px;stroke:var(--faint);fill:none;stroke-width:1.2;opacity:.6}
@@ -349,6 +379,28 @@ table.mtable input.adj{color:var(--blue);border-color:rgba(79,172,254,.4)}
   </div>
 </div>
 
+<!-- MODAL: Peça (add/edit/detalhe) -->
+<div class="modal-bg" id="modalPeca">
+  <div class="modal glass">
+    <h2 id="pkTitulo">Peça</h2>
+    <div class="pkfoto" id="pkFotoPrev"></div>
+    <button type="button" class="btn ghost tiny" id="pkFotoBtn" style="width:100%;margin-bottom:14px" onclick="document.getElementById('pkFotoFile').click()"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Foto da peça</button>
+    <input type="file" id="pkFotoFile" accept="image/*" style="display:none" onchange="onPecaFoto(this)">
+    <div class="field"><label>Código</label><input id="pkCod" placeholder="Ex: 50698"></div>
+    <div class="field"><label>Nome</label><input id="pkNome" placeholder="Nome da peça"></div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Cliente</label><input id="pkCliente" placeholder="Cliente"></div>
+      <div class="field"><label>Pontos de solda</label><input id="pkPontos" placeholder="Ex: 13"></div>
+    </div>
+    <div class="field"><label>Descrição</label><textarea id="pkDesc" placeholder="Observações"></textarea></div>
+    <div class="modal-actions">
+      <button type="button" class="btn danger" id="pkExcluir" onclick="deletePeca(_pecaEdit)">Excluir</button>
+      <button type="button" class="btn ghost" onclick="closeModal('modalPeca')">Fechar</button>
+      <button type="button" class="btn primary" id="pkSalvar" onclick="savePeca()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div id="toastWrap"></div>
 
 <script>
@@ -407,8 +459,8 @@ const PAINEIS = [
   {id:"relmes",    nome:"Relatório Mensal", sub:"Resumo do mês",         ico:IC.relmes,  built:true},
   {id:"ppeca",     nome:"Produção por Peça",sub:"Totais por código",     ico:IC.ppeca,   built:true},
   {id:"anual",     nome:"Relatório Anual",  sub:"Ano fechado",           ico:IC.anual,   built:true},
-  {id:"cadpeca",   nome:"Cadastro de Peças",sub:"Registro de peças",     ico:IC.cadpeca, built:false},
-  {id:"catpeca",   nome:"Catálogo de Peças",sub:"Peças com foto",        ico:IC.catpeca, built:false},
+  {id:"cadpeca",   nome:"Cadastro de Peças",sub:"Registro de peças",     ico:IC.cadpeca, built:true},
+  {id:"catpeca",   nome:"Catálogo de Peças",sub:"Peças com foto",        ico:IC.catpeca, built:true},
   {id:"manut",     nome:"Manutenção",       sub:"Chamados e histórico",  ico:IC.manut,   built:false},
   {id:"relat",     nome:"Relatórios",       sub:"Produção por peça",     ico:IC.relat,   built:false},
   {id:"ger",       nome:"Gerenciar",        sub:"Configurações do host", ico:IC.ger,     built:false, host:true},
@@ -548,7 +600,7 @@ function renderMain(){
   const box=document.getElementById("main"); if(!box) return;
   let sig=nav.sec+":"+nav.id+"|"+isHost+"|";
   if(nav.sec==="robo") sig+=JSON.stringify(robos()[nav.id]||{});
-  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora));
+  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')));
   if(sig===_mainSig) return; _mainSig=sig;
 
   if(nav.sec==="robo"){ box.innerHTML=viewRobot(nav.id); return; }
@@ -558,6 +610,8 @@ function renderMain(){
   else if(p.id==="relmes") box.innerHTML=viewRelMensal();
   else if(p.id==="anual") box.innerHTML=viewRelAnual();
   else if(p.id==="ppeca") box.innerHTML=viewProducaoPeca();
+  else if(p.id==="cadpeca") box.innerHTML=viewCadastroPecas();
+  else if(p.id==="catpeca") box.innerHTML=viewCatalogoPecas();
   else box.innerHTML=viewPlaceholder(p);
 }
 
@@ -672,10 +726,12 @@ function viewMeta(){
 function pecaRow(chave,md){
   const rb=robos();
   return ROBOS.map(r=>{ const cod=(md[String(r)]||{}).cod||""; const nome=(rb[String(r)]&&rb[String(r)].nome||("R"+r)).replace(/Robô FANUC /,'Robô ');
+    const nm=nomePeca(cod);
     return `<div class="field"><label>${esc(nome)}</label>${isHost
-      ? `<input value="${esc(cod)}" placeholder="código" onchange="setCod('${chave}','${r}',this.value)">`
-      : `<div class="val">${cod?esc(cod):"—"}</div>`}</div>`;
-  }).join("");
+      ? `<input list="pecaCods" value="${esc(cod)}" placeholder="código" onchange="setCod('${chave}','${r}',this.value)">`
+      : `<div class="val">${cod?esc(cod):"—"}</div>`}${nm?`<div style="font-size:11px;color:var(--faint);margin-top:3px">${esc(nm)}</div>`:''}</div>`;
+  }).join("")
+  + `<datalist id="pecaCods">${Object.keys(pecasObj()).map(c=>`<option value="${esc(c)}">${esc(nomePeca(c))}</option>`).join("")}</datalist>`;
 }
 function setCod(chave,robo,v){ if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
@@ -792,8 +848,10 @@ function viewProducaoPeca(){
   if(!lista.length) corpo=`<div class="card glass empty"><svg viewBox="0 0 24 24">${IC.ppeca}</svg><div class="soon">Nenhuma peça com produção ${termo?'para "'+esc(termo)+'"':'neste mês'}</div><div style="font-size:12.5px;color:var(--faint)">Lance a produção e informe o código da peça por robô na Meta Diária.</div></div>`;
   else corpo=lista.map(x=>{
     const robosItems=ROBOS.filter(r=>x.robos[r]).map(r=>({label:nomeRoboCurto(r),val:x.robos[r],cor:'linear-gradient(135deg,#a855f7,#7c3aed)'})).sort((a,b)=>b.val-a.val);
+    const nm=nomePeca(x.cod);
     return `<div class="card glass"><div style="display:flex;align-items:baseline;gap:12px;margin-bottom:14px">
       <div style="font-family:'Space Grotesk';font-weight:700;font-size:18px;color:var(--cyan)">${esc(x.cod)}</div>
+      ${nm?`<div style="font-size:13px;color:var(--mut)">${esc(nm)}</div>`:''}
       <div style="margin-left:auto;font-family:'Space Grotesk';font-weight:700;font-size:22px">${x.total.toLocaleString("pt-BR")}</div>
       <div style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:1px">peças</div></div>${barList(robosItems)}</div>`;
   }).join("");
@@ -804,6 +862,91 @@ function viewProducaoPeca(){
         <div class="sel" style="flex:1;min-width:150px"><label>Buscar código</label><input class="inp" value="${esc(pecaBusca)}" placeholder="ex: 50698" oninput="pecaBusca=this.value;_mainSig='';renderMain()"></div>
         <div class="metrics"><div class="metric"><div class="k">Total do mês</div><div class="v" style="color:var(--cyan)">${totalPeriodo.toLocaleString("pt-BR")}</div></div></div></div>`
     + corpo;
+}
+
+/* ============================================================
+   PEÇAS — Cadastro e Catálogo
+   ============================================================ */
+function pecasObj(){ if(!dados.pecas) dados.pecas={}; return dados.pecas; }
+function nomePeca(cod){ const p=pecasObj()[cod]; return p&&p.nome?p.nome:""; }
+function pecasFiltradas(){ const o=pecasObj(); const t=pecaBusca.trim().toUpperCase();
+  let lista=Object.keys(o).map(cod=>({cod,...o[cod]}));
+  if(t) lista=lista.filter(p=>p.cod.includes(t)||(p.nome||"").toUpperCase().includes(t)||(p.cliente||"").toUpperCase().includes(t));
+  return lista.sort((a,b)=>a.cod.localeCompare(b.cod,'pt',{numeric:true})); }
+
+function viewCadastroPecas(){
+  const lista=pecasFiltradas(); const total=Object.keys(pecasObj()).length;
+  let corpo;
+  if(!lista.length) corpo=`<div class="card glass empty"><svg viewBox="0 0 24 24">${IC.cadpeca}</svg><div class="soon">${total?'Nenhuma peça encontrada':'Nenhuma peça cadastrada'}</div>${isHost?`<button type="button" class="btn primary tiny" onclick="openPeca()">+ Cadastrar peça</button>`:'<div style="font-size:12.5px;color:var(--faint)">Entre como HOST para cadastrar peças.</div>'}</div>`;
+  else corpo=`<div class="card glass" style="padding:12px"><div class="peclist">`+lista.map(p=>`
+      <div class="pecrow">
+        <div class="pcod">${esc(p.cod)}</div>
+        <div class="pinfo"><div class="pn">${p.nome?esc(p.nome):'<span style="color:var(--faint)">sem nome</span>'}</div>
+          <div class="pm">${p.cliente?esc(p.cliente):'—'} ${p.pontos?('· '+esc(p.pontos)+' pts'):''}</div></div>
+        ${isHost?`<div class="pacts"><button type="button" class="icon-btn" title="Editar" onclick="openPeca('${esc(p.cod)}')"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+          <button type="button" class="icon-btn" title="Excluir" onclick="deletePeca('${esc(p.cod)}')"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button></div>`:''}
+      </div>`).join("")+`</div></div>`;
+  return pageHead(IC.cadpeca,"Cadastro de Peças","Registro de peças da fábrica", isHost?`<button type="button" class="btn primary tiny" onclick="openPeca()">+ Nova peça</button>`:'')
+    + `<div class="selrow card glass"><div class="sel" style="flex:1;min-width:180px"><label>Buscar</label><input class="inp" value="${esc(pecaBusca)}" placeholder="código, nome ou cliente" oninput="pecaBusca=this.value;_mainSig='';renderMain()"></div>
+        <div class="metrics"><div class="metric"><div class="k">Peças</div><div class="v" style="color:var(--cyan)">${total}</div></div></div></div>`
+    + corpo;
+}
+
+function viewCatalogoPecas(){
+  const lista=pecasFiltradas(); const total=Object.keys(pecasObj()).length;
+  let corpo;
+  if(!lista.length) corpo=`<div class="card glass empty"><svg viewBox="0 0 24 24">${IC.catpeca}</svg><div class="soon">${total?'Nenhuma peça encontrada':'Catálogo vazio'}</div>${isHost?`<button type="button" class="btn primary tiny" onclick="openPeca()">+ Cadastrar peça</button>`:''}</div>`;
+  else corpo=`<div class="catgrid">`+lista.map(p=>`
+      <div class="catcard glass" onclick="openPeca('${esc(p.cod)}')">
+        <div class="catfoto">${p.foto?`<img src="${p.foto}" alt="${esc(p.cod)}">`:`<svg viewBox="0 0 24 24">${IC.catpeca}</svg>`}</div>
+        <div class="catbody"><div class="ccod">${esc(p.cod)}</div><div class="cnome">${p.nome?esc(p.nome):'<span style="color:var(--faint)">sem nome</span>'}</div>
+          <div class="cmeta">${p.cliente?`<span class="cchip">${esc(p.cliente)}</span>`:''}${p.pontos?`<span class="cchip">${esc(p.pontos)} pts</span>`:''}</div></div>
+      </div>`).join("")+`</div>`;
+  return pageHead(IC.catpeca,"Catálogo de Peças","Peças com foto", isHost?`<button type="button" class="btn primary tiny" onclick="openPeca()">+ Nova peça</button>`:'')
+    + `<div class="selrow card glass"><div class="sel" style="flex:1;min-width:180px"><label>Buscar</label><input class="inp" value="${esc(pecaBusca)}" placeholder="código, nome ou cliente" oninput="pecaBusca=this.value;_mainSig='';renderMain()"></div>
+        <div class="metrics"><div class="metric"><div class="k">Peças</div><div class="v" style="color:var(--cyan)">${total}</div></div></div></div>`
+    + corpo;
+}
+
+/* modal add/edit peça */
+let _pecaEdit=null, _pecaFoto="";
+function openPeca(cod){
+  _pecaEdit=cod||null; const p=cod?pecasObj()[cod]:null; _pecaFoto=(p&&p.foto)||"";
+  document.getElementById("pkCod").value=cod||""; document.getElementById("pkCod").disabled=!!cod;
+  document.getElementById("pkNome").value=(p&&p.nome)||"";
+  document.getElementById("pkCliente").value=(p&&p.cliente)||"";
+  document.getElementById("pkPontos").value=(p&&p.pontos)||"";
+  document.getElementById("pkDesc").value=(p&&p.descricao)||"";
+  document.getElementById("pkTitulo").textContent=cod?("Peça "+cod):"Nova Peça";
+  const canEdit=isHost; ["pkCod","pkNome","pkCliente","pkPontos","pkDesc"].forEach(id=>document.getElementById(id).disabled=(id==="pkCod"?!!cod:!canEdit));
+  document.getElementById("pkFotoBtn").style.display=canEdit?"":"none";
+  document.getElementById("pkSalvar").style.display=canEdit?"":"none";
+  document.getElementById("pkExcluir").style.display=(canEdit&&cod)?"":"none";
+  renderPecaFoto();
+  openModal("modalPeca");
+}
+function renderPecaFoto(){ const box=document.getElementById("pkFotoPrev");
+  box.innerHTML=_pecaFoto?`<img src="${_pecaFoto}" alt="foto">${isHost?`<button type="button" class="icon-btn" style="position:absolute;top:8px;right:8px" onclick="_pecaFoto='';renderPecaFoto()" title="Remover foto"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`:''}`
+    :`<div class="pkFotoEmpty"><svg viewBox="0 0 24 24">${IC.catpeca}</svg><span>Sem foto</span></div>`; }
+function onPecaFoto(input){ const f=input.files[0]; input.value=""; if(!f) return;
+  comprimirImagem(f,900,0.72,url=>{ _pecaFoto=url; renderPecaFoto(); }); }
+function comprimirImagem(file,maxW,q,cb){ const rd=new FileReader();
+  rd.onload=e=>{ const img=new Image(); img.onload=()=>{ const sc=Math.min(1,maxW/img.width); const w=Math.round(img.width*sc),h=Math.round(img.height*sc);
+    const cv=document.createElement("canvas"); cv.width=w; cv.height=h; cv.getContext("2d").drawImage(img,0,0,w,h);
+    try{ cb(cv.toDataURL("image/jpeg",q)); }catch(err){ cb(e.target.result); } };
+    img.onerror=()=>cb(e.target.result); img.src=e.target.result; };
+  rd.readAsDataURL(file); }
+function savePeca(){ if(!isHost) return;
+  let cod=(_pecaEdit||document.getElementById("pkCod").value).trim().toUpperCase();
+  if(!cod){ showToast("Informe o código da peça",true); return; }
+  if(!_pecaEdit && pecasObj()[cod]){ showToast("Já existe uma peça com esse código",true); return; }
+  pecasObj()[cod]={ nome:document.getElementById("pkNome").value.trim(), cliente:document.getElementById("pkCliente").value.trim(),
+    pontos:document.getElementById("pkPontos").value.trim(), descricao:document.getElementById("pkDesc").value.trim(), foto:_pecaFoto||"" };
+  closeModal("modalPeca"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Peça salva",false,true));
+}
+function deletePeca(cod){ if(!isHost) return;
+  if(!confirm('Excluir a peça '+cod+'?')) return;
+  delete pecasObj()[cod]; closeModal("modalPeca"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Peça excluída",false,true));
 }
 
 /* ---------- Placeholder ---------- */

@@ -1,0 +1,12 @@
+# Netlify — site estático, publica a raiz do repositório
+[build]
+  publish = "."
+  command = ""
+
+# Nunca cachear o index.html (deploys refletem na hora)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"

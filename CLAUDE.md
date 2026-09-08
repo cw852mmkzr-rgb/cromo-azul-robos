@@ -75,28 +75,27 @@ conteudo
 Escopo original era enxuto (só Células), mas foi **ampliado**: o usuário pediu quase todos os painéis
 do Células na estética neon. Layout em **PAINÉIS + ROBÔS** com roteador (`renderMain` / `goto`).
 
-### Painéis (menu lateral)
+### Painéis (menu lateral) — TODOS prontos
 
-| Painel            | id      | Status         |
-| ----------------- | ------- | -------------- |
-| Mapa dos Robôs    | mapa    | placeholder    |
-| **Produção Mensal** | mensal| **pronto** (Fase 1) |
-| **Meta Diária**   | meta    | **pronto** (Fase 1) |
-| Relatório Mensal  | relmes  | placeholder    |
-| Produção por Peça | ppeca   | placeholder    |
-| Relatório Anual   | anual   | placeholder    |
-| Cadastro de Peças | cadpeca | placeholder    |
-| Catálogo de Peças | catpeca | placeholder    |
-| Manutenção        | manut   | placeholder    |
-| Relatórios        | relat   | placeholder    |
-| Gerenciar (host)  | ger     | placeholder    |
+| Painel            | id      | O que faz |
+| ----------------- | ------- | --------- |
+| Mapa dos Robôs    | mapa    | Piso com robôs arrastáveis (HOST), status por cor, produção de hoje. `conteudo.mapa.pos` (%) |
+| Produção Mensal   | mensal  | Total por dia do mês, média diária, grade de dias |
+| Meta Diária       | meta    | Apontamento hora×robô (turno dia/noite) + peça por robô. Fonte de toda a produção |
+| Relatório Mensal  | relmes  | Total, média, split dia/noite, melhor dia, ranking robô, top peças |
+| Produção por Peça | ppeca   | Agregação por código (mês/ano) com busca |
+| Relatório Anual   | anual   | 12 meses, total ano, média/mês, melhor mês, ranking robô |
+| Cadastro de Peças | cadpeca | Lista CRUD de peças (`conteudo.pecas`) |
+| Catálogo de Peças | catpeca | Grade visual com foto (comprimida via canvas) |
+| Manutenção        | manut   | Chamados por robô, prioridade/status (`conteudo.manutencao.chamados`) |
+| Relatórios        | relat   | Período flexível (dia/semana/mês/ano/intervalo) + exportar CSV |
+| Gerenciar (host)  | ger     | Resumo, gestão de células, senha do host (`config.senha`), zona de perigo |
 
-Painéis "placeholder" já têm entrada no menu e card neon "em construção" — implementar por fase,
-sempre lendo/gravando nas seções de `conteudo` acima.
-
-- **Robôs**: 800–805 (detalhe/cadastro da célula) — pronto
+- **Robôs**: 800–805 (detalhe/cadastro da célula)
 - **Modos**: HOST (edição) · Visualizador (leitura) · Dashboard TV (produção de hoje por robô)
 - **Backup/Restaurar** (JSON local, cobre o `conteudo` inteiro)
+- **Senha do host**: `ADMIN_PW` (`cromo3102`, mestra) OU `config.senha` definida em Gerenciar; `precarregarConfig()` carrega a segunda antes do login.
+- **Anti-flicker**: cuidado com corrida do polling logo após gravar (o save programático em teste não passa pelo debounce de `lastUserAction`; no uso real do HOST passa).
 
 ### NÃO incluir (o usuário excluiu explicitamente)
 

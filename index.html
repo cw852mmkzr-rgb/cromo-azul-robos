@@ -518,7 +518,7 @@ const PAINEIS = [
   {id:"cadpeca",   nome:"Cadastro de Peças",sub:"Registro de peças",     ico:IC.cadpeca, built:true},
   {id:"catpeca",   nome:"Catálogo de Peças",sub:"Peças com foto",        ico:IC.catpeca, built:true},
   {id:"manut",     nome:"Manutenção",       sub:"Chamados e histórico",  ico:IC.manut,   built:true},
-  {id:"relat",     nome:"Relatórios",       sub:"Produção por peça",     ico:IC.relat,   built:false},
+  {id:"relat",     nome:"Relatórios",       sub:"Período e exportação",   ico:IC.relat,   built:true},
   {id:"ger",       nome:"Gerenciar",        sub:"Configurações do host", ico:IC.ger,     built:true, host:true},
 ];
 
@@ -549,6 +549,8 @@ const PRIORIDADES = ["Baixa","Média","Alta","Urgente"];
 const PRIO_COR = {"Baixa":"var(--cyan)","Média":"var(--blue)","Alta":"var(--warn)","Urgente":"var(--danger)"};
 const MANUT_STATUS = ["Aberto","Em andamento","Concluído"];
 const MANUT_COR = {"Aberto":"var(--danger)","Em andamento":"var(--warn)","Concluído":"var(--ok)"};
+function _hojeStr(){ const z=n=>String(n).padStart(2,'0'); return hoje.getFullYear()+"-"+z(hoje.getMonth()+1)+"-"+z(hoje.getDate()); }
+let _relModo="mes", _relDia=_hojeStr(), _relSemana=_hojeStr(), _relIni=_hojeStr(), _relFim=_hojeStr();
 
 (function(){ const m=()=>{lastUserAction=Date.now()};
   ['pointerdown','touchstart','keydown','change','input'].forEach(ev=>document.addEventListener(ev,m,{passive:true,capture:true})); })();
@@ -667,7 +669,7 @@ function renderMain(){
   const box=document.getElementById("main"); if(!box) return;
   let sig=nav.sec+":"+nav.id+"|"+isHost+"|";
   if(nav.sec==="robo") sig+=JSON.stringify(robos()[nav.id]||{});
-  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{});
+  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{})+"|R"+_relModo+_relDia+_relSemana+_relIni+_relFim;
   if(sig===_mainSig) return; _mainSig=sig;
 
   if(nav.sec==="robo"){ box.innerHTML=viewRobot(nav.id); return; }
@@ -682,6 +684,7 @@ function renderMain(){
   else if(p.id==="catpeca") box.innerHTML=viewCatalogoPecas();
   else if(p.id==="ger") box.innerHTML=viewGerenciar();
   else if(p.id==="manut") box.innerHTML=viewManutencao();
+  else if(p.id==="relat") box.innerHTML=viewRelatorios();
   else box.innerHTML=viewPlaceholder(p);
 }
 
@@ -1166,6 +1169,77 @@ function mapaDragEnd(){ if(!_drag) return; const d=_drag;
   _drag=null;
   if(d.moved && d.x!=null){ mapaObj().pos[d.robo]={x:Math.round(d.x*10)/10,y:Math.round(d.y*10)/10};
     _justDragged=true; setTimeout(()=>_justDragged=false,300); lastUserAction=Date.now(); _mainSig=""; saveDebounced(); }
+}
+
+/* ============================================================
+   RELATÓRIOS — período flexível + exportar CSV
+   ============================================================ */
+function strToYMD(s){ const p=String(s||"").split("-").map(Number); return [p[0],p[1]-1,p[2]]; }
+function datasEntre(iniStr,fimStr){ let [a1,m1,d1]=strToYMD(iniStr), [a2,m2,d2]=strToYMD(fimStr);
+  let di=new Date(a1,m1,d1), df=new Date(a2,m2,d2); if(di>df){ const t=di; di=df; df=t; }
+  const out=[]; let cur=new Date(di); let guard=0; while(cur<=df && guard<400){ out.push([cur.getFullYear(),cur.getMonth(),cur.getDate()]); cur.setDate(cur.getDate()+1); guard++; } return out; }
+function semanaDe(str){ let [a,m,d]=strToYMD(str); const dt=new Date(a,m,d); const dow=(dt.getDay()+6)%7; // segunda=0
+  const seg=new Date(dt); seg.setDate(dt.getDate()-dow); const dom=new Date(seg); dom.setDate(seg.getDate()+6);
+  return {ini:seg,fim:dom,datas:datasEntre(`${seg.getFullYear()}-${seg.getMonth()+1}-${seg.getDate()}`,`${dom.getFullYear()}-${dom.getMonth()+1}-${dom.getDate()}`)}; }
+function datasDoPeriodo(){
+  if(_relModo==="dia") return [strToYMD(_relDia)];
+  if(_relModo==="semana") return semanaDe(_relSemana).datas;
+  if(_relModo==="ano") return datasDoAno(selAno);
+  if(_relModo==="intervalo") return datasEntre(_relIni,_relFim);
+  return datasDoMes(selAno,selMes);
+}
+function labelPeriodo(){
+  const fmt=(a,m,d)=>`${String(d).padStart(2,'0')}/${String(m+1).padStart(2,'0')}/${a}`;
+  if(_relModo==="dia"){ const [a,m,d]=strToYMD(_relDia); return fmt(a,m,d); }
+  if(_relModo==="semana"){ const s=semanaDe(_relSemana); return `${fmt(s.ini.getFullYear(),s.ini.getMonth(),s.ini.getDate())} a ${fmt(s.fim.getFullYear(),s.fim.getMonth(),s.fim.getDate())}`; }
+  if(_relModo==="ano") return "Ano "+selAno;
+  if(_relModo==="intervalo"){ const [a,m,d]=strToYMD(_relIni),[b,n,e]=strToYMD(_relFim); return `${fmt(a,m,d)} a ${fmt(b,n,e)}`; }
+  return MESES[selMes]+" / "+selAno;
+}
+function relControles(){
+  const dia=`<div class="sel"><label>Data</label><input class="inp" type="date" value="${_relDia}" onchange="_relDia=this.value;_mainSig='';renderMain()"></div>`;
+  const sem=`<div class="sel"><label>Semana de</label><input class="inp" type="date" value="${_relSemana}" onchange="_relSemana=this.value;_mainSig='';renderMain()"></div>`;
+  const mes=`<div class="sel"><label>Mês</label><select onchange="setPeriodo('mes',+this.value)">${MESES.map((m,i)=>`<option value="${i}" ${i===selMes?'selected':''}>${m}</option>`).join("")}</select></div>
+    <div class="sel"><label>Ano</label><select onchange="setPeriodo('ano',+this.value)">${anosOpts()}</select></div>`;
+  const ano=`<div class="sel"><label>Ano</label><select onchange="setPeriodo('ano',+this.value)">${anosOpts()}</select></div>`;
+  const inter=`<div class="sel"><label>Início</label><input class="inp" type="date" value="${_relIni}" onchange="_relIni=this.value;_mainSig='';renderMain()"></div>
+    <div class="sel"><label>Fim</label><input class="inp" type="date" value="${_relFim}" onchange="_relFim=this.value;_mainSig='';renderMain()"></div>`;
+  return _relModo==="dia"?dia:_relModo==="semana"?sem:_relModo==="ano"?ano:_relModo==="intervalo"?inter:mes;
+}
+function viewRelatorios(){
+  const datas=datasDoPeriodo();
+  const total=datas.reduce((s,[a,m,d])=>s+totalDia(a,m,d),0);
+  const porRobo=aggPorRobo(datas); const robosItems=ROBOS.map(r=>({label:nomeRoboCurto(r),val:porRobo[r]})).sort((a,b)=>b.val-a.val);
+  const porPeca=aggPorPeca(datas);
+  const pecas=Object.entries(porPeca).map(([cod,o])=>({cod,total:o.total,robos:o.robos})).sort((a,b)=>b.total-a.total);
+  const dcp=datas.filter(([a,m,d])=>totalDia(a,m,d)>0).length; const media=dcp?Math.round(total/dcp):0;
+  let tabela;
+  if(!pecas.length) tabela=`<div class="hist-empty">Sem produção com peça informada neste período.</div>`;
+  else tabela=`<div class="mtable-wrap"><table class="mtable"><thead><tr><th class="hora" style="text-align:left">Peça</th>${ROBOS.map(r=>`<th>${String(r)}</th>`).join("")}<th>Total</th></tr></thead><tbody>`
+    + pecas.map(p=>`<tr><td class="hora" style="text-align:left">${esc(p.cod)}${nomePeca(p.cod)?` <span style="color:var(--faint)">· ${esc(nomePeca(p.cod))}</span>`:''}</td>${ROBOS.map(r=>`<td>${p.robos[r]?p.robos[r].toLocaleString("pt-BR"):'·'}</td>`).join("")}<td class="tot">${p.total.toLocaleString("pt-BR")}</td></tr>`).join("")
+    + `</tbody><tfoot><tr><td class="hora" style="text-align:left">Total</td>${ROBOS.map(r=>`<td>${(porRobo[r]||0).toLocaleString("pt-BR")}</td>`).join("")}<td class="tot" style="color:var(--cyan)">${total.toLocaleString("pt-BR")}</td></tr></tfoot></table></div>`;
+  return pageHead(IC.relat,"Relatórios","Produção por período", `<button type="button" class="btn ghost tiny" onclick="exportarCSV()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Exportar CSV</button>`)
+    + `<div class="selrow card glass">
+        <div class="sel"><label>Período</label><select onchange="_relModo=this.value;_mainSig='';renderMain()">
+          ${[["dia","Dia"],["semana","Semana"],["mes","Mês"],["ano","Ano"],["intervalo","Intervalo"]].map(([v,l])=>`<option value="${v}" ${_relModo===v?'selected':''}>${l}</option>`).join("")}</select></div>
+        ${relControles()}
+        <div class="metrics"><div class="metric"><div class="k">Período</div><div class="v" style="font-size:13px;color:var(--mut)">${labelPeriodo()}</div></div></div></div>`
+    + `<div class="kpi card glass"><div><div class="lbl">Total do período</div><div class="big">${total.toLocaleString("pt-BR")}</div></div>
+        <div class="side"><div class="lbl">Média/dia produtivo</div><div class="n">${media.toLocaleString("pt-BR")}</div></div></div>`
+    + `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.robot}</svg>Produção por robô</h3>${barList(robosItems)}</div>`
+    + `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.ppeca}</svg>Detalhamento por peça</h3>${tabela}</div>`;
+}
+function exportarCSV(){
+  const datas=datasDoPeriodo(); const porPeca=aggPorPeca(datas); const porRobo=aggPorRobo(datas);
+  const pecas=Object.entries(porPeca).map(([cod,o])=>({cod,total:o.total,robos:o.robos})).sort((a,b)=>b.total-a.total);
+  const sep=";"; const linhas=[];
+  linhas.push(["Codigo","Nome",...ROBOS.map(r=>"R"+r),"Total"].join(sep));
+  pecas.forEach(p=>{ linhas.push([p.cod, (nomePeca(p.cod)||"").replace(/;/g,","), ...ROBOS.map(r=>p.robos[r]||0), p.total].join(sep)); });
+  linhas.push(["Total","",...ROBOS.map(r=>porRobo[r]||0), datas.reduce((s,[a,m,d])=>s+totalDia(a,m,d),0)].join(sep));
+  const csv="﻿"+linhas.join("\r\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}); const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  a.download="relatorio_cromo_"+labelPeriodo().replace(/[^0-9A-Za-z]/g,"_")+".csv"; a.href=url; a.click(); URL.revokeObjectURL(url);
+  showToast("CSV exportado",false,true);
 }
 
 /* ---------- Placeholder ---------- */

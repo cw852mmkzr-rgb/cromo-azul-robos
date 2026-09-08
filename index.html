@@ -262,6 +262,20 @@ table.mtable input.adj{color:var(--blue);border-color:rgba(79,172,254,.4)}
 .mstat{font-size:11.5px;font-weight:600;padding:6px 13px;border-radius:999px;border:1px solid var(--glass-bd2);background:rgba(255,255,255,.03);color:var(--mut);cursor:pointer;transition:.18s}
 .mstat.on{background:rgba(255,255,255,.06)}
 @media(hover:hover){.mstat:hover{background:rgba(255,255,255,.09);color:var(--txt)}}
+/* Mapa dos Robôs */
+.mapaFloor{position:relative;width:100%;aspect-ratio:16/9;min-height:340px;border-radius:14px;overflow:hidden;
+  background:linear-gradient(135deg,rgba(79,172,254,.05),rgba(168,85,247,.05));
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:100% 100%,44px 44px,44px 44px;border:1px solid var(--glass-bd2)}
+.mkrobo{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;user-select:none;touch-action:none;transition:transform .12s}
+.mkrobo.dragging{z-index:5;transition:none}
+@media(hover:hover){.mkrobo:hover{transform:translate(-50%,-52%)}}
+.mkdot{width:52px;height:52px;border-radius:16px;background:rgba(10,14,39,.75);display:flex;align-items:center;justify-content:center;border:1px solid var(--glass-bd)}
+.mkdot svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.5}
+.mklabel{text-align:center;background:rgba(12,16,40,.7);backdrop-filter:blur(8px);border:1px solid var(--glass-bd2);border-radius:10px;padding:5px 10px;min-width:76px}
+.mklabel b{font-family:'Space Grotesk';font-size:13px;display:block}
+.mklabel span{font-size:10px;font-weight:600;display:block;margin-top:1px}
+.mklabel em{font-size:10px;color:var(--faint);font-style:normal;display:block;margin-top:1px}
 /* Empty / placeholder */
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--faint);min-height:52vh;text-align:center;padding:30px}
 .empty svg{width:56px;height:56px;stroke:var(--faint);fill:none;stroke-width:1.2;opacity:.6}
@@ -495,7 +509,7 @@ const IC = {
   robot:'<rect x="5" y="8" width="14" height="11" rx="2.5"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1.2"/><circle cx="9.2" cy="13" r="1"/><circle cx="14.8" cy="13" r="1"/><path d="M9 17h6"/>',
 };
 const PAINEIS = [
-  {id:"mapa",      nome:"Mapa dos Robôs",   sub:"Chão de fábrica",       ico:IC.mapa,    built:false},
+  {id:"mapa",      nome:"Mapa dos Robôs",   sub:"Chão de fábrica",       ico:IC.mapa,    built:true},
   {id:"mensal",    nome:"Produção Mensal",  sub:"Total por dia do mês",  ico:IC.mensal,  built:true},
   {id:"meta",      nome:"Meta Diária",      sub:"Apontar produção",      ico:IC.meta,    built:true},
   {id:"relmes",    nome:"Relatório Mensal", sub:"Resumo do mês",         ico:IC.relmes,  built:true},
@@ -653,11 +667,12 @@ function renderMain(){
   const box=document.getElementById("main"); if(!box) return;
   let sig=nav.sec+":"+nav.id+"|"+isHost+"|";
   if(nav.sec==="robo") sig+=JSON.stringify(robos()[nav.id]||{});
-  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados());
+  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{});
   if(sig===_mainSig) return; _mainSig=sig;
 
   if(nav.sec==="robo"){ box.innerHTML=viewRobot(nav.id); return; }
   const p=PAINEIS.find(x=>x.id===nav.id)||PAINEIS[1];
+  if(p.id==="mapa"){ box.innerHTML=viewMapa(); return; }
   if(p.id==="mensal") box.innerHTML=viewMensal();
   else if(p.id==="meta") box.innerHTML=viewMeta();
   else if(p.id==="relmes") box.innerHTML=viewRelMensal();
@@ -1111,6 +1126,47 @@ function setChamadoStatus(id,s){ if(!isHost) return; const c=chamados().find(x=>
 function deleteChamado(id){ if(!isHost) return; id=id||_chamEdit; if(!id) return;
   if(!confirm("Excluir este chamado?")) return;
   dados.manutencao.chamados=chamados().filter(x=>x.id!==id); closeModal("modalChamado"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Chamado excluído",false,true)); }
+
+/* ============================================================
+   MAPA DOS ROBÔS — chão de fábrica
+   ============================================================ */
+function mapaObj(){ if(!dados) return {pos:{}}; if(!dados.mapa) dados.mapa={pos:{}}; if(!dados.mapa.pos) dados.mapa.pos={}; return dados.mapa; }
+function posRobo(k,i){ const p=mapaObj().pos[k]; if(p&&typeof p.x==='number') return p;
+  const col=i%3, row=Math.floor(i/3); return {x:20+col*30, y:32+row*40}; }
+function viewMapa(){
+  const keys=Object.keys(robos()).sort((a,b)=>Number(a)-Number(b));
+  const markers=keys.map((k,i)=>{ const c=robos()[k], cor=STATUS_COR[c.status]||"var(--faint)"; const p=posRobo(k,i);
+    const hojeT=totalRoboDia(hoje.getFullYear(),hoje.getMonth(),hoje.getDate(),k);
+    return `<div class="mkrobo" id="mk-${esc(k)}" style="left:${p.x}%;top:${p.y}%" ${isHost?`onpointerdown="mapaDragStart(event,'${esc(k)}')"`:''} onclick="mapaClick('${esc(k)}')">
+      <div class="mkdot" style="color:${cor};box-shadow:0 0 0 4px ${cor}22,0 0 22px ${cor}99"><svg viewBox="0 0 24 24">${IC.robot}</svg></div>
+      <div class="mklabel"><b>${esc((c.nome||("Robô "+k)).replace(/Robô FANUC /,''))}</b>
+        <span style="color:${cor}">${esc(c.status||"—")}</span>
+        <em>${hojeT.toLocaleString("pt-BR")} hoje</em></div></div>`;
+  }).join("");
+  return pageHead(IC.mapa,"Mapa dos Robôs","Chão de fábrica"+(isHost?" · arraste para posicionar":""))
+    + `<div class="card glass" style="padding:14px"><div class="mapaFloor" id="mapaFloor">${markers}</div></div>`
+    + `<div class="card glass" style="padding:14px 18px"><div class="legend" style="padding:0">${STATUS_LIST.map(s=>`<span><b style="color:${STATUS_COR[s]}">●</b> ${s}</span>`).join("")}</div></div>`;
+}
+function mapaClick(k){ if(_justDragged) return; goto('robo',k); }
+let _drag=null, _justDragged=false;
+function mapaDragStart(ev,robo){ if(!isHost) return; ev.preventDefault();
+  const floor=document.getElementById('mapaFloor'); const m=document.getElementById('mk-'+robo);
+  _drag={robo,m,rect:floor.getBoundingClientRect(),moved:false};
+  m.classList.add('dragging');
+  document.addEventListener('pointermove',mapaDragMove); document.addEventListener('pointerup',mapaDragEnd);
+}
+function mapaDragMove(ev){ if(!_drag) return; const {rect,m}=_drag;
+  let x=(ev.clientX-rect.left)/rect.width*100, y=(ev.clientY-rect.top)/rect.height*100;
+  x=Math.max(4,Math.min(96,x)); y=Math.max(8,Math.min(92,y));
+  m.style.left=x+'%'; m.style.top=y+'%'; _drag.x=x; _drag.y=y; _drag.moved=true; lastUserAction=Date.now();
+}
+function mapaDragEnd(){ if(!_drag) return; const d=_drag;
+  d.m.classList.remove('dragging');
+  document.removeEventListener('pointermove',mapaDragMove); document.removeEventListener('pointerup',mapaDragEnd);
+  _drag=null;
+  if(d.moved && d.x!=null){ mapaObj().pos[d.robo]={x:Math.round(d.x*10)/10,y:Math.round(d.y*10)/10};
+    _justDragged=true; setTimeout(()=>_justDragged=false,300); lastUserAction=Date.now(); _mainSig=""; saveDebounced(); }
+}
 
 /* ---------- Placeholder ---------- */
 function viewPlaceholder(p){

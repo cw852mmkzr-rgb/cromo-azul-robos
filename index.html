@@ -393,6 +393,15 @@ body{ font-family:'Chakra Petch',system-ui,sans-serif; background:#05060d;
 /* tabelas */
 table.mtable thead th{color:var(--nc)}
 table.mtable td.tot,table.mtable tfoot td{color:var(--nc)}
+/* Meta Diária — colunas Robô/Meta/Cód/Pts (robôs nas linhas) */
+table.meta-t td.rlab,table.meta-t th.rlab{position:sticky;left:0;z-index:2;background:#0a0f1e;color:var(--ok);font-family:'Orbitron',sans-serif!important;font-weight:700;min-width:56px}
+table.meta-t th.rlab{background:#0b1120}
+table.meta-t th.cmeta,table.meta-t td.cmeta{color:var(--blue);min-width:62px;font-family:'Share Tech Mono',monospace}
+table.meta-t th.ccod,table.meta-t td.ccod{color:var(--warn);min-width:92px;font-family:'Share Tech Mono',monospace}
+table.meta-t th.cpts,table.meta-t td.cpts{color:var(--ny);min-width:98px;font-family:'Share Tech Mono',monospace}
+table.meta-t input.minp{width:52px;color:var(--blue)}
+table.meta-t input.cinp{width:84px;color:var(--warn);text-align:center}
+table.meta-t input.pinp{width:90px;color:var(--ny);text-align:center}
 /* grade de dias / barras */
 .daycell{border-radius:6px}
 .daycell.has{border-color:rgba(0,240,255,.3);box-shadow:inset 0 0 0 1px rgba(0,240,255,.14)}
@@ -926,19 +935,9 @@ function viewMeta(){
   else head+=`<div class="legend"><span><b style="color:var(--ok)">■</b> atingiu a meta/hora</span><span><b style="color:var(--danger)">■</b> abaixo da meta</span><span><b style="color:var(--blue)">■</b> ajuste técnico (digite <b>#</b> no fim)</span></div>`;
 
   return head
-    + `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.cadpeca}</svg>Peça produzida por robô — dia ${selDia}</h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">${pecaRow(chave,md)}</div></div>`
     + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">☀</span><span class="tg" style="color:var(--ok)">Turno Dia — 08:00 às 17:00</span></div>${metaTable(chave,md,HORAS_DIA)}</div>`
-    + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">🌙</span><span class="tg" style="color:var(--purple)">Turno Noite — 18:00 às 22:00</span></div>${metaTable(chave,md,HORAS_NOITE)}</div>`;
-}
-function pecaRow(chave,md){
-  const rb=robos();
-  return ROBOS.map(r=>{ const cod=(md[String(r)]||{}).cod||""; const nome=(rb[String(r)]&&rb[String(r)].nome||("R"+r)).replace(/Robô FANUC /,'Robô ');
-    const nm=nomePeca(cod);
-    return `<div class="field"><label>${esc(nome)}</label>${isHost
-      ? `<input list="pecaCods" value="${esc(cod)}" placeholder="código" onchange="setCod('${chave}','${r}',this.value)">`
-      : `<div class="val">${cod?esc(cod):"—"}</div>`}${nm?`<div style="font-size:11px;color:var(--faint);margin-top:3px">${esc(nm)}</div>`:''}</div>`;
-  }).join("")
-  + `<datalist id="pecaCods">${Object.keys(pecasObj()).map(c=>`<option value="${esc(c)}">${esc(nomePeca(c))}</option>`).join("")}</datalist>`;
+    + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">🌙</span><span class="tg" style="color:var(--purple)">Turno Noite — 18:00 às 22:00</span></div>${metaTable(chave,md,HORAS_NOITE)}</div>`
+    + `<datalist id="pecaCods">${Object.keys(pecasObj()).map(c=>`<option value="${esc(c)}">${esc(nomePeca(c))}</option>`).join("")}</datalist>`;
 }
 function setCod(chave,robo,v){ if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
@@ -948,22 +947,34 @@ function setCod(chave,robo,v){ if(!isHost) return;
 }
 function metaTable(chave,md,horas){
   const rb=robos();
-  let h=`<div class="mtable-wrap"><table class="mtable"><thead><tr><th class="hora">Hora</th>`;
-  ROBOS.forEach(r=>{ h+=`<th>${(rb[String(r)]&&rb[String(r)].nome||("R"+r)).replace(/Robô FANUC /,'')}</th>`; });
-  h+=`<th>Total</th></tr></thead><tbody>`;
-  horas.forEach(hr=>{ h+=`<tr><td class="hora">${hr}</td>`;
-    let linTot=0;
-    ROBOS.forEach(r=>{ const rd=md[String(r)]||{}; const raw=rd[campoH(hr)]||""; const pv=parseCelVal(raw); linTot+=pv.num;
-      const meta=parseInt(rb[String(r)]&&rb[String(r)].meta_hora)||0;
+  // cabeçalho: ROBÔ | META | CÓD | PTS | horas... | TOTAL   (robôs nas linhas — igual ao Células)
+  let h=`<div class="mtable-wrap"><table class="mtable meta-t"><thead><tr>`
+    + `<th class="rlab">Robô</th><th class="cmeta">Meta</th><th class="ccod">Cód</th><th class="cpts">Pts</th>`
+    + horas.map(hr=>`<th class="hora">${hr}</th>`).join("")
+    + `<th>Total</th></tr></thead><tbody>`;
+  ROBOS.forEach(r=>{ const rd=md[String(r)]||{}; const meta=parseInt(rb[String(r)]&&rb[String(r)].meta_hora)||0;
+    const cod=rd.cod||""; const pts=(rb[String(r)]&&rb[String(r)].pontos_solda)||""; let linTot=0;
+    h+=`<tr><td class="rlab">${esc(String(r))}</td>`;
+    // META
+    h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(rb[String(r)]?rb[String(r)].meta_hora:'')}" onchange="setField('${r}','meta_hora',this.value)"></td>`
+               : `<td class="cmeta" style="color:var(--blue)">${meta||'—'}</td>`;
+    // CÓD
+    h+= isHost ? `<td class="ccod"><input class="cinp" list="pecaCods" value="${esc(cod)}" placeholder="—" onchange="setCod('${chave}','${r}',this.value)"></td>`
+               : `<td class="ccod" style="color:var(--warn)">${cod?esc(cod):'—'}</td>`;
+    // PTS
+    h+= isHost ? `<td class="cpts"><input class="pinp" value="${esc(pts)}" placeholder="—" onchange="setField('${r}','pontos_solda',this.value)"></td>`
+               : `<td class="cpts" style="color:var(--ny)">${pts?esc(pts):'—'}</td>`;
+    // horas
+    horas.forEach(hr=>{ const raw=rd[campoH(hr)]||""; const pv=parseCelVal(raw); linTot+=pv.num;
       let cls=""; if(raw!==""){ cls= pv.adj?"adj":(meta>0?(pv.num>=meta?"ok":"low"):""); }
       if(isHost) h+=`<td><input class="${cls}" value="${esc(raw)}" onchange="setMeta('${chave}','${r}','${campoH(hr)}',this.value)"></td>`;
-      else h+=`<td class="${cls}" style="font-family:'Space Grotesk';font-weight:600;color:${pv.adj?'var(--blue)':(raw===''?'var(--faint)':(meta>0?(pv.num>=meta?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}</td>`;
+      else h+=`<td class="${cls}" style="font-weight:600;color:${pv.adj?'var(--blue)':(raw===''?'var(--faint)':(meta>0?(pv.num>=meta?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}</td>`;
     });
     h+=`<td class="tot">${linTot.toLocaleString("pt-BR")}</td></tr>`;
   });
-  // totais por robô
-  h+=`</tbody><tfoot><tr><td class="hora">Total</td>`;
-  ROBOS.forEach(r=>{ const rd=md[String(r)]||{}; const t=horas.reduce((s,hr)=>s+parseCelVal(rd[campoH(hr)]).num,0); h+=`<td>${t.toLocaleString("pt-BR")}</td>`; });
+  // rodapé: total por hora + total geral do turno
+  h+=`</tbody><tfoot><tr><td class="rlab">Total</td><td class="cmeta"></td><td class="ccod"></td><td class="cpts"></td>`;
+  horas.forEach(hr=>{ const t=ROBOS.reduce((s,r)=>s+parseCelVal((md[String(r)]||{})[campoH(hr)]).num,0); h+=`<td>${t.toLocaleString("pt-BR")}</td>`; });
   const gt=ROBOS.reduce((s,r)=>{const rd=md[String(r)]||{};return s+horas.reduce((a,hr)=>a+parseCelVal(rd[campoH(hr)]).num,0);},0);
   h+=`<td class="tot" style="color:var(--cyan)">${gt.toLocaleString("pt-BR")}</td></tr></tfoot></table></div>`;
   return h;

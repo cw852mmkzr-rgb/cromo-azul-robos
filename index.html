@@ -529,6 +529,25 @@ table.meta-t input.pinp{width:90px;color:var(--ny);text-align:center}
 .hud-ring .r2{stroke-dasharray:3 9;opacity:.28;animation:dashMove 5s linear infinite reverse}
 @keyframes dashMove{to{stroke-dashoffset:-96}}
 @media(prefers-reduced-motion:reduce){.rb-arm1,.rb-arm2,.rb-wrist,.rb-spark,.rb-weldglow,.rb-led,.rb-halo,.dash-sweep,.dash-rn,.dash-prod-n,.hud-ring .r1,.hud-ring .r2{animation:none}}
+
+/* ===== Robô R-2000iB com pinça de solda a ponto + relógio ocupando o topo ===== */
+.dash-head{display:flex;align-items:center;gap:14px}
+.dash-clock{flex:1;text-align:right;font-size:clamp(44px,8.6vw,132px);letter-spacing:.04em;line-height:1;text-shadow:0 0 28px rgba(0,240,255,.8),0 0 8px rgba(0,240,255,.9)}
+.dash-robo-svg svg{width:clamp(230px,31vw,450px)}
+.rb-arm1{transform-origin:82px 168px;animation:rbArm1 2.8s ease-in-out infinite}
+.rb-arm2{transform-origin:112px 72px;animation:rbArm2 1.9s ease-in-out infinite}
+.rb-gun{transform-origin:200px 58px;animation:rbGun 1.9s ease-in-out infinite}
+.rb-pinca{transform-origin:222px 136px;animation:rbPinca 1.2s ease-in-out infinite}
+.rb-spark{transform-origin:193px 187px;animation:rbSpark2 1.2s ease-in-out infinite}
+.rb-weldglow{animation:rbGlow2 1.2s ease-in-out infinite}
+.rb-halo{transform-origin:82px 175px}
+@keyframes rbArm1{0%,100%{transform:rotate(2.5deg)}50%{transform:rotate(-2.5deg)}}
+@keyframes rbArm2{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3.5deg)}}
+@keyframes rbGun{0%,100%{transform:rotate(1.5deg)}50%{transform:rotate(-2deg)}}
+@keyframes rbPinca{0%,35%{transform:rotate(-14deg)}45%,80%{transform:rotate(0deg)}100%{transform:rotate(-14deg)}}
+@keyframes rbSpark2{0%,44%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1.15) rotate(-10deg)}58%{opacity:.5;transform:scale(.7) rotate(20deg)}66%{opacity:1;transform:scale(1) rotate(-25deg)}80%,100%{opacity:0;transform:scale(.3)}}
+@keyframes rbGlow2{0%,44%{opacity:.1;transform:scale(.6)}55%{opacity:.9;transform:scale(1.4)}80%,100%{opacity:.1;transform:scale(.6)}}
+@media(prefers-reduced-motion:reduce){.rb-gun,.rb-pinca{animation:none}}
 </style>
 </head>
 <body>
@@ -1606,35 +1625,47 @@ function renderDash(){ if(!dados) return; if(!_dashSeq.length) dashIniciarCarros
   try{ if(_dashGeral) dashRenderGeral(); else dashRenderRobo(_dashSeq[_dashIdx]); }catch(e){ console.error("dash",e); }
   dashRenderFooter(); }
 
-function dashRoboSVG(cor){ return `<svg viewBox="0 0 240 210" style="overflow:visible;filter:drop-shadow(0 0 9px ${cor}aa)">
-  <circle class="rb-halo" cx="70" cy="150" r="62" fill="none" stroke="${cor}" stroke-width="1.5" stroke-dasharray="6 10" opacity=".35"/>
-  <rect x="150" y="152" width="82" height="9" rx="2" fill="none" stroke="${cor}" stroke-width="2"/>
-  <rect x="158" y="161" width="8" height="30" fill="none" stroke="${cor}" stroke-width="1.5"/><rect x="216" y="161" width="8" height="30" fill="none" stroke="${cor}" stroke-width="1.5"/>
-  <rect x="166" y="140" width="52" height="12" rx="2" fill="${cor}" opacity=".12" stroke="${cor}" stroke-width="1.5"/>
-  <ellipse class="rb-weldglow" cx="187" cy="140" rx="9" ry="4" fill="#ffb000" opacity=".5"/>
-  <polygon points="28,196 112,196 102,178 38,178" fill="none" stroke="${cor}" stroke-width="2.5"/>
-  <rect x="52" y="146" width="36" height="32" rx="6" fill="${cor}" opacity=".10" stroke="${cor}" stroke-width="2.5"/>
-  <circle cx="60" cy="188" r="2" fill="${cor}"/><circle cx="80" cy="188" r="2" fill="${cor}"/>
-  <path d="M46,160 C20,150 24,110 60,96" fill="none" stroke="${cor}" stroke-width="1.5" opacity=".5"/>
+function dashRoboSVG(cor){ const Y='#f5c400', CU='#d08a3e'; return `<svg viewBox="0 0 270 235" style="overflow:visible;filter:drop-shadow(0 0 9px ${cor}aa)">
+  <circle class="rb-halo" cx="82" cy="175" r="70" fill="none" stroke="${cor}" stroke-width="1.5" stroke-dasharray="6 10" opacity=".3"/>
+  <line x1="10" y1="214" x2="262" y2="214" stroke="${cor}" stroke-width="1" opacity=".35"/>
+  <rect x="150" y="196" width="80" height="6" rx="1" fill="none" stroke="${cor}" stroke-width="1.5"/>
+  <rect x="160" y="202" width="7" height="12" fill="none" stroke="${cor}" stroke-width="1.2"/><rect x="213" y="202" width="7" height="12" fill="none" stroke="${cor}" stroke-width="1.2"/>
+  <rect x="172" y="188" width="42" height="8" rx="1.5" fill="${cor}" opacity=".12" stroke="${cor}" stroke-width="1.5"/>
+  <ellipse class="rb-weldglow" cx="193" cy="188" rx="8" ry="3.5" fill="#ffb000" opacity=".5"/>
+  <rect x="38" y="192" width="88" height="22" rx="4" fill="#0b0e18" stroke="${cor}" stroke-width="2.5"/>
+  <circle cx="52" cy="203" r="2" fill="${cor}"/><circle cx="112" cy="203" r="2" fill="${cor}"/>
+  <rect x="58" y="166" width="48" height="28" rx="6" fill="${Y}" opacity=".18" stroke="${cor}" stroke-width="2.5"/>
+  <path d="M60,176 C30,168 30,120 62,104" fill="none" stroke="#3b82f6" stroke-width="2.5" opacity=".75"/>
   <g class="rb-arm1">
-    <line x1="70" y1="146" x2="96" y2="74" stroke="${cor}" stroke-width="14" stroke-linecap="round" opacity=".18"/>
-    <line x1="70" y1="146" x2="96" y2="74" stroke="${cor}" stroke-width="3" stroke-linecap="round"/>
-    <line x1="64" y1="140" x2="88" y2="76" stroke="${cor}" stroke-width="1" opacity=".5"/>
-    <circle cx="70" cy="146" r="10" fill="#070912" stroke="${cor}" stroke-width="2.5"/><circle class="rb-led" cx="70" cy="146" r="3.5" fill="${cor}"/>
+    <line x1="82" y1="168" x2="112" y2="72" stroke="${Y}" stroke-width="18" stroke-linecap="round" opacity=".22"/>
+    <line x1="82" y1="168" x2="112" y2="72" stroke="${cor}" stroke-width="3" stroke-linecap="round"/>
+    <line x1="74" y1="160" x2="102" y2="78" stroke="${cor}" stroke-width="1" opacity=".45"/>
+    <text x="104" y="128" font-family="Share Tech Mono,monospace" font-size="8" fill="${cor}" opacity=".85" transform="rotate(-72 104 128)">R-2000iB</text>
+    <circle cx="82" cy="168" r="11" fill="#0b0e18" stroke="${cor}" stroke-width="2.5"/><circle class="rb-led" cx="82" cy="168" r="3.5" fill="${cor}"/>
     <g class="rb-arm2">
-      <line x1="96" y1="74" x2="162" y2="96" stroke="${cor}" stroke-width="11" stroke-linecap="round" opacity=".18"/>
-      <line x1="96" y1="74" x2="162" y2="96" stroke="${cor}" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="96" cy="74" r="9" fill="#070912" stroke="${cor}" stroke-width="2.5"/><circle class="rb-led d" cx="96" cy="74" r="3" fill="${cor}"/>
-      <g class="rb-wrist">
-        <circle cx="162" cy="96" r="7" fill="#070912" stroke="${cor}" stroke-width="2.5"/>
-        <line x1="162" y1="96" x2="182" y2="124" stroke="${cor}" stroke-width="6" stroke-linecap="round" opacity=".25"/>
-        <line x1="162" y1="96" x2="182" y2="124" stroke="${cor}" stroke-width="2.5" stroke-linecap="round"/>
-        <line x1="178" y1="120" x2="187" y2="133" stroke="#ffb000" stroke-width="3" stroke-linecap="round"/>
+      <rect x="92" y="52" width="16" height="14" rx="3" fill="#ff3b3b" opacity=".55" stroke="${cor}" stroke-width="1.5"/>
+      <line x1="112" y1="72" x2="200" y2="58" stroke="${Y}" stroke-width="15" stroke-linecap="round" opacity=".22"/>
+      <line x1="112" y1="72" x2="200" y2="58" stroke="${cor}" stroke-width="3" stroke-linecap="round"/>
+      <path d="M118,62 C150,42 176,44 198,48" fill="none" stroke="#3b82f6" stroke-width="2.5" opacity=".75"/>
+      <circle cx="112" cy="72" r="13" fill="#0b0e18" stroke="${cor}" stroke-width="2.5"/><circle class="rb-led d" cx="112" cy="72" r="3.5" fill="${cor}"/>
+      <g class="rb-gun">
+        <circle cx="200" cy="58" r="13" fill="${Y}" opacity=".25" stroke="${cor}" stroke-width="2.5"/>
+        <circle cx="200" cy="58" r="7" fill="none" stroke="${cor}" stroke-width="1.2"/>
+        <circle cx="200" cy="47" r="1.6" fill="${cor}"/><circle cx="211" cy="58" r="1.6" fill="${cor}"/><circle cx="200" cy="69" r="1.6" fill="${cor}"/><circle cx="189" cy="58" r="1.6" fill="${cor}"/>
+        <rect x="170" y="72" width="62" height="64" rx="4" fill="#5b6470" opacity=".45" stroke="${cor}" stroke-width="2.5"/>
+        <rect x="178" y="80" width="46" height="14" rx="2" fill="none" stroke="${cor}" stroke-width="1" opacity=".6"/>
+        <rect x="178" y="100" width="20" height="26" rx="2" fill="none" stroke="${cor}" stroke-width="1" opacity=".5"/>
+        <circle cx="216" cy="112" r="6" fill="none" stroke="${cor}" stroke-width="1.2" opacity=".7"/>
+        <path d="M232,90 C250,92 250,110 236,116" fill="none" stroke="#0b0e18" stroke-width="3"/><path d="M232,90 C250,92 250,110 236,116" fill="none" stroke="${cor}" stroke-width="1.2" opacity=".6"/>
+        <path d="M180,136 L178,160 C177,176 186,182 191,186" fill="none" stroke="${CU}" stroke-width="6" stroke-linecap="round" style="filter:drop-shadow(0 0 4px ${CU})"/>
+        <g class="rb-pinca">
+          <path d="M222,136 L226,160 C227,176 214,182 196,186" fill="none" stroke="${CU}" stroke-width="6" stroke-linecap="round" style="filter:drop-shadow(0 0 4px ${CU})"/>
+        </g>
         <g class="rb-spark">
-          <circle cx="187" cy="136" r="3.5" fill="#fff2a8"/>
-          <line x1="187" y1="130" x2="187" y2="122" stroke="#ffb000" stroke-width="2"/><line x1="192" y1="132" x2="199" y2="126" stroke="#ffb000" stroke-width="2"/>
-          <line x1="181" y1="132" x2="174" y2="127" stroke="#ffb000" stroke-width="2"/><line x1="194" y1="139" x2="202" y2="141" stroke="#ff8a00" stroke-width="2"/>
-          <line x1="180" y1="140" x2="172" y2="143" stroke="#ff8a00" stroke-width="2"/>
+          <circle cx="193" cy="187" r="3.5" fill="#fff2a8"/>
+          <line x1="193" y1="181" x2="193" y2="172" stroke="#ffb000" stroke-width="2"/><line x1="199" y1="183" x2="207" y2="177" stroke="#ffb000" stroke-width="2"/>
+          <line x1="187" y1="183" x2="179" y2="177" stroke="#ffb000" stroke-width="2"/><line x1="200" y1="190" x2="209" y2="192" stroke="#ff8a00" stroke-width="2"/>
+          <line x1="186" y1="190" x2="177" y2="193" stroke="#ff8a00" stroke-width="2"/>
         </g>
       </g>
     </g>

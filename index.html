@@ -774,7 +774,7 @@ function renderMain(){
   const box=document.getElementById("main"); if(!box) return;
   let sig=nav.sec+":"+nav.id+"|"+isHost+"|";
   if(nav.sec==="robo") sig+=JSON.stringify(robos()[nav.id]||{});
-  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{})+"|R"+_relModo+_relDia+_relSemana+_relIni+_relFim;
+  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{})+"|R"+_relModo+_relDia+_relSemana+_relIni+_relFim+"|D"+(divisaoAtiva()?1:0);
   if(sig===_mainSig) return; _mainSig=sig;
 
   if(nav.sec==="robo"){ box.innerHTML=viewRobot(nav.id); return; }
@@ -921,7 +921,7 @@ function viewMeta(){
   const totNoite=ROBOS.reduce((s,r)=>s+HORAS_NOITE.reduce((a,h)=>a+parseCelVal((md[r]||{})[campoH(h)]).num,0),0);
   const diasOpts=(()=>{let o="";for(let d=1;d<=ndias;d++)o+=`<option value="${d}" ${d===selDia?'selected':''}>${d}</option>`;return o;})();
 
-  let head=pageHead(IC.meta,"Meta Diária","Apontar produção por hora / robô")
+  let head=pageHead(IC.meta,"Meta Diária","Apontar produção por hora / robô", isHost?`<button type="button" class="btn ${divisaoAtiva()?'primary':'ghost'} tiny" onclick="toggleDivisao()" title="Divide o valor digitado pela quantidade de pontos de solda (coluna PTS)">➗ Divisão pts: ${divisaoAtiva()?'ON':'OFF'}</button>`:'')
     + `<div class="selrow card glass">
         <div class="sel"><label>Dia</label><select onchange="setPeriodo('dia',+this.value)">${diasOpts}</select></div>
         <div class="sel"><label>Mês</label><select onchange="setPeriodo('mes',+this.value)">${MESES.map((m,i)=>`<option value="${i}" ${i===selMes?'selected':''}>${m}</option>`).join("")}</select></div>
@@ -932,7 +932,7 @@ function viewMeta(){
           <div class="metric"><div class="k">∑ Total</div><div class="v" style="color:var(--cyan)">${totalGeral.toLocaleString("pt-BR")}</div></div>
         </div></div>`;
   if(!isHost) head+=`<div class="legend" style="padding-left:6px">Somente leitura — entre como HOST para apontar produção.</div>`;
-  else head+=`<div class="legend"><span><b style="color:var(--ok)">■</b> atingiu a meta/hora</span><span><b style="color:var(--danger)">■</b> abaixo da meta</span><span><b style="color:var(--blue)">■</b> ajuste técnico (digite <b>#</b> no fim)</span></div>`;
+  else head+=`<div class="legend"><span><b style="color:var(--ok)">■</b> atingiu a meta/hora</span><span><b style="color:var(--danger)">■</b> abaixo da meta</span><span><b style="color:var(--blue)">■</b> ajuste técnico (digite <b>#</b> no fim)</span>${divisaoAtiva()?`<span style="color:var(--ny)">➗ divisão ON — digite o total de pontos; dividimos pela coluna PTS</span>`:''}</div>`;
 
   return head
     + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">☀</span><span class="tg" style="color:var(--ok)">Turno Dia — 08:00 às 17:00</span></div>${metaTable(chave,md,HORAS_DIA)}</div>`
@@ -941,9 +941,12 @@ function viewMeta(){
 }
 function setCod(chave,robo,v){ if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
+  const rd=p.metas_dias[chave][robo];
   v=String(v).trim().toUpperCase();
-  if(v==="") delete p.metas_dias[chave][robo].cod; else p.metas_dias[chave][robo].cod=v;
-  _mainSig=""; saveDebounced();
+  if(v==="") delete rd.cod;
+  else { rd.cod=v; const pc=pecasObj()[v], pn=pc?parseInt(pc.pontos):0;
+    if(pn>0 && !(parseInt(rd.pontos)>0)) rd.pontos=pn; }  // puxa os pontos da peça cadastrada
+  _mainSig=""; saveDebounced(); renderMainSoon();
 }
 function metaTable(chave,md,horas){
   const rb=robos();
@@ -953,7 +956,7 @@ function metaTable(chave,md,horas){
     + horas.map(hr=>`<th class="hora">${hr}</th>`).join("")
     + `<th>Total</th></tr></thead><tbody>`;
   ROBOS.forEach(r=>{ const rd=md[String(r)]||{}; const meta=parseInt(rb[String(r)]&&rb[String(r)].meta_hora)||0;
-    const cod=rd.cod||""; const pts=(rb[String(r)]&&rb[String(r)].pontos_solda)||""; let linTot=0;
+    const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; let linTot=0;
     h+=`<tr><td class="rlab">${esc(String(r))}</td>`;
     // META
     h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(rb[String(r)]?rb[String(r)].meta_hora:'')}" onchange="setField('${r}','meta_hora',this.value)"></td>`
@@ -962,12 +965,12 @@ function metaTable(chave,md,horas){
     h+= isHost ? `<td class="ccod"><input class="cinp" list="pecaCods" value="${esc(cod)}" placeholder="—" onchange="setCod('${chave}','${r}',this.value)"></td>`
                : `<td class="ccod" style="color:var(--warn)">${cod?esc(cod):'—'}</td>`;
     // PTS
-    h+= isHost ? `<td class="cpts"><input class="pinp" value="${esc(pts)}" placeholder="—" onchange="setField('${r}','pontos_solda',this.value)"></td>`
-               : `<td class="cpts" style="color:var(--ny)">${pts?esc(pts):'—'}</td>`;
+    h+= isHost ? `<td class="cpts"><input class="pinp" type="number" min="0" value="${esc(pts)}" placeholder="pts" title="Pontos de solda — divide o valor digitado" onchange="setPontos('${chave}','${r}',this.value)"></td>`
+               : `<td class="cpts" style="color:var(--ny)">${pts!==''?esc(String(pts)):'—'}</td>`;
     // horas
     horas.forEach(hr=>{ const raw=rd[campoH(hr)]||""; const pv=parseCelVal(raw); linTot+=pv.num;
       let cls=""; if(raw!==""){ cls= pv.adj?"adj":(meta>0?(pv.num>=meta?"ok":"low"):""); }
-      if(isHost) h+=`<td><input class="${cls}" value="${esc(raw)}" onchange="setMeta('${chave}','${r}','${campoH(hr)}',this.value)"></td>`;
+      if(isHost) h+=`<td><input class="${cls}" value="${esc(raw)}" onchange="setMeta('${chave}','${r}','${campoH(hr)}',this.value,this)"></td>`;
       else h+=`<td class="${cls}" style="font-weight:600;color:${pv.adj?'var(--blue)':(raw===''?'var(--faint)':(meta>0?(pv.num>=meta?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}</td>`;
     });
     h+=`<td class="tot">${linTot.toLocaleString("pt-BR")}</td></tr>`;
@@ -979,14 +982,34 @@ function metaTable(chave,md,horas){
   h+=`<td class="tot" style="color:var(--cyan)">${gt.toLocaleString("pt-BR")}</td></tr></tfoot></table></div>`;
   return h;
 }
-function setMeta(chave,robo,campo,v){
+function divisaoAtiva(){ return !(dados&&dados.config&&dados.config.divisao_pontos===false); }
+function setMeta(chave,robo,campo,v,el){
   if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
+  const rd=p.metas_dias[chave][robo];
   v=String(v).trim();
-  if(v==="") delete p.metas_dias[chave][robo][campo]; else p.metas_dias[chave][robo][campo]=v;
+  // divisão automática pela quantidade de pontos de solda (# = ajuste, não divide)
+  if(v!=="" && !v.includes('#')){
+    const pontos=parseInt(rd.pontos)||0, num=parseInt(v)||0;
+    if(divisaoAtiva() && pontos>1 && num>0){
+      const div=Math.round(num/pontos);
+      if(div>=1 && div<=999 && div!==num){ v=String(div); if(el) el.value=v; }
+    }
+  }
+  if(v==="") delete rd[campo]; else rd[campo]=v;
+  if(el){ const meta=parseInt(robos()[robo]&&robos()[robo].meta_hora)||0, pv=parseCelVal(v);
+    el.className = v===''?'':(pv.adj?'adj':(meta>0?(pv.num>=meta?'ok':'low'):'')); }
+  _mainSig=""; saveDebounced(); renderMainSoon();
+}
+function setPontos(chave,robo,v){ if(!isHost) return;
+  const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
+  const n=parseInt(String(v).trim())||0;
+  if(!n) delete p.metas_dias[chave][robo].pontos; else p.metas_dias[chave][robo].pontos=n;
   _mainSig=""; saveDebounced();
-  // atualiza só os totais sem re-render completo (evita perder foco)
-  renderMainSoon();
+}
+function toggleDivisao(){ if(!isHost) return;
+  cfg().divisao_pontos = divisaoAtiva() ? false : true;
+  _mainSig=""; renderMain(); saveToAPI().then(()=>showToast(divisaoAtiva()?"Divisão de pontos ATIVADA":"Divisão de pontos DESATIVADA",false,true));
 }
 let _rmTimer=null; function renderMainSoon(){ clearTimeout(_rmTimer); _rmTimer=setTimeout(()=>{ if(!document.querySelector('#main input:focus')){ _mainSig=""; renderMain(); } },1200); }
 

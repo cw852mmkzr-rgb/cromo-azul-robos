@@ -548,6 +548,20 @@ table.meta-t input.pinp{width:90px;color:var(--ny);text-align:center}
 @keyframes rbSpark2{0%,44%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1.15) rotate(-10deg)}58%{opacity:.5;transform:scale(.7) rotate(20deg)}66%{opacity:1;transform:scale(1) rotate(-25deg)}80%,100%{opacity:0;transform:scale(.3)}}
 @keyframes rbGlow2{0%,44%{opacity:.1;transform:scale(.6)}55%{opacity:.9;transform:scale(1.4)}80%,100%{opacity:.1;transform:scale(.6)}}
 @media(prefers-reduced-motion:reduce){.rb-gun,.rb-pinca{animation:none}}
+
+/* ===== Glitch de TV cyberpunk na troca de slide ===== */
+.dash-main.glitching{animation:dashShake .28s steps(5)}
+.dash-main.glitching .dash-robo, .dash-main.glitching .dash-geral{animation:dashSplit .28s steps(4)}
+@keyframes dashShake{0%,100%{transform:translate(0,0)}18%{transform:translate(-7px,3px)}34%{transform:translate(6px,-4px)}52%{transform:translate(-4px,-2px)}70%{transform:translate(3px,4px)}86%{transform:translate(-2px,1px)}}
+@keyframes dashSplit{0%,100%{filter:none}25%{filter:drop-shadow(3px 0 0 #ff2bd6) drop-shadow(-3px 0 0 #00f0ff)}50%{filter:drop-shadow(-4px 0 0 #ff2bd6) drop-shadow(4px 0 0 #00f0ff)}75%{filter:drop-shadow(2px 0 0 #ff2bd6) drop-shadow(-2px 0 0 #00f0ff)}}
+.dash-static{position:absolute;inset:0;z-index:60;pointer-events:none;opacity:0;mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.85'/></svg>")}
+.dash-static.on{animation:dashStatic .3s steps(6)}
+@keyframes dashStatic{0%{opacity:.55;background-position:0 0}25%{opacity:.85;background-position:22% 12%}50%{opacity:.35;background-position:-18% 34%}75%{opacity:.7;background-position:34% -22%}100%{opacity:0;background-position:0 0}}
+/* barras de scanline temporárias durante o glitch */
+.dash-static.on::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,240,255,.14) 3px 4px);animation:dashBar .3s linear}
+@keyframes dashBar{0%{transform:translateY(-30px)}100%{transform:translateY(30px)}}
+@media(prefers-reduced-motion:reduce){.dash-main.glitching,.dash-main.glitching .dash-robo,.dash-main.glitching .dash-geral,.dash-static.on,.dash-static.on::before{animation:none}}
 </style>
 </head>
 <body>
@@ -1603,7 +1617,7 @@ function startDashboard(){ isHost=false;
   lastUserAction=0; loadFromAPI(); if(dados) renderDash();
   clearInterval(dashTimer); dashTimer=setInterval(loadFromAPI,3000);
   tickClock(); clearInterval(dashClockTimer); dashClockTimer=setInterval(tickClock,1000);
-  clearInterval(dashSlideTimer); dashSlideTimer=setInterval(dashNextSlide,6000); try{ (window._dashAC || (window._dashAC=new (window.AudioContext||window.webkitAudioContext)())).resume(); }catch(e){}
+  clearInterval(dashSlideTimer); dashSlideTimer=setInterval(dashNextSlide,6000);
 }
 function exitDashboard(){ [dashTimer,dashClockTimer,dashSlideTimer].forEach(t=>clearInterval(t));
   document.getElementById("dashScreen").style.display="none"; document.getElementById("loginScreen").style.display="flex"; }
@@ -1636,7 +1650,17 @@ function dashZap(){ try{
   osc.connect(og).connect(ctx.destination); osc.start(t); osc.stop(t+0.12);
 }catch(e){} }
 
-function dashNextSlide(){ if(!dados) return; dashZap();
+
+function dashGlitch(){
+  const scr=document.getElementById('dashScreen'), main=document.getElementById('dashMain'); if(!scr||!main) return;
+  let ov=document.getElementById('dashStatic');
+  if(!ov){ ov=document.createElement('div'); ov.id='dashStatic'; ov.className='dash-static'; scr.appendChild(ov); }
+  main.classList.remove('glitching'); ov.classList.remove('on'); void main.offsetWidth;
+  main.classList.add('glitching'); ov.classList.add('on');
+  setTimeout(()=>{ main.classList.remove('glitching'); ov.classList.remove('on'); }, 320);
+}
+
+function dashNextSlide(){ if(!dados) return; dashGlitch();
   if(_dashGeral||!_dashSeq.length) dashIniciarCarrossel();
   else if(_dashIdx>=_dashSeq.length-1) _dashGeral=true;
   else _dashIdx++;

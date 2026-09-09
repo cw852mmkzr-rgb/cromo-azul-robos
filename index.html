@@ -573,6 +573,23 @@ table.meta-t input.pinp{width:90px;color:var(--ny);text-align:center}
 .dash-mod .dm-t{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;letter-spacing:.02em}
 .dash-mod .dm-d{font-size:12px;color:var(--mut);margin-top:2px;line-height:1.4}
 .dash-mod .dm-badge{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#04121a;background:var(--nc);padding:2px 7px;border-radius:3px;margin-left:6px;vertical-align:2px}
+
+/* ===== Ajuste de tamanho por modelo do Dashboard TV ===== */
+.dash-robo[data-modelo="2"] .dash-robo-svg svg,
+.dash-robo[data-modelo="3"] .dash-robo-svg svg{width:auto;height:min(58vh,380px);max-width:min(28vw,260px)}
+.rb3-eye{transform-box:fill-box;transform-origin:center;animation:rb3Blink 3.4s infinite}
+.rb3-eye.d{animation-delay:.2s}
+.rb3-led{animation:rb3Pulse 1.4s ease-in-out infinite}
+.rb3-armL{transform-box:fill-box;transform-origin:42px 114px;animation:rb3ArmL 3.6s ease-in-out infinite}
+.rb3-armR{transform-box:fill-box;transform-origin:138px 114px;animation:rb3ArmR 3.6s ease-in-out infinite}
+.rb3-earL,.rb3-earR{transform-box:fill-box;transform-origin:center;animation:rb3EarPulse 1.9s ease-in-out infinite}
+.rb3-earR{animation-delay:.9s}
+@keyframes rb3Blink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.1)}}
+@keyframes rb3Pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.85)}}
+@keyframes rb3ArmL{0%,100%{transform:rotate(0)}50%{transform:rotate(6deg)}}
+@keyframes rb3ArmR{0%,100%{transform:rotate(0)}50%{transform:rotate(-6deg)}}
+@keyframes rb3EarPulse{0%,100%{opacity:1}50%{opacity:.5}}
+@media(prefers-reduced-motion:reduce){.rb3-eye,.rb3-led,.rb3-armL,.rb3-armR,.rb3-earL,.rb3-earR{animation:none}}
 </style>
 </head>
 <body>
@@ -1370,7 +1387,7 @@ function viewGerenciar(){
         <div class="dash-mod-grid">
           ${dashModOpt(1,'Modelo 1','R-2000iB · braço amarelo com pinça de solda')}
           ${dashModOpt(2,'Modelo 2','Humanoide neon dançando (a primeira versão)')}
-          ${dashModOpt(3,'Modelo 3','em breve — você me diz o próximo','soon')}
+          ${dashModOpt(3,'Modelo 3','Robô cartoon azul com gravata (mascote)')}
         </div></div>`
     + `<div class="card glass" style="border-color:rgba(251,113,133,.25)"><h3 style="color:var(--danger)"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>Zona de perigo</h3>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -1777,8 +1794,76 @@ function dashRoboSVG2(cor){ return `<svg viewBox="0 0 140 200" style="overflow:v
   <rect x="38" y="140" width="64" height="10" rx="4" fill="none" stroke="${cor}" stroke-width="1.5"/>
   <rect x="38" y="150" width="24" height="40" rx="8" fill="none" stroke="${cor}" stroke-width="2.5"/><rect x="34" y="188" width="28" height="10" rx="4" fill="none" stroke="${cor}" stroke-width="1.5"/>
   <rect x="78" y="150" width="24" height="40" rx="8" fill="none" stroke="${cor}" stroke-width="2.5"/><rect x="78" y="188" width="28" height="10" rx="4" fill="none" stroke="${cor}" stroke-width="1.5"/></svg>`; }
+
+function dashRoboSVG3(cor){ return `<svg viewBox="0 0 180 224" style="overflow:visible;filter:drop-shadow(0 0 9px ${cor}aa)">
+  <ellipse cx="90" cy="218" rx="55" ry="3" fill="${cor}" opacity=".3"/>
+  <line x1="60" y1="34" x2="52" y2="10" stroke="${cor}" stroke-width="2"/>
+  <circle cx="52" cy="8" r="4" fill="${cor}"/>
+  <line x1="120" y1="34" x2="128" y2="10" stroke="${cor}" stroke-width="2"/>
+  <circle cx="128" cy="8" r="4" fill="${cor}"/>
+  <path d="M58,32 Q90,20 122,32 L122,42 L58,42 Z" fill="${cor}" opacity=".12" stroke="${cor}" stroke-width="2"/>
+  <circle cx="82" cy="30" r="2" fill="#ff6a00"/><circle cx="98" cy="30" r="2" fill="${cor}"/>
+  <g class="rb3-earL">
+    <ellipse cx="42" cy="72" rx="12" ry="16" fill="none" stroke="${cor}" stroke-width="2"/>
+    <circle cx="42" cy="72" r="5" fill="#ff5a1a" style="filter:drop-shadow(0 0 4px #ff8a00)"/>
+  </g>
+  <g class="rb3-earR">
+    <ellipse cx="138" cy="72" rx="12" ry="16" fill="none" stroke="${cor}" stroke-width="2"/>
+    <circle cx="138" cy="72" r="5" fill="#ff5a1a" style="filter:drop-shadow(0 0 4px #ff8a00)"/>
+  </g>
+  <rect x="56" y="40" width="68" height="68" rx="20" fill="${cor}" opacity=".05" stroke="${cor}" stroke-width="2.5"/>
+  <rect x="64" y="50" width="52" height="42" rx="12" fill="${cor}" opacity=".22" stroke="${cor}" stroke-width="1.5"/>
+  <circle cx="80" cy="68" r="9" fill="${cor}" style="filter:drop-shadow(0 0 5px ${cor})"/>
+  <circle class="rb3-eye" cx="82" cy="66" r="3.2" fill="#fff"/>
+  <circle cx="100" cy="68" r="9" fill="${cor}" style="filter:drop-shadow(0 0 5px ${cor})"/>
+  <circle class="rb3-eye d" cx="102" cy="66" r="3.2" fill="#fff"/>
+  <path d="M78,84 Q90,90 102,84" fill="none" stroke="${cor}" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cx="72" cy="100" r="1.6" fill="#ff5a1a"/>
+  <circle cx="90" cy="102" r="1.6" fill="${cor}"/>
+  <circle cx="108" cy="100" r="1.6" fill="#ff5a1a"/>
+  <rect x="80" y="106" width="20" height="8" rx="2" fill="none" stroke="${cor}" stroke-width="1.5"/>
+  <rect x="50" y="112" width="80" height="76" rx="14" fill="${cor}" opacity=".05" stroke="${cor}" stroke-width="2.5"/>
+  <path d="M74,116 L106,116 L102,120 L90,124 L78,120 Z" fill="${cor}" opacity=".3" stroke="${cor}" stroke-width="1"/>
+  <rect x="60" y="128" width="26" height="28" rx="3" fill="${cor}" opacity=".14" stroke="${cor}" stroke-width="1"/>
+  <line x1="64" y1="134" x2="80" y2="134" stroke="${cor}" stroke-width="1" opacity=".8"/>
+  <line x1="64" y1="140" x2="82" y2="140" stroke="${cor}" stroke-width="1" opacity=".8"/>
+  <line x1="64" y1="146" x2="76" y2="146" stroke="${cor}" stroke-width="1" opacity=".8"/>
+  <circle cx="66" cy="134" r="1.4" fill="#ff5a1a"/><circle cx="70" cy="134" r="1.4" fill="${cor}"/>
+  <path d="M84,122 L96,122 L94,168 L86,168 Z" fill="#ff5a1a" opacity=".55" stroke="#ff8a00" stroke-width="1"/>
+  <line x1="86" y1="132" x2="94" y2="132" stroke="${cor}" stroke-width="1.4"/>
+  <line x1="86" y1="144" x2="94" y2="144" stroke="${cor}" stroke-width="1.4"/>
+  <line x1="86" y1="156" x2="94" y2="156" stroke="${cor}" stroke-width="1.4"/>
+  <circle cx="112" cy="130" r="5" fill="#22c55e" style="filter:drop-shadow(0 0 6px #22c55e)"/>
+  <circle class="rb3-led" cx="112" cy="130" r="2.4" fill="#dcfce7"/>
+  <circle cx="112" cy="150" r="7" fill="none" stroke="${cor}" stroke-width="1.5"/>
+  <circle cx="112" cy="150" r="4" fill="${cor}" opacity=".22"/>
+  <line x1="112" y1="146" x2="112" y2="149" stroke="${cor}" stroke-width="1.5"/>
+  <rect x="82" y="172" width="16" height="4" rx="1" fill="#ff5a1a" opacity=".7"/>
+  <rect x="82" y="179" width="16" height="4" rx="1" fill="#ff5a1a" opacity=".7"/>
+  <g class="rb3-armL">
+    <rect x="34" y="114" width="16" height="30" rx="7" fill="${cor}" opacity=".06" stroke="${cor}" stroke-width="2"/>
+    <circle cx="42" cy="144" r="3" fill="none" stroke="${cor}" stroke-width="1"/>
+    <rect x="34" y="146" width="16" height="32" rx="7" fill="${cor}" opacity=".06" stroke="${cor}" stroke-width="2"/>
+    <circle cx="42" cy="156" r="2" fill="#ff5a1a"/>
+    <circle cx="42" cy="184" r="7" fill="none" stroke="${cor}" stroke-width="1.5"/>
+    <circle cx="42" cy="184" r="3" fill="${cor}" opacity=".25"/>
+  </g>
+  <g class="rb3-armR">
+    <rect x="130" y="114" width="16" height="30" rx="7" fill="${cor}" opacity=".06" stroke="${cor}" stroke-width="2"/>
+    <circle cx="138" cy="144" r="3" fill="none" stroke="${cor}" stroke-width="1"/>
+    <rect x="130" y="146" width="16" height="32" rx="7" fill="${cor}" opacity=".06" stroke="${cor}" stroke-width="2"/>
+    <circle cx="138" cy="156" r="2" fill="#ff5a1a"/>
+    <circle cx="138" cy="184" r="7" fill="none" stroke="${cor}" stroke-width="1.5"/>
+    <circle cx="138" cy="184" r="3" fill="${cor}" opacity=".25"/>
+  </g>
+  <path d="M60,188 L60,205 Q60,214 76,214 L92,214 L90,196 Q90,190 82,190 L60,190 Z" fill="${cor}" opacity=".06" stroke="${cor}" stroke-width="2"/>
+  <circle cx="72" cy="204" r="3" fill="#ff5a1a" style="filter:drop-shadow(0 0 3px #ff5a1a)"/>
+  <path d="M120,188 L120,205 Q120,214 104,214 L88,214 L90,196 Q90,190 98,190 L120,190 Z" fill="${cor}" opacity=".06" stroke="${cor}" stroke-width="2"/>
+  <circle cx="108" cy="204" r="3" fill="#ff5a1a" style="filter:drop-shadow(0 0 3px #ff5a1a)"/>
+</svg>`; }
+
 function dashModelo(){ return (dados&&dados.config&&dados.config.dash_modelo)||1; }
-function dashRoboSVG(cor){ const m=dashModelo(); if(m===2) return dashRoboSVG2(cor); return dashRoboSVG1(cor); }
+function dashRoboSVG(cor){ const m=dashModelo(); if(m===2) return dashRoboSVG2(cor); if(m===3) return dashRoboSVG3(cor); return dashRoboSVG1(cor); }
 
 function dashRenderRobo(k){ const main=document.getElementById("dashMain"); const c=robos()[k]; if(!main||!c) return;
   const rd=dashDados()[k]||{}, hora=dashHoraAtual();
@@ -1787,7 +1872,7 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
   const cor=(prodH===0&&meta===0)?DASH_NONE:bateu?DASH_OK:DASH_FAIL;
   const sig=`R|${k}|${hora}|${prodH}|${meta}|${rd.cod||''}|${_dashIdx}|${_dashSeq.length}|M${dashModelo()}`; if(sig===_dashSigMain) return; _dashSigMain=sig;
   const dots=_dashSeq.map((_,i)=>`<i class="${i===_dashIdx?'on':''}"></i>`).join('')+`<i class="g"></i>`;
-  main.innerHTML=`<div class="dash-robo" style="--cor:${cor}"><div class="dash-sweep"></div>
+  main.innerHTML=`<div class="dash-robo" data-modelo="${dashModelo()}" style="--cor:${cor}"><div class="dash-sweep"></div>
     <div class="dash-robo-svg">${dashRoboSVG(cor)}</div>
     <div class="dash-info">
       <div><div class="dash-rn">ROBÔ ${esc(k)}</div><div class="dash-nome">${esc(c.nome||'')}</div><div class="dash-cod">⚙ ${esc(rd.cod||c.codigo_peca||'—')}</div></div>

@@ -1634,22 +1634,22 @@ function dashRoboSVG(cor){ const Y='#f5c400', CU='#d08a3e'; return `<svg viewBox
   <ellipse class="rb-weldglow" cx="193" cy="188" rx="8" ry="3.5" fill="#ffb000" opacity=".5"/>
   <rect x="38" y="192" width="88" height="22" rx="4" fill="#0b0e18" stroke="${cor}" stroke-width="2.5"/>
   <circle cx="52" cy="203" r="2" fill="${cor}"/><circle cx="112" cy="203" r="2" fill="${cor}"/>
-  <rect x="58" y="166" width="48" height="28" rx="6" fill="${Y}" opacity=".18" stroke="${cor}" stroke-width="2.5"/>
+  <rect x="58" y="166" width="48" height="28" rx="6" fill="${Y}" stroke="${cor}" stroke-width="2" style="filter:drop-shadow(0 0 4px ${cor})"/>
   <path d="M60,176 C30,168 30,120 62,104" fill="none" stroke="#3b82f6" stroke-width="2.5" opacity=".75"/>
   <g class="rb-arm1">
-    <line x1="82" y1="168" x2="112" y2="72" stroke="${Y}" stroke-width="18" stroke-linecap="round" opacity=".22"/>
-    <line x1="82" y1="168" x2="112" y2="72" stroke="${cor}" stroke-width="3" stroke-linecap="round"/>
+    <line x1="82" y1="168" x2="112" y2="72" stroke="${Y}" stroke-width="16" stroke-linecap="round" style="filter:drop-shadow(0 0 6px ${cor})"/>
+    <line x1="82" y1="168" x2="112" y2="72" stroke="${cor}" stroke-width="1.5" stroke-linecap="round" opacity=".9"/>
     <line x1="74" y1="160" x2="102" y2="78" stroke="${cor}" stroke-width="1" opacity=".45"/>
     <text x="104" y="128" font-family="Share Tech Mono,monospace" font-size="8" fill="${cor}" opacity=".85" transform="rotate(-72 104 128)">R-2000iB</text>
     <circle cx="82" cy="168" r="11" fill="#0b0e18" stroke="${cor}" stroke-width="2.5"/><circle class="rb-led" cx="82" cy="168" r="3.5" fill="${cor}"/>
     <g class="rb-arm2">
       <rect x="92" y="52" width="16" height="14" rx="3" fill="#ff3b3b" opacity=".55" stroke="${cor}" stroke-width="1.5"/>
-      <line x1="112" y1="72" x2="200" y2="58" stroke="${Y}" stroke-width="15" stroke-linecap="round" opacity=".22"/>
-      <line x1="112" y1="72" x2="200" y2="58" stroke="${cor}" stroke-width="3" stroke-linecap="round"/>
+      <line x1="112" y1="72" x2="200" y2="58" stroke="${Y}" stroke-width="13" stroke-linecap="round" style="filter:drop-shadow(0 0 6px ${cor})"/>
+      <line x1="112" y1="72" x2="200" y2="58" stroke="${cor}" stroke-width="1.5" stroke-linecap="round" opacity=".9"/>
       <path d="M118,62 C150,42 176,44 198,48" fill="none" stroke="#3b82f6" stroke-width="2.5" opacity=".75"/>
       <circle cx="112" cy="72" r="13" fill="#0b0e18" stroke="${cor}" stroke-width="2.5"/><circle class="rb-led d" cx="112" cy="72" r="3.5" fill="${cor}"/>
       <g class="rb-gun">
-        <circle cx="200" cy="58" r="13" fill="${Y}" opacity=".25" stroke="${cor}" stroke-width="2.5"/>
+        <circle cx="200" cy="58" r="13" fill="${Y}" stroke="${cor}" stroke-width="2" style="filter:drop-shadow(0 0 5px ${cor})"/>
         <circle cx="200" cy="58" r="7" fill="none" stroke="${cor}" stroke-width="1.2"/>
         <circle cx="200" cy="47" r="1.6" fill="${cor}"/><circle cx="211" cy="58" r="1.6" fill="${cor}"/><circle cx="200" cy="69" r="1.6" fill="${cor}"/><circle cx="189" cy="58" r="1.6" fill="${cor}"/>
         <rect x="176" y="74" width="50" height="42" rx="3" fill="#5b6470" opacity=".45" stroke="${cor}" stroke-width="2.5"/>

@@ -108,16 +108,20 @@ Base de conhecimento IA / MR.ROBOT, Bot WhatsApp / Edge Functions.
 - **Visualizador**: entra sem senha, somente leitura
 - **Dashboard TV**: entra sem senha, grade de todas as células com relógio ao vivo (para TV de chão de fábrica)
 
-## Estética — Glassmorphism Neon Azul/Roxo
+## Estética — CYBERPUNK "Neon City" (atual)
 
-- Fundo: gradiente escuro azul-marinho → roxo, com **orbs desfocados** dando o glow neon
-- Cards: glass real — `backdrop-filter: blur(20px)`, fundo branco 5–9%, borda branca ~16%, sombra suave
-- Paleta (variáveis CSS em `:root`):
-  - Azul elétrico `#4facfe` / `#00c6ff` · Roxo neon `#a855f7` / `#7c3aed` · Ciano `#22d3ee`
-  - Gradiente padrão: `linear-gradient(135deg, #4facfe, #a855f7)`
-- Tipografia: **Space Grotesk** (títulos, uppercase, letter-spacing) + **Inter** (corpo)
-- Botões pill com gradiente neon e glow no hover; ícones outline finos; transições `cubic-bezier`
-- Cores de status: Produzindo=verde · Setup=azul · Aguardando=roxo · Manutenção=âmbar · Parado=vermelho
+O glassmorphism roxo original foi **substituído** pelo tema cyberpunk **Neon City** (escolha do usuário).
+É aplicado como um **bloco de override no fim do `<style>`** (`/* NEON CITY */`) que cascateia sobre a base — as classes/variáveis originais continuam lá, só os tokens e alguns componentes são redefinidos. Para mexer no visual, edite esse bloco.
+
+- Fundo: **preto/índigo** `#05060d` com **grid** de linhas + brilhos radiais ciano/magenta. Overlay `.scanlines` (linhas de CRT).
+- Paleta neon (tokens em `:root`, redefinidos no bloco Neon City):
+  - Ciano `--nc #00f0ff` (primária) · Magenta `--nm #ff2bd6` · Amarelo `--ny #f9f871`
+  - `--grad: linear-gradient(135deg,#00f0ff,#ff2bd6)` · painéis `--glass: rgba(10,14,28,.72)`
+  - Status: Produzindo `#00ffae` · Setup ciano · Aguardando magenta · Manutenção `#ffb000` · Parado `#ff2b5e`
+- Tipografia: **Orbitron** (números/títulos, via `!important` — inclusive sobre estilos inline `Space Grotesk`, e o seletor `[style*="Space Grotesk"]`), **Share Tech Mono** (rótulos/labels), **Chakra Petch** (corpo).
+- Painéis com borda ciano + glow suave; botões/cantos pequenos; LEDs de status com `box-shadow` glow; foco de input com halo ciano.
+- **Painel** (id `painel`) é a tela inicial: bento com Produção do mês (+ sparkline), medidor de Meta do dia (donut SVG), Alertas e cartões de robô. É o default de `nav`.
+- Trocar cor do tema = mudar `--nc`/`--nm`/`--grad` no bloco Neon City. Diminuir brilho = reduzir os `text-shadow`/`box-shadow`/`--nc` alpha.
 
 ## Padrões de código
 

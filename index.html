@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0a0e27">
+<meta name="theme-color" content="#05060d">
 <title>Cromo Azul Robôs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Orbitron:wght@500;700;800;900&family=Share+Tech+Mono&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    CROMO AZUL ROBÔS — Glassmorphism Neon
@@ -330,11 +330,105 @@ table.mtable input.adj{color:var(--blue);border-color:rgba(79,172,254,.4)}
   .kpi .big{font-size:36px}
   .selrow .metrics{margin-left:0;width:100%}
 }
+
+/* ============================================================
+   NEON CITY — tema cyberpunk (override, cascateia em tudo)
+   ============================================================ */
+:root{
+  --nc:#00f0ff; --nm:#ff2bd6; --ny:#f9f871;
+  --bg1:#070912; --bg2:#0a0b18; --bg3:#0b0e1c;
+  --blue:#00f0ff; --blue2:#00f0ff; --purple:#ff2bd6; --purple2:#ff2bd6; --cyan:#00f0ff;
+  --grad:linear-gradient(135deg,#00f0ff,#ff2bd6);
+  --grad-soft:linear-gradient(135deg,rgba(0,240,255,.14),rgba(255,43,214,.12));
+  --glass:rgba(10,14,28,.72); --glass-strong:rgba(14,18,34,.86);
+  --glass-bd:rgba(0,240,255,.30); --glass-bd2:rgba(120,150,210,.18);
+  --txt:#eaf2ff; --mut:#7d8bb0; --faint:#5c6890;
+  --ok:#00ffae; --warn:#ffb000; --danger:#ff2b5e;
+  --shadow:0 0 26px -10px rgba(0,240,255,.45);
+}
+body{ font-family:'Chakra Petch',system-ui,sans-serif; background:#05060d;
+  background-image:radial-gradient(1100px 560px at 82% -8%,rgba(255,43,214,.10),transparent 60%),radial-gradient(950px 520px at -5% 108%,rgba(0,240,255,.11),transparent 55%),linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:100% 100%,100% 100%,44px 44px,44px 44px; background-attachment:fixed; }
+.orbs{display:none}
+.scanlines{position:fixed;inset:0;z-index:9998;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.13) 2px 3px)}
+/* fontes: display Orbitron, rótulos mono */
+[style*="Space Grotesk"]{font-family:'Orbitron',sans-serif!important}
+.tb-title,.nav-meta .n,.page-head h1,.hero-info h1,.kpi .big,.kpi .side .n,.kpi .n,.metric .v,.daycell .n,.mtable td.tot,.mtable tfoot td,.barrow .bv,.ybar .yv,.catbody .ccod,.pecrow .pcod,.gerrow .gnum,.mtitulo,.dash-head h1,.dash-clock,.dash-card .top .n,.login-title{font-family:'Orbitron',sans-serif!important;letter-spacing:.02em}
+.side-sec,.field label,.card h3,.metric .k,.selrow .sel label,.daycell .d,.mtable thead th,.psub,.hero-info .rid,.mode-badge,.status-pill,.pv-lbl{font-family:'Share Tech Mono',monospace!important}
+/* painéis de vidro → placa neon */
+.glass{ background:var(--glass); backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px);
+  border:1px solid var(--glass-bd2); box-shadow:inset 0 0 0 1px rgba(0,240,255,.10),0 0 22px -12px rgba(0,240,255,.4); border-radius:8px }
+.card,.selrow,.kpi,.robot-hero,.modal,.login-card,.sidebar,.topbar{border-radius:8px}
+.card h3{color:var(--nc);text-shadow:0 0 10px rgba(0,240,255,.35);letter-spacing:.14em}
+.card h3 svg{filter:drop-shadow(0 0 4px rgba(0,240,255,.5))}
+.page-head .pico{border-radius:6px} .page-head .pico svg{filter:drop-shadow(0 0 5px rgba(0,240,255,.5))}
+/* topo HUD */
+.topbar{box-shadow:inset 0 0 0 1px rgba(0,240,255,.08),0 0 24px -14px rgba(0,240,255,.5)}
+.tb-logo{clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px));box-shadow:0 0 16px rgba(0,240,255,.55)}
+.mode-badge{border-radius:3px;text-shadow:0 0 8px currentColor;letter-spacing:.08em}
+.mode-badge.host{color:var(--nm);border-color:rgba(255,43,214,.5);background:rgba(255,43,214,.12);box-shadow:0 0 14px -4px rgba(255,43,214,.6)}
+/* menu */
+.side-sec{letter-spacing:.16em}
+.nav-item.active{background:linear-gradient(90deg,rgba(0,240,255,.15),transparent);border-color:rgba(0,240,255,.42);box-shadow:inset 0 0 0 1px rgba(0,240,255,.22)}
+.nav-item:before{background:var(--nc);box-shadow:0 0 10px var(--nc)}
+.nav-ico{border-radius:4px}
+.nav-item.active .nav-ico svg{filter:drop-shadow(0 0 4px var(--nc))}
+/* botões */
+.btn{border-radius:4px;letter-spacing:.06em}
+.btn.primary{background:var(--grad);color:#04121a;box-shadow:0 0 20px -6px rgba(0,240,255,.7)}
+.btn.ghost{border-color:rgba(0,240,255,.35);color:#cdeffb}
+.btn.danger{border-radius:4px}
+/* inputs */
+.field input,.field select,.field textarea,.inp,.login-input,table.mtable input{border-radius:4px;background:rgba(0,240,255,.045);border-color:rgba(120,150,210,.24)}
+.field input:focus,.field select:focus,.field textarea:focus,.inp:focus,.login-input:focus,table.mtable input:focus{border-color:var(--nc);box-shadow:0 0 0 2px rgba(0,240,255,.18),0 0 14px -4px rgba(0,240,255,.6);background:rgba(0,240,255,.08)}
+.icon-btn{border-radius:5px} .icon-btn:hover{box-shadow:0 0 14px -6px rgba(0,240,255,.6)}
+/* números com glow */
+.kpi{background:var(--grad-soft)}
+.kpi .big{color:var(--nc)!important;-webkit-text-fill-color:var(--nc)!important;background:none!important;text-shadow:0 0 22px rgba(0,240,255,.55)}
+.kpi .side .n,.kpi .n{color:var(--nc)}
+.metric .v,.daycell.has .n{text-shadow:0 0 12px rgba(0,240,255,.4)}
+/* LEDs / status */
+.dot,.led{box-shadow:0 0 9px currentColor}
+.status-pill{border-radius:3px;text-shadow:0 0 8px currentColor;letter-spacing:.06em}
+/* tabelas */
+table.mtable thead th{color:var(--nc)}
+table.mtable td.tot,table.mtable tfoot td{color:var(--nc)}
+/* grade de dias / barras */
+.daycell{border-radius:6px}
+.daycell.has{border-color:rgba(0,240,255,.3);box-shadow:inset 0 0 0 1px rgba(0,240,255,.14)}
+.daycell.today{border-color:var(--nm);box-shadow:0 0 0 1px rgba(255,43,214,.4),0 0 14px -6px rgba(255,43,214,.6)}
+.daycell .bar i,.barrow .bt i,.ybar .yb i{box-shadow:0 0 8px rgba(0,240,255,.4)}
+/* chips / catálogo / mapa */
+.cchip{background:rgba(255,43,214,.12);border-color:rgba(255,43,214,.35);color:#ffbdf0}
+.chip{border-color:rgba(0,240,255,.4);color:var(--nc);background:rgba(0,240,255,.1)}
+.catcard,.pkfoto{border-radius:8px} .catfoto{border-radius:0}
+.mkdot{border-radius:8px;box-shadow:0 0 16px -3px currentColor}
+.mklabel{border-radius:5px}
+.mchamado{border-radius:8px} .mstat{border-radius:3px}
+/* toast */
+.toast{border-radius:6px}
+/* login */
+.login-title{-webkit-text-fill-color:#fff!important;background:none!important;color:#fff;text-shadow:0 0 18px rgba(0,240,255,.5),2px 0 0 rgba(255,43,214,.5),-2px 0 0 rgba(0,240,255,.5);letter-spacing:.06em}
+.login-sub{font-family:'Share Tech Mono',monospace;letter-spacing:.2em}
+/* Painel (bento) */
+.bento{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
+.bento .span{grid-column:1/-1}
+.pn-big{font-family:'Orbitron',sans-serif;font-weight:800;font-size:46px;line-height:1;color:var(--nc);text-shadow:0 0 22px rgba(0,240,255,.55);letter-spacing:.02em}
+.pn-lbl{font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--nc)}
+.pn-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--mut);margin-top:7px}
+.pn-alert{display:flex;align-items:center;gap:9px;font-family:'Share Tech Mono',monospace;font-size:12px;margin-top:10px}
+.pn-robos{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.pn-rc{padding:13px 14px}
+.pn-rc .n{font-family:'Orbitron',sans-serif;font-weight:700;font-size:16px}
+.pn-rc .s{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:9.5px;text-transform:uppercase;color:var(--mut);margin-top:7px}
+.pn-rc .v{font-family:'Orbitron',sans-serif;font-weight:700;font-size:19px;color:var(--nc);margin-top:8px}
+@media(max-width:820px){.bento{grid-template-columns:1fr}.pn-robos{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body>
 
 <div class="orbs"><div class="orb b1"></div><div class="orb b2"></div><div class="orb b3"></div></div>
+<div class="scanlines"></div>
 
 <!-- LOGIN -->
 <div id="loginScreen">
@@ -507,8 +601,10 @@ const IC = {
   relat:'<path d="M9 17V9M13 17V5M17 17v-4"/><path d="M3 21h18"/>',
   ger:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L14.5 2h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6a7 7 0 0 0 .1-1z"/>',
   robot:'<rect x="5" y="8" width="14" height="11" rx="2.5"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1.2"/><circle cx="9.2" cy="13" r="1"/><circle cx="14.8" cy="13" r="1"/><path d="M9 17h6"/>',
+  painel:'<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="5" rx="1"/><rect x="13" y="10" width="8" height="11" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/>',
 };
 const PAINEIS = [
+  {id:"painel",    nome:"Painel",           sub:"Visão geral",           ico:IC.painel,  built:true},
   {id:"mapa",      nome:"Mapa dos Robôs",   sub:"Chão de fábrica",       ico:IC.mapa,    built:true},
   {id:"mensal",    nome:"Produção Mensal",  sub:"Total por dia do mês",  ico:IC.mensal,  built:true},
   {id:"meta",      nome:"Meta Diária",      sub:"Apontar produção",      ico:IC.meta,    built:true},
@@ -537,7 +633,7 @@ function buildDefault(){
    ESTADO
    ============================================================ */
 let dados = null;            // objeto conteudo completo
-let nav = {sec:"painel", id:"mensal"};
+let nav = {sec:"painel", id:"painel"};
 let isHost = false, pollTimer = null;
 let lastUserAction = 0, _saveTimer = null, _mainSig = "";
 /* seletores de período (Meta Diária / Produção Mensal) */
@@ -675,7 +771,8 @@ function renderMain(){
   if(nav.sec==="robo"){ box.innerHTML=viewRobot(nav.id); return; }
   const p=PAINEIS.find(x=>x.id===nav.id)||PAINEIS[1];
   if(p.id==="mapa"){ box.innerHTML=viewMapa(); return; }
-  if(p.id==="mensal") box.innerHTML=viewMensal();
+  if(p.id==="painel") box.innerHTML=viewPainel();
+  else if(p.id==="mensal") box.innerHTML=viewMensal();
   else if(p.id==="meta") box.innerHTML=viewMeta();
   else if(p.id==="relmes") box.innerHTML=viewRelMensal();
   else if(p.id==="anual") box.innerHTML=viewRelAnual();
@@ -740,6 +837,43 @@ function totalRoboDia(a,m,d,robo){ const md=prod().metas_dias[chaveData(a,m,d)];
   const rd=md[robo]; return [...HORAS_DIA,...HORAS_NOITE].reduce((s,h)=>s+parseCelVal(rd[campoH(h)]).num,0); }
 function totalDia(a,m,d){ return ROBOS.reduce((s,r)=>s+totalRoboDia(a,m,d,String(r)),0); }
 function diasNoMes(a,m){ return new Date(a,m+1,0).getDate(); }
+
+/* ---------- PAINEL (bento / visão geral) ---------- */
+function viewPainel(){
+  const A=hoje.getFullYear(),M=hoje.getMonth(),D=hoje.getDate();
+  const ndias=diasNoMes(A,M); let totalMes=0; const serie=[];
+  for(let d=1;d<=ndias;d++){ const t=totalDia(A,M,d); totalMes+=t; if(d<=D) serie.push(t); }
+  const hojeT=totalDia(A,M,D);
+  const dcp=serie.filter(t=>t>0).length; const media=dcp?Math.round(totalMes/dcp):0;
+  // sparkline (últimos até 14 dias)
+  const jan=serie.slice(Math.max(0,serie.length-14)); const maxv=Math.max(1,...jan);
+  const pts=jan.length>1?jan.map((v,i)=>`${(i/(jan.length-1)*320).toFixed(0)},${(40-(v/maxv)*34).toFixed(1)}`).join(' '):`0,38 320,38`;
+  // meta do dia: soma das metas/hora dos robôs × 10h dia
+  const metaDia=ROBOS.reduce((s,r)=>s+(parseInt(robos()[String(r)]?.meta_hora)||0),0)*10;
+  const pct=metaDia?Math.min(100,Math.round(hojeT/metaDia*100)):0;
+  const dash=232, off=dash-(dash*pct/100);
+  // alertas
+  const alerta=Object.keys(robos()).sort((a,b)=>a-b).filter(k=>['Manutenção','Parado','Setup'].includes(robos()[k].status));
+  const nCh=chamados().filter(c=>c.status!=='Concluído').length;
+  let alertHtml=alerta.slice(0,4).map(k=>{const c=robos()[k],cor=STATUS_COR[c.status];return `<div class="pn-alert"><span class="dot" style="color:${cor}"></span>${esc(k)} :: ${esc((c.status||'').toUpperCase())}</div>`;}).join("");
+  if(nCh) alertHtml+=`<div class="pn-alert"><span class="dot" style="color:var(--nm)"></span>${nCh} CHAMADO${nCh>1?'S':''} ABERTO${nCh>1?'S':''}</div>`;
+  if(!alertHtml) alertHtml=`<div class="pn-alert" style="color:var(--ok)"><span class="dot" style="color:var(--ok)"></span>TUDO OPERANDO</div>`;
+  const robos6=Object.keys(robos()).sort((a,b)=>a-b).map(k=>{ const c=robos()[k],cor=STATUS_COR[c.status]||"var(--faint)"; const t=totalRoboDia(A,M,D,k);
+    return `<div class="pn-rc card glass" style="cursor:pointer" onclick="goto('robo','${k}')"><div class="n">${esc(k)}</div>
+      <div class="s"><span class="dot" style="color:${cor}"></span>${esc(c.status||'—')}</div><div class="v">${t.toLocaleString("pt-BR")}</div></div>`;
+  }).join("");
+  return pageHead(IC.painel,"Painel","Visão geral · "+MESES[M]+" "+A)
+    + `<div class="bento">
+        <div class="card glass"><div class="pn-lbl">Produção do mês</div><div class="pn-big">${totalMes.toLocaleString("pt-BR")}</div>
+          <div class="pn-sub">MÉDIA ${media.toLocaleString("pt-BR")}/DIA · ${dcp} DIAS ATIVOS</div>
+          <svg viewBox="0 0 320 44" width="100%" height="42" preserveAspectRatio="none" style="margin-top:12px"><polyline points="${pts}" fill="none" stroke="#ff2bd6" stroke-width="2.5" style="filter:drop-shadow(0 0 5px rgba(255,43,214,.8))"/></svg></div>
+        <div class="card glass" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center"><div class="pn-lbl">Meta do dia</div>
+          <svg viewBox="0 0 90 90" width="90" height="90" style="margin-top:8px"><circle cx="45" cy="45" r="37" fill="none" stroke="#16233c" stroke-width="8"/><circle cx="45" cy="45" r="37" fill="none" stroke="#00f0ff" stroke-width="8" stroke-linecap="round" stroke-dasharray="${dash}" stroke-dashoffset="${off}" transform="rotate(-90 45 45)" style="filter:drop-shadow(0 0 6px rgba(0,240,255,.9))"/></svg>
+          <div class="pn-big" style="font-size:26px;margin-top:8px">${pct}%</div><div class="pn-sub">${hojeT.toLocaleString("pt-BR")} / ${metaDia.toLocaleString("pt-BR")} PÇ HOJE</div></div>
+        <div class="card glass"><div class="pn-lbl" style="color:var(--nm)">// Alertas</div>${alertHtml}</div>
+        <div class="card glass span"><h3><svg viewBox="0 0 24 24">${IC.robot}</svg>Robôs · produção de hoje</h3><div class="pn-robos">${robos6}</div></div>
+      </div>`;
+}
 
 /* ---------- PRODUÇÃO MENSAL ---------- */
 function viewMensal(){

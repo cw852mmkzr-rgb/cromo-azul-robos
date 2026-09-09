@@ -432,6 +432,71 @@ table.meta-t input.pinp{width:90px;color:var(--ny);text-align:center}
 .pn-rc .s{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:9.5px;text-transform:uppercase;color:var(--mut);margin-top:7px}
 .pn-rc .v{font-family:'Orbitron',sans-serif;font-weight:700;font-size:19px;color:var(--nc);margin-top:8px}
 @media(max-width:820px){.bento{grid-template-columns:1fr}.pn-robos{grid-template-columns:repeat(3,1fr)}}
+
+/* ===== Dashboard TV — carrossel (estilo Tremps, visual Neon City) ===== */
+#dashScreen{padding:0;overflow:hidden}
+.dash-head{padding:12px 22px;margin:0;border-bottom:1px solid rgba(0,240,255,.18);background:rgba(8,10,20,.75);flex-shrink:0}
+.dash-date{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--mut);margin-left:14px}
+.dash-clock{font-family:'Orbitron',sans-serif!important;color:var(--nc);text-shadow:0 0 14px rgba(0,240,255,.6)}
+.dash-main{flex:1;min-height:0;overflow:hidden;position:relative}
+.dash-loading{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:var(--mut);font-family:'Share Tech Mono',monospace;letter-spacing:.2em}
+.dash-spin{width:54px;height:54px;border:4px solid #16233c;border-top-color:var(--nc);border-radius:50%;animation:sp 1s linear infinite;box-shadow:0 0 14px rgba(0,240,255,.4)}
+@keyframes sp{to{transform:rotate(360deg)}}
+.dash-robo{height:100%;display:flex;align-items:center;justify-content:center;gap:clamp(20px,5vw,80px);padding:16px 30px;position:relative}
+.dash-robo::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--cor) 9%,transparent),transparent 65%);pointer-events:none}
+.dash-robo-svg svg{width:clamp(140px,22vw,300px);height:auto}
+.dash-info{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(6px,1.4vh,18px);text-align:center;position:relative;max-width:640px;max-height:100%}
+.dash-rn{font-family:'Orbitron',sans-serif;font-weight:800;font-size:clamp(22px,4.6vh,52px);color:#fff;letter-spacing:.06em;text-shadow:0 0 18px color-mix(in srgb,var(--cor) 60%,transparent)}
+.dash-nome{font-family:'Share Tech Mono',monospace;font-size:clamp(13px,1.6vw,18px);color:var(--mut);letter-spacing:.14em;text-transform:uppercase}
+.dash-cod{font-family:'Orbitron',sans-serif;font-size:clamp(16px,2.4vw,30px);color:var(--ny);font-weight:700;text-shadow:0 0 10px rgba(249,248,113,.5);margin-top:4px}
+.dash-box{border:1px solid color-mix(in srgb,var(--cor) 45%,transparent);background:rgba(10,14,28,.7);padding:clamp(12px,2vh,22px) clamp(24px,4vw,56px);clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cor) 20%,transparent),0 0 30px -10px var(--cor)}
+.dash-prod-h{font-family:'Share Tech Mono',monospace;font-size:clamp(11px,1.3vw,15px);letter-spacing:.2em;color:var(--mut)}
+.dash-prod-n{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(44px,13vh,130px);line-height:1;color:var(--cor);text-shadow:0 0 30px color-mix(in srgb,var(--cor) 70%,transparent)}
+.dash-meta-txt{font-family:'Share Tech Mono',monospace;font-size:clamp(12px,1.5vw,18px);color:var(--mut);letter-spacing:.1em;margin-top:6px}
+.dash-meta-txt b{color:var(--cor)} .dash-meta-txt.fail{color:#ff6a00;font-weight:700}
+.dash-eff .dash-pct{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(32px,9vh,96px);line-height:1;color:var(--cor);text-shadow:0 0 24px color-mix(in srgb,var(--cor) 60%,transparent)}
+.dash-eff-l{font-family:'Share Tech Mono',monospace;font-size:clamp(11px,1.3vw,15px);letter-spacing:.2em;color:var(--mut);margin-top:6px}
+.dash-bar{width:min(520px,70vw);margin:14px auto 0;height:14px;background:#111a2e;border:1px solid rgba(255,255,255,.06);overflow:hidden}
+.dash-bar i{display:block;height:100%;width:100%;background:var(--cor);transform-origin:left;box-shadow:0 0 14px var(--cor);transition:transform .4s}
+.dash-dots{display:flex;gap:6px;justify-content:center;margin-top:6px}
+.dash-dots i{width:6px;height:6px;border-radius:99px;background:#1a2540;transition:all .3s;display:block}
+.dash-dots i.on{width:22px;background:var(--nc);box-shadow:0 0 10px var(--nc)}
+.dash-dots i.on.g{background:var(--ny);box-shadow:0 0 10px var(--ny)}
+.dash-geral{height:100%;overflow:auto;padding:14px 20px}
+.dash-geral-t{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--mut);text-align:center;margin-bottom:10px}
+.dash-geral-t b{color:var(--ny)}
+.dash-tbl{width:100%;border-collapse:collapse;background:rgba(10,14,28,.7);border:1px solid rgba(0,240,255,.18)}
+.dash-tbl th{font-family:'Share Tech Mono',monospace;font-size:clamp(11px,1.3vw,18px);letter-spacing:.08em;color:var(--mut);padding:8px 6px;border-bottom:1px solid rgba(0,240,255,.15);text-transform:uppercase;white-space:nowrap;text-align:center}
+.dash-tbl th.at{color:var(--ny);border-bottom:2px solid var(--ny)}
+.dash-tbl th.mt{color:var(--nc)} .dash-tbl th.tt{color:var(--ok);border-left:2px solid rgba(0,255,174,.25)}
+.dash-tbl td{padding:6px 8px;text-align:center;font-family:'Orbitron',sans-serif;font-weight:700;font-size:clamp(14px,1.8vw,24px);border-bottom:1px solid rgba(255,255,255,.04)}
+.dash-tbl td.at{font-size:clamp(18px,2.2vw,30px)}
+.dash-tbl td.rn{color:#fff;text-align:left} .dash-tbl td.cd{color:var(--ny);font-family:'Share Tech Mono',monospace;text-align:left;font-weight:400}
+.dash-tbl td.mt{color:var(--nc);text-shadow:0 0 10px rgba(0,240,255,.5)} .dash-tbl td.tt{color:var(--ok);border-left:2px solid rgba(0,255,174,.25)}
+.dash-tbl tfoot td{border-top:2px solid rgba(0,240,255,.2);color:#fff;font-size:clamp(13px,1.6vw,20px)}
+.dash-tbl tfoot td:first-child{text-align:left;font-family:'Share Tech Mono',monospace;letter-spacing:.12em;font-size:12px}
+.dash-footer{flex-shrink:0;background:rgba(6,8,16,.85);border-top:1px solid rgba(0,240,255,.2);padding:10px 20px}
+.dash-footer-title{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--mut);text-transform:uppercase;margin-bottom:8px}
+.dash-horas{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.dash-hc{flex-shrink:0;min-width:84px;text-align:center;padding:8px 14px;background:rgba(10,14,28,.7);border:1px solid rgba(255,255,255,.07);--cor:#4a5a7a}
+.dash-hc.at{border-color:var(--cor);background:color-mix(in srgb,var(--cor) 10%,transparent);box-shadow:0 0 16px -6px var(--cor)}
+.dash-hc .hl{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--mut);margin-bottom:4px}
+.dash-hc.at .hl{color:var(--cor)}
+.dash-hc .hv{font-family:'Orbitron',sans-serif;font-weight:900;font-size:30px;color:var(--cor);text-shadow:0 0 12px color-mix(in srgb,var(--cor) 55%,transparent)}
+.dash-hc.tot{border-color:rgba(249,248,113,.5);background:rgba(249,248,113,.08);--cor:var(--ny)}
+.rb-head{transform-origin:70px 40px;animation:headBob 1s ease-in-out infinite}
+.rb-body{transform-origin:70px 107px;animation:headBob 1s ease-in-out infinite .1s}
+.rb-armL{transform-origin:30px 85px;animation:armUp .8s ease-in-out infinite}
+.rb-armR{transform-origin:110px 85px;animation:armDown .8s ease-in-out infinite}
+.rb-weld{animation:weld .8s ease-in-out infinite}
+.rb-eye{animation:blink 2.5s infinite;transform-box:fill-box;transform-origin:center} .rb-eye.d{animation-delay:.15s}
+@keyframes headBob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(-2deg)}}
+@keyframes armUp{0%,100%{transform:rotate(0)}50%{transform:rotate(-22deg)}}
+@keyframes armDown{0%,100%{transform:rotate(0)}50%{transform:rotate(18deg)}}
+@keyframes weld{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.6)}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@media(prefers-reduced-motion:reduce){.rb-head,.rb-body,.rb-armL,.rb-armR,.rb-weld,.rb-eye{animation:none}}
+@media(max-width:760px){.dash-robo{flex-direction:column;gap:12px;padding:10px}.dash-robo-svg svg{width:120px}}
 </style>
 </head>
 <body>
@@ -459,13 +524,19 @@ table.meta-t input.pinp{width:90px;color:var(--ny);text-align:center}
   </div>
 </div>
 
-<!-- DASHBOARD TV -->
+<!-- DASHBOARD TV (carrossel robô a robô + visão geral + horas) -->
 <div id="dashScreen">
   <div class="dash-head">
     <button type="button" class="icon-btn" onclick="exitDashboard()" title="Sair"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
-    <h1>Cromo Azul</h1><div class="dash-clock" id="dashClock">--:--</div>
+    <h1>Cromo Azul</h1>
+    <div class="dash-date" id="dashDate"></div>
+    <div class="dash-clock" id="dashClock">--:--:--</div>
   </div>
-  <div class="dash-grid" id="dashGrid"></div>
+  <div class="dash-main" id="dashMain"></div>
+  <div class="dash-footer">
+    <div class="dash-footer-title">⏱ Produção total por hora — hoje (todos os robôs)</div>
+    <div class="dash-horas" id="dashHoras"></div>
+  </div>
 </div>
 
 <!-- APP -->
@@ -1461,32 +1532,109 @@ function openConfig(){ openModal("modalConfig"); }
 /* ============================================================
    DASHBOARD TV
    ============================================================ */
-let dashTimer=null, dashClockTimer=null;
+/* Mesmas funções do dashboard do Tremps: carrossel robô a robô (verde = bateu a meta da hora,
+   laranja = não bateu), depois a Visão Geral (robôs × horas) e rodapé com o total por hora. */
+let dashTimer=null, dashClockTimer=null, dashSlideTimer=null;
+let _dashIdx=0, _dashGeral=false, _dashSeq=[], _dashSigMain="", _dashSigFoot="";
+const DASH_OK="#00ffae", DASH_FAIL="#ff6a00", DASH_RED="#ff2b5e", DASH_NONE="#4a5a7a";
+function dashChave(){ const n=new Date(); return chaveData(n.getFullYear(),n.getMonth(),n.getDate()); }
+function dashDados(){ return prod().metas_dias[dashChave()]||{}; }
+function dashHoraAtual(){ const h=new Date().getHours(), all=[...HORAS_DIA,...HORAS_NOITE];
+  const s=String(h).padStart(2,'0')+":00"; if(all.includes(s)) return s;
+  for(let i=all.length-1;i>=0;i--){ if(parseInt(all[i])<h) return all[i]; } return all[0]; }
+function dashRobos(){ return Object.keys(robos()).sort((a,b)=>Number(a)-Number(b)); }
+
 function startDashboard(){ isHost=false;
   document.getElementById("loginScreen").style.display="none"; document.getElementById("app").style.display="none";
   document.getElementById("dashScreen").style.display="flex";
-  loadFromAPI(); clearInterval(dashTimer); dashTimer=setInterval(loadFromAPI,5000);
+  _dashIdx=0; _dashGeral=false; _dashSeq=[]; _dashSigMain=""; _dashSigFoot="";
+  document.getElementById("dashMain").innerHTML=`<div class="dash-loading"><div class="dash-spin"></div><div>CARREGANDO PRODUÇÃO…</div></div>`;
+  lastUserAction=0; loadFromAPI(); if(dados) renderDash();
+  clearInterval(dashTimer); dashTimer=setInterval(loadFromAPI,3000);
   tickClock(); clearInterval(dashClockTimer); dashClockTimer=setInterval(tickClock,1000);
+  clearInterval(dashSlideTimer); dashSlideTimer=setInterval(dashNextSlide,6000);
 }
-function exitDashboard(){ clearInterval(dashTimer); clearInterval(dashClockTimer);
+function exitDashboard(){ [dashTimer,dashClockTimer,dashSlideTimer].forEach(t=>clearInterval(t));
   document.getElementById("dashScreen").style.display="none"; document.getElementById("loginScreen").style.display="flex"; }
-function tickClock(){ const el=document.getElementById("dashClock"); if(el) el.textContent=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
-function renderDash(){ const g=document.getElementById("dashGrid"); if(!g||!dados) return;
-  const hojeT=totalDia(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
-  let cards=Object.keys(robos()).sort((a,b)=>Number(a)-Number(b)).map(k=>{ const c=robos()[k], cor=STATUS_COR[c.status]||"var(--faint)";
-    const t=totalRoboDia(hoje.getFullYear(),hoje.getMonth(),hoje.getDate(),k);
-    return `<div class="dash-card glass"><div class="top"><span class="dot" style="color:${cor};width:14px;height:14px"></span>
-      <span class="n">${esc(c.nome||("Robô "+k))}</span>
-      <span class="status-pill" style="margin-left:auto;color:${cor};font-size:11px;padding:6px 12px">${esc(c.status||"—")}</span></div>
-      <div class="rows"><span class="k">Hoje</span><span class="v" style="color:var(--cyan);font-family:'Space Grotesk';font-weight:700">${t.toLocaleString("pt-BR")}</span>
-      <span class="k">Cliente</span><span class="v">${esc(c.cliente||"—")}</span>
-      <span class="k">Peça</span><span class="v">${esc(c.peca||"—")}</span>
-      <span class="k">Operador</span><span class="v">${esc(c.operador||"—")}</span>
-      <span class="k">Modelo</span><span class="v">${esc(c.modelo||"—")}</span></div></div>`;
-  }).join("");
-  g.innerHTML=`<div class="dash-card glass" style="grid-column:1/-1;background:var(--grad-soft)"><div class="top"><span class="n" style="font-size:16px">Produção de hoje (todos os robôs)</span>
-    <span style="margin-left:auto;font-family:'Space Grotesk';font-size:32px;font-weight:700;color:var(--cyan)">${hojeT.toLocaleString("pt-BR")}</span></div></div>`+cards;
-}
+function tickClock(){ const n=new Date(); const ce=document.getElementById("dashClock"), de=document.getElementById("dashDate");
+  if(ce) ce.textContent=n.toLocaleTimeString("pt-BR");
+  if(de){ const s=n.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}); de.textContent=s.charAt(0).toUpperCase()+s.slice(1); } }
+
+function dashIniciarCarrossel(){ const dd=dashDados(), hora=dashHoraAtual();
+  // igual ao Tremps: só entram robôs com produção na hora atual; se nenhum tiver, entram todos
+  let seq=dashRobos().filter(k=>parseCelVal((dd[k]||{})[campoH(hora)]).num>0);
+  if(!seq.length) seq=dashRobos();
+  _dashSeq=seq; _dashIdx=0; _dashGeral=false; }
+function dashNextSlide(){ if(!dados) return;
+  if(_dashGeral||!_dashSeq.length) dashIniciarCarrossel();
+  else if(_dashIdx>=_dashSeq.length-1) _dashGeral=true;
+  else _dashIdx++;
+  _dashSigMain=""; renderDash(); }
+function renderDash(){ if(!dados) return; if(!_dashSeq.length) dashIniciarCarrossel();
+  try{ if(_dashGeral) dashRenderGeral(); else dashRenderRobo(_dashSeq[_dashIdx]); }catch(e){ console.error("dash",e); }
+  dashRenderFooter(); }
+
+function dashRoboSVG(cor){ return `<svg viewBox="0 0 140 200" style="overflow:visible;filter:drop-shadow(0 0 8px ${cor}aa)">
+  <g class="rb-head"><rect x="40" y="10" width="60" height="50" rx="10" fill="none" stroke="${cor}" stroke-width="2.5"/>
+    <circle cx="57" cy="28" r="7" fill="${cor}" opacity=".18"/><circle cx="83" cy="28" r="7" fill="${cor}" opacity=".18"/>
+    <circle class="rb-eye" cx="57" cy="28" r="4" fill="${cor}"/><circle class="rb-eye d" cx="83" cy="28" r="4" fill="${cor}"/>
+    <line x1="56" y1="46" x2="84" y2="46" stroke="${cor}" stroke-width="2.5" stroke-linecap="round"/></g>
+  <rect x="63" y="60" width="14" height="12" rx="3" fill="none" stroke="${cor}" stroke-width="1.5"/>
+  <g class="rb-body"><rect x="30" y="72" width="80" height="70" rx="10" fill="none" stroke="${cor}" stroke-width="2.5"/>
+    <rect x="50" y="82" width="40" height="30" rx="6" fill="${cor}" opacity=".1" stroke="${cor}" stroke-width="1"/>
+    <circle cx="62" cy="97" r="4" fill="${cor}" opacity=".7"/><circle cx="78" cy="97" r="4" fill="${cor}" opacity=".45"/></g>
+  <g class="rb-armL"><rect x="8" y="75" width="24" height="12" rx="6" fill="none" stroke="${cor}" stroke-width="2.5"/><rect x="4" y="87" width="18" height="30" rx="6" fill="none" stroke="${cor}" stroke-width="2.5"/><rect x="4" y="117" width="8" height="12" rx="3" fill="none" stroke="${cor}" stroke-width="1.5"/><rect x="14" y="115" width="8" height="12" rx="3" fill="none" stroke="${cor}" stroke-width="1.5"/></g>
+  <g class="rb-armR"><rect x="108" y="75" width="24" height="12" rx="6" fill="none" stroke="${cor}" stroke-width="2.5"/><rect x="118" y="87" width="18" height="30" rx="6" fill="none" stroke="${cor}" stroke-width="2.5"/>
+    <g class="rb-weld"><circle cx="127" cy="117" r="3" fill="#ffb000"/><line x1="127" y1="110" x2="127" y2="106" stroke="#ffb000" stroke-width="2"/><line x1="133" y1="112" x2="136" y2="109" stroke="#ffb000" stroke-width="2"/><line x1="121" y1="112" x2="118" y2="109" stroke="#ffb000" stroke-width="2"/></g></g>
+  <rect x="38" y="140" width="64" height="10" rx="4" fill="none" stroke="${cor}" stroke-width="1.5"/>
+  <rect x="38" y="150" width="24" height="40" rx="8" fill="none" stroke="${cor}" stroke-width="2.5"/><rect x="34" y="188" width="28" height="10" rx="4" fill="none" stroke="${cor}" stroke-width="1.5"/>
+  <rect x="78" y="150" width="24" height="40" rx="8" fill="none" stroke="${cor}" stroke-width="2.5"/><rect x="78" y="188" width="28" height="10" rx="4" fill="none" stroke="${cor}" stroke-width="1.5"/></svg>`; }
+
+function dashRenderRobo(k){ const main=document.getElementById("dashMain"); const c=robos()[k]; if(!main||!c) return;
+  const rd=dashDados()[k]||{}, hora=dashHoraAtual();
+  const meta=parseInt(c.meta_hora)||0, prodH=parseCelVal(rd[campoH(hora)]).num;
+  const pct=meta>0?Math.round(prodH/meta*100):0, bateu=meta>0&&prodH>=meta, faltam=meta>0?Math.max(meta-prodH,0):0;
+  const cor=(prodH===0&&meta===0)?DASH_NONE:bateu?DASH_OK:DASH_FAIL;
+  const sig=`R|${k}|${hora}|${prodH}|${meta}|${rd.cod||''}|${_dashIdx}|${_dashSeq.length}`; if(sig===_dashSigMain) return; _dashSigMain=sig;
+  const dots=_dashSeq.map((_,i)=>`<i class="${i===_dashIdx?'on':''}"></i>`).join('')+`<i class="g"></i>`;
+  main.innerHTML=`<div class="dash-robo" style="--cor:${cor}">
+    <div class="dash-robo-svg">${dashRoboSVG(cor)}</div>
+    <div class="dash-info">
+      <div><div class="dash-rn">ROBÔ ${esc(k)}</div><div class="dash-nome">${esc(c.nome||'')}</div><div class="dash-cod">⚙ ${esc(rd.cod||c.codigo_peca||'—')}</div></div>
+      <div class="dash-box"><div class="dash-prod-h">PRODUÇÃO ${hora}</div><div class="dash-prod-n">${prodH>0?prodH:'—'}</div>
+        ${meta>0?`<div class="dash-meta-txt">META: <b>${meta}</b> PEÇAS/HORA</div>`:''}
+        ${meta>0&&prodH>0&&!bateu&&faltam>0?`<div class="dash-meta-txt fail">FALTOU ${faltam} PEÇA${faltam===1?'':'S'}</div>`:''}</div>
+      ${meta>0&&prodH>0?`<div class="dash-eff"><div class="dash-pct">${pct}%</div><div class="dash-eff-l">EFICIÊNCIA DA HORA</div>
+        <div class="dash-bar"><i style="transform:scaleX(${Math.min(pct,100)/100})"></i></div></div>`:''}
+      <div class="dash-dots">${dots}</div>
+    </div></div>`; }
+
+function dashRenderGeral(){ const main=document.getElementById("dashMain"); if(!main) return;
+  const dd=dashDados(), hora=dashHoraAtual(), horas=[...HORAS_DIA,...HORAS_NOITE], rb=dashRobos();
+  const sig="G|"+hora+"|"+JSON.stringify(dd)+"|"+rb.map(k=>robos()[k].meta_hora).join(','); if(sig===_dashSigMain) return; _dashSigMain=sig;
+  let totalGeral=0;
+  const linhas=rb.map(k=>{ const rd=dd[k]||{}, meta=parseInt(robos()[k].meta_hora)||0;
+    const pa=parseCelVal(rd[campoH(hora)]).num, corAtual=(meta===0||pa===0)?DASH_NONE:(pa>=meta?DASH_OK:DASH_RED);
+    const tr=horas.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]).num,0); totalGeral+=tr;
+    const cells=horas.map(h=>{ const v=parseCelVal(rd[campoH(h)]).num, at=h===hora;
+      const ok=meta>0&&v>=meta, fail=meta>0&&v>0&&v<meta; const cor=at?corAtual:ok?DASH_OK:fail?DASH_RED:DASH_NONE;
+      return `<td class="${at?'at':''}" style="color:${cor};${at?'background:'+cor+'18':''}">${v>0?v:'—'}</td>`; }).join('');
+    return `<tr><td class="rn">${esc(k)}</td><td class="cd">${esc(rd.cod||'—')}</td><td class="mt">${meta||'—'}</td>${cells}<td class="tt">${tr>0?tr.toLocaleString("pt-BR"):'—'}</td></tr>`; }).join('');
+  const heads=horas.map(h=>`<th class="${h===hora?'at':''}">${h}</th>`).join('');
+  const tot=horas.map(h=>{ const t=rb.reduce((s,k)=>s+parseCelVal((dd[k]||{})[campoH(h)]).num,0); return `<td>${t>0?t:'—'}</td>`; }).join('');
+  main.innerHTML=`<div class="dash-geral"><div class="dash-geral-t">📊 VISÃO GERAL — PRODUÇÃO DO DIA · HORA ATUAL: <b>${hora}</b></div>
+    <table class="dash-tbl"><thead><tr><th style="text-align:left">Robô</th><th style="text-align:left">Peça</th><th class="mt">Meta/h</th>${heads}<th class="tt">Total</th></tr></thead>
+    <tbody>${linhas}</tbody><tfoot><tr><td colspan="3">TOTAL GERAL</td>${tot}<td class="tt">${totalGeral.toLocaleString("pt-BR")}</td></tr></tfoot></table>
+    <div class="dash-dots">${rb.map(()=>`<i></i>`).join('')}<i class="on g"></i></div></div>`; }
+
+function dashRenderFooter(){ const f=document.getElementById("dashHoras"); if(!f) return;
+  const dd=dashDados(), hora=dashHoraAtual(), horas=[...HORAS_DIA,...HORAS_NOITE], rb=dashRobos();
+  const sig="F|"+hora+"|"+JSON.stringify(dd)+"|"+rb.map(k=>robos()[k].meta_hora).join(','); if(sig===_dashSigFoot) return; _dashSigFoot=sig;
+  const metaT=rb.reduce((s,k)=>s+(parseInt(robos()[k].meta_hora)||0),0); let totalDiaV=0;
+  f.innerHTML=horas.map(h=>{ const t=rb.reduce((s,k)=>s+parseCelVal((dd[k]||{})[campoH(h)]).num,0); totalDiaV+=t; const at=h===hora;
+    const cor=t===0?DASH_NONE:(metaT>0&&t>=metaT)?DASH_OK:DASH_RED;
+    return `<div class="dash-hc ${at?'at':''}" style="--cor:${cor}"><div class="hl">${h}${at?' ◀':''}</div><div class="hv">${t>0?t:'—'}</div></div>`; }).join('')
+    + `<div class="dash-hc tot"><div class="hl">∑ TOTAL</div><div class="hv">${totalDiaV>0?totalDiaV.toLocaleString("pt-BR"):'—'}</div></div>`; }
 
 /* ============================================================
    UTIL

@@ -1379,22 +1379,11 @@ function parseTempoPeca(str){
   const nm=parseFloat(str); if(!isNaN(nm)) return Math.round(nm*60); return null;
 }
 function calcRitmo(mh,tp){
-  const meta=parseFloat(mh); const seg=parseTempoPeca(tp);
-  if(!seg || seg<=0) return '—';
-  if(!meta || meta<=0){
-    const pph = Math.round(3600/seg);
-    return `${pph} peças/h`;
-  }
-  const totalSeg = Math.round(meta*seg);         // tempo pra fazer <meta> peças
-  const fmt = s => { const m=Math.floor(s/60), r=s%60; return `${m}min${r>0?' '+r+'s':''}`; };
-  const totalTxt = fmt(totalSeg);
-  if(totalSeg <= 3600){
-    const folga = 3600 - totalSeg;
-    return `${meta} peças em ${totalTxt} · folga de ${fmt(folga)}`;
-  }
-  const excede = totalSeg - 3600;
-  const pph = Math.floor(3600/seg);
-  return `${meta} peças precisariam de ${totalTxt} · excede em ${fmt(excede)} (bate ${pph} pçs/h)`;
+  const mn=parseFloat(mh); const st=parseTempoPeca(tp);
+  if(!mn||mn<=0||!st) return '—';
+  const d=3600/mn; const ef=Math.round((st/d)*100);
+  const m=Math.floor(d/60); const s=Math.round(d%60);
+  return `${m>0?m+'min ':''}${s>0?s+'s':''} / peça (${ef}% do tempo)`.trim();
 }
 function registrarLimpeza(k){
   if(!isHost){ showToast("Apenas o HOST pode registrar",true); return; }

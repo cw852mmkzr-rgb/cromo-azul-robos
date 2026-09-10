@@ -901,7 +901,7 @@ function parseCelVal(raw){ const s=String(raw||'').trim(); if(!s) return {num:0,
 /* Campos da célula robótica */
 const GRUPOS = [
   { titulo:"Identificação", ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/>', campos:[
-    {k:"modelo",l:"Modelo FANUC"},{k:"celula",l:"Nº da Célula"},{k:"cliente",l:"Cliente"} ]},
+    {k:"modelo",l:"Modelo FANUC"},{k:"celula",l:"Nº da Célula"} ]},
   { titulo:"Operação", ico:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>', campos:[
     {k:"operador",l:"Operador"},{k:"turno",l:"Turno"},{k:"meta_hora",l:"Meta/hora",tipo:"number"} ]},
   { titulo:"Parâmetros de Solda", ico:'<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>', campos:[
@@ -1160,7 +1160,6 @@ function viewRobot(k){
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
       <div style="flex:1;min-width:220px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="field"><label>Cliente</label>${isHost?`<input value="${esc(c.cliente||"")}" onchange="setField('${k}','cliente',this.value)">`:`<div class="val">${c.cliente?esc(c.cliente):"—"}</div>`}</div>
-        <div class="field"><label>Peça</label>${isHost?`<input value="${esc(c.peca||"")}" onchange="setField('${k}','peca',this.value)">`:`<div class="val">${c.peca?esc(c.peca):"—"}</div>`}</div>
         <div class="field"><label>Código da peça</label>${isHost?`<input list="pecaCods" value="${esc(c.codigo_peca||"")}" onchange="setField('${k}','codigo_peca',this.value)">`:`<div class="val">${c.codigo_peca?esc(c.codigo_peca):"—"}</div>`}</div>
         <div class="field"><label>Tempo/peça</label>${isHost?`<input value="${esc(c.tempo_peca||"")}" onchange="setField('${k}','tempo_peca',this.value)">`:`<div class="val">${c.tempo_peca?esc(c.tempo_peca):"—"}</div>`}</div>
       </div>

@@ -590,6 +590,12 @@ table.meta-t input.pinp{width:96px;color:var(--ny);text-align:center}
 @keyframes rb3ArmR{0%,100%{transform:rotate(0)}50%{transform:rotate(-6deg)}}
 @keyframes rb3EarPulse{0%,100%{opacity:1}50%{opacity:.5}}
 @media(prefers-reduced-motion:reduce){.rb3-eye,.rb3-led,.rb3-armL,.rb3-armR,.rb3-earL,.rb3-earR{animation:none}}
+
+/* ===== Horário do café (09:00) — meta reduzida ===== */
+table.meta-t th.cafe{color:var(--ny);background:rgba(249,248,113,.10);border-bottom:2px solid rgba(249,248,113,.5)}
+table.meta-t td.cafe-td{background:rgba(249,248,113,.06)}
+table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
+.dash-hc.cafe{background:rgba(249,248,113,.10);border-color:rgba(249,248,113,.5)}
 </style>
 </head>
 <body>
@@ -742,6 +748,10 @@ const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Ag
 const HORAS_DIA   = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
 const HORAS_NOITE = ["18:00","19:00","20:00","21:00","22:00"];
 function campoH(h){ return 'h'+h.replace(':',''); }
+const HORAS_CAFE = ["09:00"]; // horários com meta reduzida (parada de café)
+function ehCafe(h){ return HORAS_CAFE.includes(h); }
+const DASH_CAFE = "#ffcf5c";
+
 function parseCelVal(raw){ const s=String(raw||'').trim(); if(!s) return {num:0,adj:false}; const adj=s.endsWith('#'); return {num:parseInt(s.replace('#',''))||0, adj}; }
 
 /* Campos da célula robótica */
@@ -1096,7 +1106,7 @@ function viewMeta(){
           <div class="metric"><div class="k">∑ Total</div><div class="v" style="color:var(--cyan)">${totalGeral.toLocaleString("pt-BR")}</div></div>
         </div></div>`;
   if(!isHost) head+=`<div class="legend" style="padding-left:6px">Somente leitura — entre como HOST para apontar produção.</div>`;
-  else head+=`<div class="legend"><span><b style="color:var(--ok)">■</b> atingiu a meta/hora</span><span><b style="color:var(--danger)">■</b> abaixo da meta</span><span><b style="color:var(--blue)">■</b> ajuste técnico (digite <b>#</b> no fim)</span>${divisaoAtiva()?`<span style="color:var(--ny)">➗ divisão ON — digite o total de pontos; dividimos pela coluna PTS</span>`:''}</div>`;
+  else head+=`<div class="legend"><span><b style="color:var(--ok)">■</b> atingiu a meta/hora</span><span><b style="color:var(--danger)">■</b> abaixo da meta</span><span><b style="color:var(--blue)">■</b> ajuste técnico (digite <b>#</b> no fim)</span><span style="color:var(--ny)"><b>☕ 09:00</b> — meta reduzida (parada do café)</span>${divisaoAtiva()?`<span style="color:var(--ny)">➗ divisão ON — digite o total de pontos; dividimos pela coluna PTS</span>`:''}</div>`;
 
   return head
     + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">☀</span><span class="tg" style="color:var(--ok)">Turno Dia — 08:00 às 17:00</span></div>${metaTable(chave,md,HORAS_DIA)}</div>`
@@ -1117,7 +1127,7 @@ function metaTable(chave,md,horas){
   // cabeçalho: ROBÔ | META | CÓD | PTS | horas... | TOTAL   (robôs nas linhas — igual ao Células)
   let h=`<div class="mtable-wrap"><table class="mtable meta-t"><thead><tr>`
     + `<th class="rlab">Robô</th><th class="cmeta">Meta</th><th class="ccod">Cód</th><th class="cpts">Pts</th>`
-    + horas.map(hr=>`<th class="hora">${hr}</th>`).join("")
+    + horas.map(hr=>`<th class="hora${ehCafe(hr)?" cafe":""}">${hr}${ehCafe(hr)?" ☕":""}</th>`).join("")
     + `<th>Total</th></tr></thead><tbody>`;
   ROBOS.forEach(r=>{ const rd=md[String(r)]||{}; const meta=parseInt(rb[String(r)]&&rb[String(r)].meta_hora)||0;
     const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; let linTot=0;
@@ -1133,9 +1143,10 @@ function metaTable(chave,md,horas){
                : `<td class="cpts" style="color:var(--ny)">${pts!==''?esc(String(pts)):'—'}</td>`;
     // horas
     horas.forEach(hr=>{ const raw=rd[campoH(hr)]||""; const pv=parseCelVal(raw); linTot+=pv.num;
-      let cls=""; if(raw!==""){ cls= pv.adj?"adj":(meta>0?(pv.num>=meta?"ok":"low"):""); }
-      if(isHost) h+=`<td><input class="${cls}" value="${esc(raw)}" onchange="setMeta('${chave}','${r}','${campoH(hr)}',this.value,this)"></td>`;
-      else h+=`<td class="${cls}" style="font-weight:600;color:${pv.adj?'var(--blue)':(raw===''?'var(--faint)':(meta>0?(pv.num>=meta?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}</td>`;
+      const cafe=ehCafe(hr);
+      let cls=cafe?"cafe":""; if(raw!==""&&!cafe){ cls= pv.adj?"adj":(meta>0?(pv.num>=meta?"ok":"low"):""); } else if(raw!==""&&cafe&&pv.adj){ cls="cafe adj"; }
+      if(isHost) h+=`<td class="${cafe?'cafe-td':''}"><input class="${cls}" value="${esc(raw)}" onchange="setMeta('${chave}','${r}','${campoH(hr)}',this.value,this)"></td>`;
+      else h+=`<td class="${cls}${cafe?' cafe-td':''}" style="font-weight:600;color:${cafe?'var(--ny)':(pv.adj?'var(--blue)':(raw===''?'var(--faint)':(meta>0?(pv.num>=meta?'var(--ok)':'var(--danger)'):'var(--txt)')))}">${raw===''?'·':esc(String(pv.num))}</td>`;
     });
     h+=`<td class="tot">${linTot.toLocaleString("pt-BR")}</td></tr>`;
   });
@@ -1869,8 +1880,8 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
   const rd=dashDados()[k]||{}, hora=dashHoraAtual();
   const meta=parseInt(c.meta_hora)||0, prodH=parseCelVal(rd[campoH(hora)]).num;
   const pct=meta>0?Math.round(prodH/meta*100):0, bateu=meta>0&&prodH>=meta, faltam=meta>0?Math.max(meta-prodH,0):0;
-  const cor=(prodH===0&&meta===0)?DASH_NONE:bateu?DASH_OK:DASH_FAIL;
-  const sig=`R|${k}|${hora}|${prodH}|${meta}|${rd.cod||''}|${_dashIdx}|${_dashSeq.length}|M${dashModelo()}`; if(sig===_dashSigMain) return; _dashSigMain=sig;
+  const cafe=ehCafe(hora); const cor=cafe?DASH_CAFE:((prodH===0&&meta===0)?DASH_NONE:bateu?DASH_OK:DASH_FAIL);
+  const sig=`R|${k}|${hora}|${prodH}|${meta}|${rd.cod||''}|${_dashIdx}|${_dashSeq.length}|M${dashModelo()}|C${cafe?1:0}`; if(sig===_dashSigMain) return; _dashSigMain=sig;
   const dots=_dashSeq.map((_,i)=>`<i class="${i===_dashIdx?'on':''}"></i>`).join('')+`<i class="g"></i>`;
   main.innerHTML=`<div class="dash-robo" data-modelo="${dashModelo()}" style="--cor:${cor}"><div class="dash-sweep"></div>
     <div class="dash-robo-svg">${dashRoboSVG(cor)}</div>
@@ -1878,7 +1889,8 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
       <div><div class="dash-rn">ROBÔ ${esc(k)}</div><div class="dash-nome">${esc(c.nome||'')}</div><div class="dash-cod">⚙ ${esc(rd.cod||c.codigo_peca||'—')}</div></div>
       <div class="dash-box"><div class="dash-prod-h">PRODUÇÃO ${hora}</div><div class="dash-prod-n">${prodH>0?prodH:'—'}</div>
         ${meta>0?`<div class="dash-meta-txt">META: <b>${meta}</b> PEÇAS/HORA</div>`:''}
-        ${meta>0&&prodH>0&&!bateu&&faltam>0?`<div class="dash-meta-txt fail">FALTOU ${faltam} PEÇA${faltam===1?'':'S'}</div>`:''}</div>
+        ${meta>0&&prodH>0&&!bateu&&faltam>0&&!cafe?`<div class="dash-meta-txt fail">FALTOU ${faltam} PEÇA${faltam===1?'':'S'}</div>`:''}
+        ${cafe?`<div class="dash-meta-txt" style="color:var(--ny);font-weight:700">☕ META REDUZIDA — HORÁRIO DO CAFÉ</div>`:''}</div>
       ${meta>0&&prodH>0?`<div class="dash-eff"><div class="dash-pct-wrap"><svg class="hud-ring" viewBox="0 0 200 120" preserveAspectRatio="none"><ellipse class="r1" cx="100" cy="60" rx="96" ry="54"/><ellipse class="r2" cx="100" cy="60" rx="86" ry="46"/></svg><div class="dash-pct">${pct}%</div></div><div class="dash-eff-l">EFICIÊNCIA DA HORA</div>
         <div class="dash-bar"><i style="transform:scaleX(${Math.min(pct,100)/100})"></i></div></div>`:''}
       <div class="dash-dots">${dots}</div>
@@ -1891,11 +1903,11 @@ function dashRenderGeral(){ const main=document.getElementById("dashMain"); if(!
   const linhas=rb.map(k=>{ const rd=dd[k]||{}, meta=parseInt(robos()[k].meta_hora)||0;
     const pa=parseCelVal(rd[campoH(hora)]).num, corAtual=(meta===0||pa===0)?DASH_NONE:(pa>=meta?DASH_OK:DASH_RED);
     const tr=horas.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]).num,0); totalGeral+=tr;
-    const cells=horas.map(h=>{ const v=parseCelVal(rd[campoH(h)]).num, at=h===hora;
-      const ok=meta>0&&v>=meta, fail=meta>0&&v>0&&v<meta; const cor=at?corAtual:ok?DASH_OK:fail?DASH_RED:DASH_NONE;
+    const cells=horas.map(h=>{ const v=parseCelVal(rd[campoH(h)]).num, at=h===hora, cafe=ehCafe(h);
+      const ok=meta>0&&v>=meta, fail=meta>0&&v>0&&v<meta; let cor=at?corAtual:ok?DASH_OK:fail?DASH_RED:DASH_NONE; if(cafe) cor=DASH_CAFE;
       return `<td class="${at?'at':''}" style="color:${cor};${at?'background:'+cor+'18':''}">${v>0?v:'—'}</td>`; }).join('');
     return `<tr><td class="rn">${esc(k)}</td><td class="cd">${esc(rd.cod||'—')}</td><td class="mt">${meta||'—'}</td>${cells}<td class="tt">${tr>0?tr.toLocaleString("pt-BR"):'—'}</td></tr>`; }).join('');
-  const heads=horas.map(h=>`<th class="${h===hora?'at':''}">${h}</th>`).join('');
+  const heads=horas.map(h=>`<th class="${h===hora?'at':''}${ehCafe(h)?' cafe':''}">${h}${ehCafe(h)?' ☕':''}</th>`).join('');
   const tot=horas.map(h=>{ const t=rb.reduce((s,k)=>s+parseCelVal((dd[k]||{})[campoH(h)]).num,0); return `<td>${t>0?t:'—'}</td>`; }).join('');
   main.innerHTML=`<div class="dash-geral"><div class="dash-geral-t">📊 VISÃO GERAL — PRODUÇÃO DO DIA · HORA ATUAL: <b>${hora}</b></div>
     <table class="dash-tbl"><thead><tr><th style="text-align:left">Robô</th><th style="text-align:left">Peça</th><th class="mt">Meta/h</th>${heads}<th class="tt">Total</th></tr></thead>
@@ -1908,7 +1920,8 @@ function dashRenderFooter(){ const f=document.getElementById("dashHoras"); if(!f
   const metaT=rb.reduce((s,k)=>s+(parseInt(robos()[k].meta_hora)||0),0); let totalDiaV=0;
   f.innerHTML=horas.map(h=>{ const t=rb.reduce((s,k)=>s+parseCelVal((dd[k]||{})[campoH(h)]).num,0); totalDiaV+=t; const at=h===hora;
     const cor=t===0?DASH_NONE:(metaT>0&&t>=metaT)?DASH_OK:DASH_RED;
-    return `<div class="dash-hc ${at?'at':''}" style="--cor:${cor}"><div class="hl">${h}${at?' ◀':''}</div><div class="hv">${t>0?t:'—'}</div></div>`; }).join('')
+    const cafe=ehCafe(h); const cor2=cafe?DASH_CAFE:cor;
+    return `<div class="dash-hc ${at?'at':''}${cafe?' cafe':''}" style="--cor:${cor2}"><div class="hl">${h}${cafe?' ☕':''}${at?' ◀':''}</div><div class="hv">${t>0?t:'—'}</div></div>`; }).join('')
     + `<div class="dash-hc tot"><div class="hl">∑ TOTAL</div><div class="hv">${totalDiaV>0?totalDiaV.toLocaleString("pt-BR"):'—'}</div></div>`; }
 
 /* ============================================================

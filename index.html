@@ -836,6 +836,8 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
     <div class="pkfoto" id="pkFotoPrev"></div>
     <button type="button" class="btn ghost tiny" id="pkFotoBtn" style="width:100%;margin-bottom:14px" onclick="document.getElementById('pkFotoFile').click()"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Foto da peça</button>
     <input type="file" id="pkFotoFile" accept="image/*" style="display:none" onchange="onPecaFoto(this)">
+    <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="handleImgUpload(this.files[0]);this.value=''">
+    <input type="file" id="imgCameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImgUpload(this.files[0]);this.value=''">
     <div class="field"><label>Código</label><input id="pkCod" placeholder="Ex: 50698"></div>
     <div class="field"><label>Nome</label><input id="pkNome" placeholder="Nome da peça"></div>
     <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
@@ -901,11 +903,10 @@ const GRUPOS = [
   { titulo:"Identificação", ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/>', campos:[
     {k:"modelo",l:"Modelo FANUC"},{k:"celula",l:"Nº da Célula"},{k:"cliente",l:"Cliente"} ]},
   { titulo:"Operação", ico:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>', campos:[
-    {k:"peca",l:"Peça"},{k:"codigo_peca",l:"Código da peça"},{k:"operador",l:"Operador"},
-    {k:"turno",l:"Turno"},{k:"meta_hora",l:"Meta/hora",tipo:"number"},{k:"tempo_peca",l:"Tempo/peça"} ]},
+    {k:"operador",l:"Operador"},{k:"turno",l:"Turno"},{k:"meta_hora",l:"Meta/hora",tipo:"number"} ]},
   { titulo:"Parâmetros de Solda", ico:'<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>', campos:[
-    {k:"eletrodo",l:"Eletrodo"},{k:"tipo_eletrodo",l:"Tipo do eletrodo"},{k:"corrente",l:"Corrente"},
-    {k:"tempo_solda",l:"Tempo de solda"},{k:"pre_pressao",l:"Pré-pressão"},{k:"pontos_solda",l:"Pontos de solda"} ]},
+    {k:"corrente",l:"Corrente"},{k:"tempo_solda",l:"Tempo de solda"},
+    {k:"pre_pressao",l:"Pré-pressão"},{k:"pontos_solda",l:"Pontos de solda"} ]},
   { titulo:"Equipe & Turno", ico:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>', campos:[
     {k:"membro1",l:"Membro 1"},{k:"membro2",l:"Membro 2"},{k:"membro3",l:"Membro 3"} ]},
   { titulo:"Observações", ico:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>', campos:[
@@ -1138,7 +1139,88 @@ function viewRobot(k){
       : `<span class="status-pill" style="color:${cor}"><span class="dot" style="color:${cor}"></span>${esc(c.status||"—")}</span>`}</div>
     ${isHost?`<button type="button" class="btn danger tiny" onclick="removeCell('${k}')">Excluir</button>`:""}
   </div>`;
-  GRUPOS.forEach(g=>{
+
+  // ── Identificação (primeiro do GRUPOS) ──
+  const gIdent = GRUPOS[0];
+  html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24">${gIdent.ico}</svg>${gIdent.titulo}</h3><div class="grid">`;
+  gIdent.campos.forEach(f=>{ const v=c[f.k]!=null?c[f.k]:"";
+    html+=`<div class="field"><label>${f.l}</label>`;
+    if(isHost) html+=`<input value="${esc(v)}" onchange="setField('${k}','${f.k}',this.value)">`;
+    else html+=`<div class="val">${v!==""?esc(v):"—"}</div>`;
+    html+=`</div>`; });
+  html+=`</div></div>`;
+
+  // ── Peça em Produção ──
+  _selRobo=k;
+  const imgSrc=c.img_peca||"";
+  const imgBlock=imgSrc
+    ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;display:block">${isHost?`<button type="button" onclick="event.stopPropagation();removeImgPeca('${k}')" title="Remover imagem" style="position:absolute;top:4px;right:4px;background:rgba(255,43,94,.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:900">✕</button>`:""}`
+    : `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--faint);font-size:11px;font-family:'Share Tech Mono',monospace;letter-spacing:.08em"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>SEM FOTO</span></div>`;
+  html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14L4 7m8 4v10M4 7v10l8 4"/></svg>Peça em Produção</h3>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+      <div style="flex:1;min-width:220px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Cliente</label>${isHost?`<input value="${esc(c.cliente||"")}" onchange="setField('${k}','cliente',this.value)">`:`<div class="val">${c.cliente?esc(c.cliente):"—"}</div>`}</div>
+        <div class="field"><label>Peça</label>${isHost?`<input value="${esc(c.peca||"")}" onchange="setField('${k}','peca',this.value)">`:`<div class="val">${c.peca?esc(c.peca):"—"}</div>`}</div>
+        <div class="field"><label>Código da peça</label>${isHost?`<input list="pecaCods" value="${esc(c.codigo_peca||"")}" onchange="setField('${k}','codigo_peca',this.value)">`:`<div class="val">${c.codigo_peca?esc(c.codigo_peca):"—"}</div>`}</div>
+        <div class="field"><label>Tempo/peça</label>${isHost?`<input value="${esc(c.tempo_peca||"")}" onchange="setField('${k}','tempo_peca',this.value)">`:`<div class="val">${c.tempo_peca?esc(c.tempo_peca):"—"}</div>`}</div>
+      </div>
+      <div style="flex-shrink:0;width:150px">
+        <div style="font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;font-family:'Share Tech Mono',monospace">Imagem da peça</div>
+        <div style="position:relative;width:150px;height:150px;border-radius:10px;overflow:hidden;border:2px dashed rgba(0,240,255,.35);background:rgba(0,0,0,.35);cursor:${isHost?'pointer':'default'};box-shadow:${imgSrc?'0 0 12px rgba(0,240,255,.2)':'none'}" ${isHost?`onclick="triggerImgUpload('${k}')"`:''}>${imgBlock}</div>
+        ${isHost?`<div style="display:flex;gap:6px;margin-top:8px">
+          <button type="button" onclick="triggerImgUpload('${k}')" class="btn ghost tiny" style="flex:1;padding:5px 0;font-size:10px">🖼 Galeria</button>
+          <button type="button" onclick="triggerImgCamera('${k}')" class="btn primary tiny" style="flex:1;padding:5px 0;font-size:10px">📷 Câmera</button>
+        </div>`:''}
+      </div>
+    </div>
+    <datalist id="pecaCods">${Object.keys(pecasObj()).map(cod=>`<option value="${esc(cod)}">${esc(nomePeca(cod))}</option>`).join("")}</datalist>
+  </div>`;
+
+  // ── Eletrodo (avançado) ──
+  const eletrodo=c.eletrodo||"", tipoEle=c.tipo_eletrodo||"";
+  const desgaste=calcDesgaste(k);
+  const limAviso=parseInt(c.limite_eletrodo_aviso)||300, limCrit=parseInt(c.limite_eletrodo)||500;
+  const corDesg = desgaste>=limCrit?'var(--danger)':desgaste>=limAviso?'var(--ny)':'var(--ok)';
+  html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>Eletrodo${isHost?` <button type="button" class="btn primary tiny" onclick="registrarTrocaEletrodo('${k}')" style="margin-left:auto">+ Registrar troca agora</button>`:''}</h3>
+    <div class="grid">
+      <div class="field"><label>Eletrodo atual</label>${isHost?`<input value="${esc(eletrodo)}" onchange="setField('${k}','eletrodo',this.value)">`:`<div class="val">${eletrodo?esc(eletrodo):"—"}</div>`}</div>
+      <div class="field"><label>Tipo</label>${isHost?`<input value="${esc(tipoEle)}" onchange="setField('${k}','tipo_eletrodo',this.value)">`:`<div class="val">${tipoEle?esc(tipoEle):"—"}</div>`}</div>
+      <div class="field"><label>Última troca registrada</label><div class="val" style="color:var(--ny)">${c.ultima_troca?esc(c.ultima_troca):"—"}</div></div>
+      <div class="field"><label>🔩 Desgaste do eletrodo atual</label>
+        <div style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span style="font-size:22px;font-weight:900;color:${corDesg};font-family:Orbitron,sans-serif;text-shadow:0 0 8px ${corDesg}">${desgaste.toLocaleString("pt-BR")}</span>
+          <span style="font-size:11px;color:var(--faint);text-align:right;line-height:1.3">peças desde<br>última troca</span>
+        </div>
+        ${isHost?`<div style="display:flex;gap:8px;margin-top:6px">
+          <div style="flex:1">
+            <div style="font-size:9.5px;color:var(--ny);margin-bottom:3px;letter-spacing:.08em;font-family:'Share Tech Mono',monospace">🟡 AVISO ACIMA DE</div>
+            <input type="number" value="${limAviso}" style="width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(249,248,113,.4);color:var(--ny);padding:5px 10px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:13px;font-weight:800" onchange="setField('${k}','limite_eletrodo_aviso',parseInt(this.value)||300)">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:9.5px;color:var(--danger);margin-bottom:3px;letter-spacing:.08em;font-family:'Share Tech Mono',monospace">🔴 CRÍTICO ACIMA DE</div>
+            <input type="number" value="${limCrit}" style="width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(255,43,94,.4);color:var(--danger);padding:5px 10px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:13px;font-weight:800" onchange="setField('${k}','limite_eletrodo',parseInt(this.value)||500)">
+          </div>
+        </div>`:''}
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.06)">📋 Histórico de trocas (${(c.historico_eletrodo||[]).length})</div>
+      <div style="max-height:200px;overflow-y:auto">
+        ${(c.historico_eletrodo&&c.historico_eletrodo.length)
+          ? [...c.historico_eletrodo].reverse().map((h,i)=>`
+            <div class="hist-item" style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">
+              <span style="color:var(--nc);min-width:140px;font-family:'Share Tech Mono',monospace">📅 ${esc(h.data||"")}</span>
+              <span style="flex:1;color:var(--txt)">⚡ ${esc(h.eletrodo||"—")}${h.tipo?` <span style="color:var(--faint);font-size:11px">(${esc(h.tipo)})</span>`:""}</span>
+              ${h.pecas_feitas>0?`<span style="color:var(--ny);font-size:11px;font-family:Orbitron,sans-serif;font-weight:800">🔩 ${h.pecas_feitas.toLocaleString("pt-BR")} peças</span>`:""}
+              ${isHost?`<button type="button" onclick="removerHistEletrodo('${k}',${c.historico_eletrodo.length-1-i})" style="background:none;border:1px solid rgba(255,43,94,.35);color:var(--danger);border-radius:4px;width:22px;height:22px;cursor:pointer;font-size:11px">✕</button>`:""}
+            </div>`).join("")
+          : `<div class="hist-empty" style="color:var(--faint);font-size:12px;padding:8px 0">Nenhuma troca registrada.</div>`}
+      </div>
+    </div>
+  </div>`;
+
+  // ── Restante do GRUPOS (Operação, Parâmetros de Solda, Equipe, Observações) ──
+  GRUPOS.slice(1).forEach(g=>{
     html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24">${g.ico}</svg>${g.titulo}</h3><div class="grid">`;
     g.campos.forEach(f=>{ const v=c[f.k]!=null?c[f.k]:"";
       html+=`<div class="field ${f.full?'full':''}"><label>${f.l}</label>`;
@@ -1148,15 +1230,70 @@ function viewRobot(k){
       html+=`</div>`; });
     html+=`</div></div>`;
   });
-  // manutenção eletrodo
-  html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.manut}</svg>Manutenção — Eletrodo</h3><div class="grid">
-    <div class="field"><label>Última troca</label>${isHost?`<input value="${esc(c.ultima_troca||"")}" onchange="setField('${k}','ultima_troca',this.value)" placeholder="dd/mm/aaaa hh:mm">`:`<div class="val">${c.ultima_troca?esc(c.ultima_troca):"—"}</div>`}</div>
-    ${isHost?`<div class="field" style="align-self:end"><button type="button" class="btn primary tiny" onclick="registrarTroca('${k}')">Registrar troca agora</button></div>`:""}</div>
-    <div style="margin-top:14px"><label style="font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--faint);font-weight:600">Histórico</label><div class="hist" style="margin-top:8px">`;
-  const hist=Array.isArray(c.historico_eletrodo)?c.historico_eletrodo:[];
-  html+= hist.length?hist.slice().reverse().map(h=>`<div class="hist-item"><span class="hd">${esc(h.data||"")}</span><span class="ht">${esc(h.eletrodo||"")} ${h.tipo?("· "+esc(h.tipo)):""}</span></div>`).join(""):`<div class="hist-empty">Nenhuma troca registrada.</div>`;
-  html+=`</div></div></div>`;
   return html;
+}
+
+let _selRobo=null;
+function calcDesgaste(k){
+  const c=robos()[k]; if(!c) return 0;
+  const ut=c.ultima_troca||''; if(!ut) return 0;
+  const m=ut.match(/(\d{2})\/(\d{2})\/(\d{4}),?\s*(\d{2}):(\d{2})/); if(!m) return 0;
+  const dataTroca=new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5]);
+  const md=prod().metas_dias||{}; let total=0;
+  Object.entries(md).forEach(([chave,dia])=>{
+    const p=chave.split('_').map(Number); if(p.length!==3) return;
+    const rd=dia[k]||{};
+    [...HORAS_DIA,...HORAS_NOITE].forEach(h=>{
+      const val=parseCelVal(rd[campoH(h)]||'').num; if(val<=0) return;
+      const hNum=parseInt(h.split(':')[0]);
+      const dh=new Date(p[0],p[1],p[2],hNum,0);
+      if(dh>=dataTroca) total+=val;
+    });
+  });
+  return total;
+}
+function registrarTrocaEletrodo(k){
+  if(!isHost) return;
+  const c=robos()[k]; if(!c.eletrodo){ showToast("Informe o eletrodo primeiro",true); return; }
+  if(!c.historico_eletrodo) c.historico_eletrodo=[];
+  const agora=new Date().toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  const pecas=calcDesgaste(k);
+  c.historico_eletrodo.push({data:agora,eletrodo:c.eletrodo,tipo:c.tipo_eletrodo||'',pecas_feitas:pecas});
+  c.ultima_troca=agora;
+  _mainSig=""; renderMain();
+  saveToAPI().then(()=>showToast(`Troca registrada ✓ — ${pecas.toLocaleString("pt-BR")} peças`,false,true));
+}
+function removerHistEletrodo(k,idx){
+  if(!isHost) return;
+  const c=robos()[k]; if(!c.historico_eletrodo) return;
+  c.historico_eletrodo.splice(idx,1);
+  _mainSig=""; renderMain(); saveToAPI();
+}
+function triggerImgUpload(k){ if(!isHost) return; _selRobo=k; document.getElementById("imgFileInput").click(); }
+function triggerImgCamera(k){ if(!isHost) return; _selRobo=k; document.getElementById("imgCameraInput").click(); }
+function handleImgUpload(file){
+  if(!file || !_selRobo || !isHost) return;
+  const k=_selRobo;
+  const canvas=document.createElement('canvas'); const ctx=canvas.getContext('2d');
+  const img=new Image(); const url=URL.createObjectURL(file);
+  img.onload=function(){
+    const max=800; let w=img.width,h=img.height;
+    if(w>max||h>max){ if(w>h){h=Math.round(h*max/w); w=max;} else {w=Math.round(w*max/h); h=max;} }
+    canvas.width=w; canvas.height=h; ctx.drawImage(img,0,0,w,h);
+    const compressed=canvas.toDataURL('image/jpeg',0.85);
+    URL.revokeObjectURL(url);
+    if(!robos()[k]) return;
+    robos()[k].img_peca=compressed;
+    _mainSig=""; renderMain();
+    saveToAPI().then(()=>showToast("Imagem salva ✓",false,true));
+  };
+  img.src=url;
+}
+function removeImgPeca(k){
+  if(!isHost || !robos()[k]) return;
+  if(!confirm("Remover a imagem da peça?")) return;
+  delete robos()[k].img_peca;
+  _mainSig=""; renderMain(); saveToAPI();
 }
 function setField(k,campo,v){ if(!isHost||!robos()[k]) return; if(campo==="meta_hora") v=String(v).replace(",","."); robos()[k][campo]=v; _mainSig=""; if(campo==="status"||campo==="nome") renderNav(); saveDebounced(); }
 function registrarTroca(k){ if(!isHost) return; const c=robos()[k];

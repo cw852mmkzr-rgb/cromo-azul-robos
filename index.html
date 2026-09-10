@@ -664,6 +664,80 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .ppd-rob-bar>div{height:100%;background:var(--ok);border-radius:2px;box-shadow:0 0 6px var(--ok)}
 .ppd-rob-pct{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--faint);margin-top:4px}
 .ppd-empty{color:var(--faint);font-size:13px;padding:16px}
+
+/* ===== Relatório Mensal (Neon City) ===== */
+.rm-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.rm-kpi{padding:14px 18px;border-radius:6px;border:1px solid var(--glass-bd2);background:rgba(255,255,255,.03);border-left:3px solid var(--ok)}
+.rm-kpi.blue{border-left-color:var(--blue)}.rm-kpi.ny{border-left-color:var(--ny)}.rm-kpi.purple{border-left-color:var(--purple)}
+.rm-kpi-l{font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+.rm-kpi-v{font-family:'Orbitron',sans-serif;font-weight:800;font-size:28px;line-height:1;text-shadow:0 0 12px currentColor}
+.rm-kpi-s{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--mut);margin-top:5px}
+@media(max-width:900px){.rm-kpis{grid-template-columns:repeat(2,1fr)}}
+.rm-daybars{display:flex;align-items:flex-end;gap:3px;height:76px}
+.rm-daycell{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.rm-daycell>div{width:100%}
+.rm-daycell>span{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--faint)}
+.rm-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.rm-grid2{grid-template-columns:1fr}}
+.rm-heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.rm-h-dow{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--faint);text-align:center;font-weight:700;padding:2px 0}
+.rm-h-cell{border:1px solid var(--glass-bd2);border-radius:3px;padding:4px 2px;text-align:center}
+.rm-h-cell .d{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--faint)}
+.rm-h-cell .v{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;margin-top:1px}
+.rm-heat-legend{display:flex;align-items:center;gap:6px;margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--faint)}
+.rm-heat-legend i{width:11px;height:11px;border-radius:2px;display:block}
+.rm-toppeca{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.rm-toppeca .med{font-size:14px;min-width:26px}
+.rm-toppeca .cod{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--ny);font-weight:700;min-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rm-toppeca .bar{flex:1;background:rgba(255,255,255,.06);border-radius:99px;height:7px;overflow:hidden}
+.rm-toppeca .bar>i{display:block;height:100%;background:var(--ny);border-radius:99px;box-shadow:0 0 6px var(--ny)}
+.rm-toppeca .v{font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;color:var(--txt);min-width:56px;text-align:right}
+.rm-table{border-collapse:collapse;width:100%;min-width:520px;font-family:'Share Tech Mono',monospace}
+.rm-table th{padding:11px 12px;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);text-align:center;border-bottom:1px solid var(--glass-bd2);background:rgba(255,255,255,.02);font-weight:700}
+.rm-table th.ok{color:var(--ok)}.rm-table th.purple{color:var(--purple)}.rm-table th.ny{color:var(--ny)}
+.rm-table td{padding:11px 12px;font-size:13px;text-align:center;border-bottom:1px solid rgba(255,255,255,.04)}
+.rm-table td.ok{color:var(--ok);font-weight:700}.rm-table td.purple{color:var(--purple);font-weight:700}.rm-table td.mut{color:var(--mut)}
+.rm-t-bar{display:flex;align-items:center;gap:9px}
+.rm-t-bar i{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:99px;position:relative;overflow:hidden;min-width:60px}
+.rm-t-bar i:before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--w,0);background:var(--ny);border-radius:99px;box-shadow:0 0 6px var(--ny)}
+.rm-t-bar b{font-family:'Orbitron',sans-serif;font-size:15px;color:var(--ny);min-width:60px;text-align:right;font-weight:800}
+.rm-table tr.tot{background:rgba(249,248,113,.06);border-top:2px solid rgba(249,248,113,.4)}
+.rm-table tr.tot td{font-family:'Orbitron',sans-serif;font-weight:800;font-size:15px}
+.rm-table tr.tot td.ny{color:var(--ny);font-size:17px}
+.rm-evol-sub{display:flex;justify-content:space-between;margin-top:8px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--faint)}
+.rm-meta-row{background:rgba(255,255,255,.02);border:1px solid var(--glass-bd2);border-radius:6px;padding:12px 14px;margin-bottom:10px}
+.rm-meta-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.rm-meta-head .rob{font-family:'Orbitron',sans-serif;font-weight:800;font-size:17px;color:#fff}
+.rm-meta-head .cod{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--ny);font-weight:700}
+.rm-meta-head .pct{font-family:'Orbitron',sans-serif;font-weight:800;font-size:20px}
+.rm-meta-cards{display:flex;gap:8px;margin-bottom:8px}
+.rm-meta-cards>div{flex:1;padding:8px;border-radius:4px;text-align:center;border:1px solid}
+.rm-meta-cards>div.ok{background:rgba(0,255,174,.08);border-color:rgba(0,255,174,.3)}
+.rm-meta-cards>div.fail{background:rgba(255,43,94,.08);border-color:rgba(255,43,94,.3)}
+.rm-meta-cards>div>b{font-family:'Orbitron',sans-serif;font-weight:800;font-size:22px;display:block}
+.rm-meta-cards>div.ok>b{color:var(--ok)}.rm-meta-cards>div.fail>b{color:var(--danger)}
+.rm-meta-cards>div>span{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--mut);display:block;margin-top:3px}
+.rm-meta-bar{height:6px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+.rm-meta-bar i{display:block;height:100%;border-radius:99px;box-shadow:0 0 6px currentColor}
+.rm-eff-hero{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:700px){.rm-eff-hero{grid-template-columns:1fr}}
+.rm-eff-card{padding:14px 16px;border-radius:6px;text-align:center;border:1px solid}
+.rm-eff-card.ok{background:rgba(0,255,174,.06);border-color:rgba(0,255,174,.3)}
+.rm-eff-card.fail{background:rgba(255,43,94,.06);border-color:rgba(255,43,94,.3)}
+.rm-eff-card .l{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.rm-eff-card.ok .l{color:var(--ok)}.rm-eff-card.fail .l{color:var(--danger)}
+.rm-eff-card .r{font-family:'Orbitron',sans-serif;font-weight:800;font-size:28px;color:#fff}
+.rm-eff-card.ok .r{color:var(--ok)}.rm-eff-card.fail .r{color:var(--danger)}
+.rm-eff-card .p{font-family:'Orbitron',sans-serif;font-weight:800;font-size:26px;color:#fff;margin:4px 0}
+.rm-eff-card .s{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--mut)}
+.rm-eff-title{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-bottom:10px;font-weight:700}
+.rm-rank{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.rm-rank .med{font-size:15px;min-width:32px}
+.rm-rank .rob{font-family:'Orbitron',sans-serif;font-weight:800;font-size:14px;color:#fff;min-width:80px}
+.rm-rank .bar{flex:1;background:rgba(255,255,255,.06);border-radius:99px;height:9px;overflow:hidden}
+.rm-rank .bar i{display:block;height:100%;border-radius:99px;box-shadow:0 0 6px currentColor}
+.rm-rank .pct{font-family:'Orbitron',sans-serif;font-weight:800;font-size:15px;min-width:56px;text-align:right}
+.rm-rank .sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--faint);min-width:80px;text-align:right}
 </style>
 </head>
 <body>
@@ -1287,24 +1361,205 @@ function barList(items){ const max=Math.max(1,...items.map(i=>i.val));
 
 /* ---------- RELATÓRIO MENSAL ---------- */
 function viewRelMensal(){
-  const datas=datasDoMes(selAno,selMes);
-  let total=0,tDia=0,tNoite=0,melhor={d:0,v:0}; const totais=[];
-  datas.forEach(([a,m,d])=>{ const t=totalDia(a,m,d); totais.push(t); total+=t; tDia+=totalTurno(a,m,d,HORAS_DIA); tNoite+=totalTurno(a,m,d,HORAS_NOITE); if(t>melhor.v) melhor={d,v:t}; });
-  const dcp=totais.filter(t=>t>0).length; const media=dcp?Math.round(total/dcp):0;
-  const porRobo=aggPorRobo(datas); const robosItems=ROBOS.map(r=>({label:nomeRoboCurto(r),val:porRobo[r],cor:'var(--grad)'})).sort((a,b)=>b.val-a.val);
-  const porPeca=aggPorPeca(datas); const pecaItems=Object.entries(porPeca).map(([cod,o])=>({label:cod,val:o.total,cor:'linear-gradient(135deg,#22d3ee,#4facfe)'})).sort((a,b)=>b.val-a.val).slice(0,8);
-  return pageHead(IC.relmes,"Relatório Mensal","Resumo de "+MESES[selMes]+" / "+selAno)
-    + selMesAnoRow()
-    + `<div class="kpi card glass"><div><div class="lbl">Total do mês</div><div class="big">${total.toLocaleString("pt-BR")}</div></div>
-        <div style="display:flex;gap:22px;flex-wrap:wrap;text-align:right">
-          <div><div class="lbl">Média/dia</div><div class="side"><div class="n">${media.toLocaleString("pt-BR")}</div></div></div>
-          <div><div class="lbl">☀ Dia</div><div class="side"><div class="n" style="color:var(--ok)">${tDia.toLocaleString("pt-BR")}</div></div></div>
-          <div><div class="lbl">🌙 Noite</div><div class="side"><div class="n" style="color:var(--purple)">${tNoite.toLocaleString("pt-BR")}</div></div></div>
-          <div><div class="lbl">Melhor dia</div><div class="side"><div class="n" style="color:var(--cyan)">${melhor.v?('Dia '+melhor.d):'—'}</div></div></div>
-        </div></div>`
-    + `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.robot}</svg>Produção por robô</h3>${barList(robosItems)}</div>`
-    + `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.ppeca}</svg>Top peças do mês</h3>${barList(pecaItems)}</div>`;
+  const anoAtual = new Date().getFullYear();
+  const mesIdx = selMes, anoSel = selAno;
+  const ndias = diasNoMes(anoSel, mesIdx);
+  const md = prod().metas_dias||{};
+
+  const diasDoMes={};
+  for(let d=1;d<=ndias;d++){
+    const chave=chaveData(anoSel,mesIdx,d), dia=md[chave]||{};
+    const info={robos:{},totalGeral:0};
+    ROBOS.forEach(robo=>{
+      const rd=dia[String(robo)]||{};
+      const meta=parseInt(robos()[String(robo)]?.meta_hora)||0;
+      const cod=rd.cod||'—';
+      const tDia=HORAS_DIA.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]||'').num,0);
+      const tNoite=HORAS_NOITE.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]||'').num,0);
+      const total=tDia+tNoite;
+      info.robos[robo]={total,meta,cod,totalDia:tDia,totalNoite:tNoite,dia:rd};
+      info.totalGeral+=total;
+    });
+    if(info.totalGeral>0) diasDoMes[d]=info;
+  }
+  const diasComDados=Object.keys(diasDoMes).map(Number).sort((a,b)=>a-b);
+  const totalMes=diasComDados.reduce((s,d)=>s+diasDoMes[d].totalGeral,0);
+  const diasComProd=diasComDados.filter(d=>diasDoMes[d].totalGeral>0);
+  const mediaDia=diasComProd.length>0?Math.round(totalMes/diasComProd.length):0;
+  const melhorDia=diasComDados.reduce((best,d)=>diasDoMes[d].totalGeral>(diasDoMes[best]?.totalGeral||0)?d:best, diasComDados[0]);
+
+  const eficienciaRobo = ROBOS.map(robo=>{
+    let totalProd=0,diasAtivo=0,diasBateu=0;
+    const metaHora=parseInt(robos()[String(robo)]?.meta_hora)||0;
+    diasComDados.forEach(d=>{
+      const r=diasDoMes[d].robos[robo]||{};
+      if(r.total>0){totalProd+=r.total;diasAtivo++;}
+      const metaEst=metaHora*9;
+      if(metaEst>0 && r.total>=metaEst) diasBateu++;
+    });
+    const efic = diasAtivo>0&&metaHora>0 ? Math.round(totalProd/(diasAtivo*metaHora*9)*100) : 0;
+    return {robo,totalProd,diasAtivo,diasBateu,mediaMetaHora:metaHora,efic};
+  }).filter(r=>r.diasAtivo>0).sort((a,b)=>b.totalProd-a.totalProd);
+
+  const pecas={};
+  diasComDados.forEach(d=>{
+    ROBOS.forEach(robo=>{
+      const r=diasDoMes[d].robos[robo]||{};
+      if(!r.cod||r.cod==='—'||r.total<=0) return;
+      pecas[r.cod]=(pecas[r.cod]||0)+r.total;
+    });
+  });
+  const topPecas=Object.entries(pecas).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxPeca=topPecas.length?topPecas[0][1]:1;
+
+  const mesesOpts=MESES.map((m,i)=>`<option value="${i}" ${i===mesIdx?'selected':''}>${m}</option>`).join('');
+  const anosOpts=[anoAtual-1,anoAtual,anoAtual+1,anoAtual+2].map(a=>`<option value="${a}" ${a===anoSel?'selected':''}>${a}</option>`).join('');
+
+  let html = pageHead(IC.relmes,'Relatório Mensal','Análise consolidada do mês')
+    + `<div class="selrow card glass">
+        <div class="sel"><label>Mês</label><select onchange="setPeriodo('mes',+this.value)">${mesesOpts}</select></div>
+        <div class="sel"><label>Ano</label><select onchange="setPeriodo('ano',+this.value)">${anosOpts}</select></div>
+        <div class="metrics"><div class="metric"><div class="k">Dias com dados</div><div class="v">${diasComDados.length}</div></div></div></div>`;
+
+  if(!diasComDados.length){
+    return html + `<div class="card glass empty"><svg viewBox="0 0 24 24">${IC.relmes}</svg><div class="soon">Nenhum dado para ${MESES[mesIdx]} de ${anoSel}</div><div style="font-size:12.5px;color:var(--faint)">Os dados vêm da Meta Diária.</div></div>`;
+  }
+
+  const maxD = Math.max(...diasComDados.map(d=>diasDoMes[d].totalGeral),1);
+
+  html += `<div class="rm-kpis">
+    <div class="rm-kpi ok"><div class="rm-kpi-l">Total do Mês</div><div class="rm-kpi-v" style="color:var(--ok)">${totalMes.toLocaleString('pt-BR')}</div><div class="rm-kpi-s">peças produzidas</div></div>
+    <div class="rm-kpi blue"><div class="rm-kpi-l">Média Diária</div><div class="rm-kpi-v" style="color:var(--blue)">${mediaDia.toLocaleString('pt-BR')}</div><div class="rm-kpi-s">peças/dia</div></div>
+    <div class="rm-kpi ny"><div class="rm-kpi-l">Melhor Dia</div><div class="rm-kpi-v" style="color:var(--ny)">${melhorDia?diasDoMes[melhorDia].totalGeral.toLocaleString('pt-BR'):'—'}</div><div class="rm-kpi-s">${melhorDia?'dia '+melhorDia:''}</div></div>
+    <div class="rm-kpi purple"><div class="rm-kpi-l">Robôs Ativos</div><div class="rm-kpi-v" style="color:var(--purple)">${eficienciaRobo.length}</div><div class="rm-kpi-s">de ${ROBOS.length} robôs</div></div>
+  </div>`;
+
+  html += `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.mensal}</svg>Produção diária do mês</h3>
+    <div class="rm-daybars">
+      ${Array.from({length:ndias},(_,i)=>i+1).map(d=>{
+        const val=diasDoMes[d]?diasDoMes[d].totalGeral:0;
+        const h=val>0?Math.max(Math.round(val/maxD*56),4):2;
+        const hoje=d===new Date().getDate()&&mesIdx===new Date().getMonth()&&anoSel===anoAtual;
+        return `<div class="rm-daycell"><div title="Dia ${d}: ${val}" style="height:${h}px;background:${val>0?(hoje?'var(--ny)':'var(--ok)'):'#1a2540'};border-radius:3px 3px 0 0;transition:height .3s;box-shadow:${val>0?'0 0 6px currentColor':'none'};color:${val>0?(hoje?'var(--ny)':'var(--ok)'):'transparent'}"></div>${d%5===0||d===1?`<span>${d}</span>`:'<span style="color:transparent">.</span>'}</div>`;
+      }).join('')}
+    </div></div>`;
+
+  const semanas=['D','S','T','Q','Q','S','S'];
+  const primeiroDia=new Date(anoSel,mesIdx,1).getDay();
+  html += `<div class="rm-grid2">
+    <div class="card glass"><h3>🗓 Heatmap de Produção</h3>
+      <div class="rm-heatmap">
+        ${semanas.map(x=>`<div class="rm-h-dow">${x}</div>`).join('')}
+        ${Array.from({length:primeiroDia},()=>'<div></div>').join('')}
+        ${Array.from({length:ndias},(_,i)=>i+1).map(dia=>{
+          const val=diasDoMes[dia]?.totalGeral||0, pct=val/maxD;
+          const bg = val===0?'rgba(255,255,255,.02)':pct<0.3?'rgba(0,255,174,.15)':pct<0.6?'rgba(0,255,174,.35)':pct<0.85?'rgba(0,255,174,.6)':'rgba(0,255,174,.9)';
+          const bdr = val>0?'rgba(0,255,174,.35)':'var(--glass-bd2)';
+          return `<div class="rm-h-cell" style="background:${bg};border-color:${bdr}" title="${dia}/${mesIdx+1} — ${val.toLocaleString('pt-BR')} peças"><div class="d">${dia}</div><div class="v" style="color:${val>0?'var(--ok)':'transparent'}">${val>0?val:'-'}</div></div>`;
+        }).join('')}
+      </div>
+      <div class="rm-heat-legend"><span>Baixo</span><i style="background:rgba(0,255,174,.15)"></i><i style="background:rgba(0,255,174,.35)"></i><i style="background:rgba(0,255,174,.6)"></i><i style="background:rgba(0,255,174,.9)"></i><span>Alto</span></div>
+    </div>
+    <div class="card glass"><h3>🏆 Top Peças do Mês</h3>
+      ${topPecas.length?topPecas.map(([cod,total],i)=>{
+        const medalhas=['🥇','🥈','🥉','4º','5º'];
+        const pct=Math.round(total/maxPeca*100);
+        return `<div class="rm-toppeca"><span class="med">${medalhas[i]}</span><span class="cod">${esc(cod)}</span><div class="bar"><i style="width:${pct}%"></i></div><span class="v">${total.toLocaleString('pt-BR')}</span></div>`;
+      }).join(''):'<div class="hist-empty">Sem dados</div>'}
+    </div>
+  </div>`;
+
+  const totalDiaMes=diasComDados.reduce((s,d)=>s+ROBOS.reduce((ss,r)=>ss+(diasDoMes[d].robos[r]?.totalDia||0),0),0);
+  const totalNoiteMes=diasComDados.reduce((s,d)=>s+ROBOS.reduce((ss,r)=>ss+(diasDoMes[d].robos[r]?.totalNoite||0),0),0);
+  html += `<div class="card glass" style="padding:0"><div style="padding:16px 18px;border-bottom:1px solid var(--glass-bd2)"><h3 style="margin:0">📋 Detalhe por Dia — todos os robôs</h3></div>
+    <div style="overflow-x:auto"><table class="rm-table"><thead><tr>
+      <th style="text-align:left">Dia</th><th class="ok">☀ Dia</th><th class="purple">🌙 Noite</th><th class="ny" style="text-align:left">Total Geral</th><th>Robôs</th>
+    </tr></thead><tbody>
+      ${diasComDados.map(d=>{
+        const dia=diasDoMes[d];
+        const tDia=ROBOS.reduce((s,r)=>s+(dia.robos[r]?.totalDia||0),0);
+        const tNoite=ROBOS.reduce((s,r)=>s+(dia.robos[r]?.totalNoite||0),0);
+        const rAtivos=ROBOS.filter(r=>(dia.robos[r]?.total||0)>0).length;
+        const pct=Math.round(dia.totalGeral/maxD*100);
+        const dataFmt=String(d).padStart(2,'0')+'/'+String(mesIdx+1).padStart(2,'0')+'/'+anoSel;
+        return `<tr><td style="text-align:left;color:var(--mut)">${dataFmt}</td>
+          <td class="ok">${tDia.toLocaleString('pt-BR')}</td>
+          <td class="purple">${tNoite.toLocaleString('pt-BR')}</td>
+          <td><div class="rm-t-bar"><i style="--w:${pct}%"></i><b>${dia.totalGeral.toLocaleString('pt-BR')}</b></div></td>
+          <td class="mut">${rAtivos} ativo(s)</td></tr>`;
+      }).join('')}
+      <tr class="tot"><td style="text-align:left">TOTAL</td><td class="ok">${totalDiaMes.toLocaleString('pt-BR')}</td><td class="purple">${totalNoiteMes.toLocaleString('pt-BR')}</td><td class="ny">${totalMes.toLocaleString('pt-BR')}</td><td></td></tr>
+    </tbody></table></div></div>`;
+
+  const diasGrafico = diasComDados.filter(d=>diasDoMes[d].totalGeral>0);
+  if(diasGrafico.length){
+    const maxV=Math.max(...diasGrafico.map(d=>diasDoMes[d].totalGeral),1);
+    const minV=Math.min(...diasGrafico.map(d=>diasDoMes[d].totalGeral));
+    const W=800, H=110, pad=14, n=diasGrafico.length;
+    const pts=diasGrafico.map((d,i)=>{ const x=pad+(i/Math.max(n-1,1))*(W-pad*2); const y=H-pad-((diasDoMes[d].totalGeral-minV)/(maxV-minV||1))*(H-pad*2); return {x,y,d,v:diasDoMes[d].totalGeral}; });
+    const polyline=pts.map(p=>`${p.x},${p.y}`).join(' ');
+    const areaPath='M'+pts[0].x+','+H+' '+pts.map(p=>'L'+p.x+','+p.y).join(' ')+' L'+pts[pts.length-1].x+','+H+' Z';
+    const circles=pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="#00ffae" stroke="#05060d" stroke-width="2"><title>Dia ${String(p.d).padStart(2,'0')} — ${p.v.toLocaleString('pt-BR')} peças</title></circle><text x="${p.x}" y="${p.y-8}" text-anchor="middle" font-size="9" fill="#7d8bb0">${p.v.toLocaleString('pt-BR')}</text><text x="${p.x}" y="${H-2}" text-anchor="middle" font-size="9" fill="#7d8bb0">${String(p.d).padStart(2,'0')}</text>`).join('');
+    const melhorD = diasGrafico.reduce((a,d)=>diasDoMes[d].totalGeral>diasDoMes[a].totalGeral?d:a,diasGrafico[0]);
+    html += `<div class="card glass"><h3>📈 Evolução Diária</h3>
+      <div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H+12}" style="width:100%;min-width:520px;height:150px" preserveAspectRatio="none">
+        <defs><linearGradient id="ecgGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00ffae" stop-opacity="0.35"/><stop offset="100%" stop-color="#00ffae" stop-opacity="0"/></linearGradient></defs>
+        <path d="${areaPath}" fill="url(#ecgGrad)"/>
+        <polyline points="${polyline}" fill="none" stroke="#00ffae" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 4px #00ffae)"/>
+        <g>${circles}</g>
+      </svg></div>
+      <div class="rm-evol-sub"><span>Média: <b style="color:var(--txt)">${mediaDia.toLocaleString('pt-BR')}</b>/dia</span><span>Melhor: <b style="color:var(--ok)">dia ${String(melhorD).padStart(2,'0')} — ${diasDoMes[melhorD].totalGeral.toLocaleString('pt-BR')}</b></span></div>
+    </div>`;
+  }
+
+  const HORAS=[...HORAS_DIA,...HORAS_NOITE];
+  const metasAtingidas = ROBOS.map(robo=>{
+    let atingiu=0,naoAtingiu=0, cod='—';
+    const meta=parseInt(robos()[String(robo)]?.meta_hora)||0;
+    diasComDados.forEach(d=>{
+      const rd=diasDoMes[d].robos[robo]?.dia||{};
+      if(rd.cod && rd.cod!=='—') cod=rd.cod;
+      if(meta<=0) return;
+      HORAS.forEach(h=>{ if(ehCafe(h)) return; const v=parseCelVal(rd[campoH(h)]||'').num; if(v<=0) return;
+        if(v>=meta) atingiu++; else naoAtingiu++;
+      });
+    });
+    if(atingiu===0 && naoAtingiu===0) return null;
+    const total=atingiu+naoAtingiu, pct=Math.round(atingiu/total*100);
+    return {robo,cod,atingiu,naoAtingiu,total,pct};
+  }).filter(Boolean).sort((a,b)=>b.pct-a.pct);
+  html += `<div class="card glass"><h3>🎯 Metas Atingidas por Robô no Mês</h3>
+    ${metasAtingidas.length?metasAtingidas.map(r=>{
+      const cor=r.pct>=80?'var(--ok)':r.pct>=50?'var(--ny)':'var(--danger)';
+      return `<div class="rm-meta-row">
+        <div class="rm-meta-head"><span class="rob">Robô ${r.robo}</span><span class="cod">${esc(r.cod)}</span><span class="pct" style="color:${cor}">${r.pct}% de aproveitamento</span></div>
+        <div class="rm-meta-cards"><div class="ok"><b>${r.atingiu}x</b><span>✅ Atingiu a meta</span></div><div class="fail"><b>${r.naoAtingiu}x</b><span>❌ Não atingiu</span></div></div>
+        <div class="rm-meta-bar"><i style="width:${r.pct}%;background:${cor}"></i></div>
+      </div>`;
+    }).join(''):'<div class="hist-empty">Sem dados de meta no mês.</div>'}
+  </div>`;
+
+  const robosComMeta = eficienciaRobo.filter(r=>r.mediaMetaHora>0 && r.diasAtivo>0);
+  if(robosComMeta.length){
+    const melhor=robosComMeta.reduce((a,b)=>b.efic>a.efic?b:a);
+    const pior=robosComMeta.reduce((a,b)=>b.efic<a.efic?b:a);
+    html += `<div class="card glass"><h3>⚙ Eficiência por Robô no Mês</h3>
+      <div class="rm-eff-hero">
+        <div class="rm-eff-card ok"><div class="l">🥇 Melhor Desempenho</div><div class="r">Robô ${melhor.robo}</div><div class="p">${melhor.efic}%</div><div class="s">${melhor.totalProd.toLocaleString('pt-BR')} peças · ${melhor.diasAtivo} dia(s)</div><div class="s">Meta média: ${melhor.mediaMetaHora}/h</div></div>
+        <div class="rm-eff-card fail"><div class="l">📉 Menor Desempenho</div><div class="r">Robô ${pior.robo}</div><div class="p">${pior.efic}%</div><div class="s">${pior.totalProd.toLocaleString('pt-BR')} peças · ${pior.diasAtivo} dia(s)</div><div class="s">Meta média: ${pior.mediaMetaHora}/h</div></div>
+      </div>
+      <div class="rm-eff-title">Ranking completo</div>
+      ${robosComMeta.sort((a,b)=>b.efic-a.efic).map((r,i)=>{
+        const cor=r.efic>=100?'var(--ok)':r.efic>=70?'var(--ny)':'var(--danger)';
+        const medalha=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'º';
+        return `<div class="rm-rank"><span class="med">${medalha}</span><span class="rob">Robô ${r.robo}</span><div class="bar"><i style="width:${Math.min(r.efic,100)}%;background:${cor}"></i></div><span class="pct" style="color:${cor}">${r.efic}%</span><span class="sub">${r.totalProd.toLocaleString('pt-BR')} pcs</span></div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  return html;
 }
+
 function selMesAnoRow(){
   return `<div class="selrow card glass">
     <div class="sel"><label>Mês</label><select onchange="setPeriodo('mes',+this.value)">${MESES.map((m,i)=>`<option value="${i}" ${i===selMes?'selected':''}>${m}</option>`).join("")}</select></div>

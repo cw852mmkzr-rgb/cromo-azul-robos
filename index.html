@@ -596,6 +596,74 @@ table.meta-t th.cafe{color:var(--ny);background:rgba(249,248,113,.10);border-bot
 table.meta-t td.cafe-td{background:rgba(249,248,113,.06)}
 table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .dash-hc.cafe{background:rgba(249,248,113,.10);border-color:rgba(249,248,113,.5)}
+
+/* ===== Produção por Peça (Neon City) ===== */
+.ppeca-sub{font-family:'Share Tech Mono',monospace;font-size:12.5px;letter-spacing:.05em;color:var(--mut);margin-bottom:14px}
+.ppeca-modos{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.ppeca-modo{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;letter-spacing:.06em;padding:8px 15px;border-radius:4px;background:rgba(255,255,255,.03);border:1px solid var(--glass-bd2);color:var(--mut);cursor:pointer;transition:.18s}
+.ppeca-modo:hover{background:rgba(0,240,255,.08);color:var(--txt)}
+.ppeca-modo.on{background:linear-gradient(90deg,rgba(0,240,255,.18),transparent);border-color:rgba(0,240,255,.5);color:var(--nc);text-shadow:0 0 8px rgba(0,240,255,.5)}
+.ppeca-filtros{display:flex;gap:14px;flex-wrap:wrap;align-items:end;margin-bottom:12px}
+.ppeca-sel{display:flex;flex-direction:column;gap:4px}
+.ppeca-sel label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.ppeca-sel select,.ppeca-sel input{padding:9px 12px;min-width:140px}
+.ppeca-kpis{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+.ppeca-kpi{font-family:'Share Tech Mono',monospace;font-size:11.5px;letter-spacing:.08em;padding:8px 14px;border-radius:4px;border:1px solid var(--glass-bd2);color:var(--mut)}
+.ppeca-kpi b{font-family:'Orbitron',sans-serif;font-weight:700;font-size:15px;color:var(--txt);margin:0 3px}
+.ppeca-kpi.tot{border-color:rgba(0,240,255,.4);color:var(--nc)}
+.ppeca-kpi.tot b{color:var(--nc)}
+.ppeca-busca{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--glass-bd2);border-radius:4px;background:rgba(0,240,255,.045)}
+.ppeca-busca span{font-size:14px}
+.ppeca-busca input{flex:1;background:transparent;border:none;outline:none;color:var(--txt);font-family:inherit;font-size:14px}
+.ppeca-busca button{background:transparent;border:none;color:var(--faint);cursor:pointer;font-size:14px;padding:2px 6px}
+.ppeca-busca button:hover{color:var(--danger)}
+.ppeca-card{padding:16px 18px;margin-top:10px;cursor:pointer;transition:.2s}
+.ppeca-card:hover{border-color:rgba(0,240,255,.35);box-shadow:inset 0 0 0 1px rgba(0,240,255,.18),0 0 22px -8px rgba(0,240,255,.5);transform:translateY(-1px)}
+.ppeca-head{display:grid;grid-template-columns:170px 1fr 200px 140px;gap:22px;align-items:center}
+.ppeca-lbl{font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.ppeca-cod{font-family:'Orbitron',sans-serif;font-weight:800;font-size:24px;color:var(--warn);text-shadow:0 0 10px rgba(255,176,0,.45)}
+.ppeca-cod-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--mut);margin-top:2px}
+.ppeca-spark{display:flex;align-items:flex-end;gap:2px;height:26px}
+.ppeca-prop-bar{height:8px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-bottom:5px}
+.ppeca-prop-bar>div{height:100%;border-radius:2px;box-shadow:0 0 8px currentColor;transition:width .4s}
+.ppeca-prop-pct{font-family:'Share Tech Mono',monospace;font-size:10.5px;color:var(--faint)}
+.ppeca-tot{font-family:'Orbitron',sans-serif;font-weight:800;font-size:26px;text-align:right}
+.ppeca-ver{font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:.06em;color:var(--nc);text-align:right;margin-top:2px}
+@media(max-width:900px){.ppeca-head{grid-template-columns:1fr 1fr;gap:14px}.ppeca-col-spark{grid-column:1/-1}.ppeca-col-prop,.ppeca-col-tot{grid-column:auto}}
+
+/* Modal de detalhe */
+.ppd-ov{display:none;position:fixed;inset:0;z-index:80;background:rgba(4,7,20,.78);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px}
+.ppd-ov.open{display:flex;animation:fadeIn .18s ease}
+.ppd-card{width:100%;max-width:920px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;border-radius:8px;background:var(--glass-strong);border:1px solid rgba(0,240,255,.35);box-shadow:0 20px 60px rgba(2,6,23,.6),0 0 30px -8px rgba(0,240,255,.4)}
+.ppd-head{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--glass-bd2);background:rgba(10,14,28,.6)}
+.ppd-head-cod{font-family:'Orbitron',sans-serif;font-weight:800;font-size:32px;color:var(--warn);text-shadow:0 0 14px rgba(255,176,0,.5);letter-spacing:.03em}
+.ppd-head-sub{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--mut);margin-top:3px;letter-spacing:.06em}
+.ppd-head-x{background:transparent;border:1px solid var(--glass-bd2);color:var(--mut);font-size:16px;width:36px;height:36px;border-radius:4px;cursor:pointer}
+.ppd-head-x:hover{color:var(--danger);border-color:var(--danger)}
+.ppd-body{padding:22px;overflow-y:auto}
+.ppd-hero{text-align:center;padding:16px 0 24px;border-bottom:1px solid var(--glass-bd2);margin-bottom:22px}
+.ppd-hero-v{font-family:'Orbitron',sans-serif;font-weight:800;font-size:58px;color:var(--nc);text-shadow:0 0 22px rgba(0,240,255,.5);letter-spacing:.02em;line-height:1}
+.ppd-hero-l{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--mut);letter-spacing:.14em;text-transform:uppercase;margin-top:8px}
+.ppd-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:24px}
+.ppd-kpi{padding:12px 14px;border:1px solid var(--glass-bd2);border-radius:4px;background:rgba(255,255,255,.03);border-left:3px solid var(--kc,var(--nc))}
+.ppd-kpi-l{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.ppd-kpi-v{font-family:'Orbitron',sans-serif;font-weight:700;font-size:22px;color:var(--kc);margin-top:3px;text-shadow:0 0 6px color-mix(in srgb,var(--kc) 40%,transparent)}
+.ppd-kpi-s{font-family:'Share Tech Mono',monospace;font-size:10.5px;color:var(--mut);margin-top:4px}
+.ppd-sec-t{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;letter-spacing:.1em;color:var(--nc);text-transform:uppercase;margin-bottom:12px;text-shadow:0 0 8px rgba(0,240,255,.3)}
+.ppd-hbars{display:flex;align-items:flex-end;gap:6px;padding-bottom:14px;margin-bottom:24px;overflow-x:auto}
+.ppd-hbar{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:40px}
+.ppd-hbar-v{font-family:'Orbitron',sans-serif;font-size:10.5px;color:var(--nc);height:14px}
+.ppd-hbar-fill{width:22px;background:linear-gradient(180deg,var(--ok),#0a7d5a);border-radius:2px 2px 0 0;min-height:2px;box-shadow:0 0 6px rgba(0,255,174,.4)}
+.ppd-hbar-fill.cafe{background:linear-gradient(180deg,var(--ny),#997a20);box-shadow:0 0 6px rgba(249,248,113,.5)}
+.ppd-hbar-h{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--mut);letter-spacing:.04em}
+.ppd-rob-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.ppd-rob-card{padding:12px 14px;border:1px solid var(--glass-bd2);border-radius:4px;background:rgba(255,255,255,.03)}
+.ppd-rob-nome{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;color:var(--mut);letter-spacing:.04em}
+.ppd-rob-val{font-family:'Orbitron',sans-serif;font-weight:800;font-size:22px;color:var(--ok);margin:4px 0 6px;text-shadow:0 0 8px rgba(0,255,174,.35)}
+.ppd-rob-bar{height:5px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.ppd-rob-bar>div{height:100%;background:var(--ok);border-radius:2px;box-shadow:0 0 6px var(--ok)}
+.ppd-rob-pct{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--faint);margin-top:4px}
+.ppd-empty{color:var(--faint);font-size:13px;padding:16px}
 </style>
 </head>
 <body>
@@ -823,6 +891,15 @@ let lastUserAction = 0, _saveTimer = null, _mainSig = "";
 const hoje = new Date();
 let selDia = hoje.getDate(), selMes = hoje.getMonth(), selAno = hoje.getFullYear();
 let pecaBusca = "";
+/* estado do Produção por Peça (mesmas funções do Células) */
+const _ppDIAMS = 86400000;
+function _ppHojeStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function _ppParseInput(str){ const [a,m,d]=String(str||'').split('-').map(Number); return new Date(a||new Date().getFullYear(),(m||1)-1,d||1); }
+function _ppFmtData(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); }
+function _ppSegunda(d){ const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); const dow=(x.getDay()+6)%7; x.setDate(x.getDate()-dow); return x; }
+let _ppmModo='mes', _ppmMes=new Date().getMonth(), _ppmAno=new Date().getFullYear();
+let _ppmDataDia=_ppHojeStr(), _ppmDataSemana=_ppHojeStr(), _ppmDataIni=_ppHojeStr(), _ppmDataFim=_ppHojeStr();
+
 let _manutFiltro = "todos", _manutRobo = "todos";
 const PRIORIDADES = ["Baixa","Média","Alta","Urgente"];
 const PRIO_COR = {"Baixa":"var(--cyan)","Média":"var(--blue)","Alta":"var(--warn)","Urgente":"var(--danger)"};
@@ -948,7 +1025,7 @@ function renderMain(){
   const box=document.getElementById("main"); if(!box) return;
   let sig=nav.sec+":"+nav.id+"|"+isHost+"|";
   if(nav.sec==="robo") sig+=JSON.stringify(robos()[nav.id]||{});
-  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{})+"|R"+_relModo+_relDia+_relSemana+_relIni+_relFim+"|D"+(divisaoAtiva()?1:0);
+  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+_ppmModo+_ppmMes+_ppmAno+_ppmDataDia+_ppmDataSemana+_ppmDataIni+_ppmDataFim+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{})+"|R"+_relModo+_relDia+_relSemana+_relIni+_relFim+"|D"+(divisaoAtiva()?1:0);
   if(sig===_mainSig) return; _mainSig=sig;
 
   if(nav.sec==="robo"){ box.innerHTML=viewRobot(nav.id); return; }
@@ -1254,31 +1331,188 @@ function viewRelAnual(){
     + `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.robot}</svg>Produção por robô no ano</h3>${barList(robosItems)}</div>`;
 }
 
-/* ---------- PRODUÇÃO POR PEÇA ---------- */
-function viewProducaoPeca(){
-  const datas=datasDoMes(selAno,selMes); const agg=aggPorPeca(datas);
-  let lista=Object.entries(agg).map(([cod,o])=>({cod,total:o.total,robos:o.robos})).sort((a,b)=>b.total-a.total);
-  const termo=pecaBusca.trim().toUpperCase(); if(termo) lista=lista.filter(x=>x.cod.includes(termo));
-  const totalPeriodo=Object.values(agg).reduce((s,o)=>s+o.total,0);
-  let corpo;
-  if(!lista.length) corpo=`<div class="card glass empty"><svg viewBox="0 0 24 24">${IC.ppeca}</svg><div class="soon">Nenhuma peça com produção ${termo?'para "'+esc(termo)+'"':'neste mês'}</div><div style="font-size:12.5px;color:var(--faint)">Lance a produção e informe o código da peça por robô na Meta Diária.</div></div>`;
-  else corpo=lista.map(x=>{
-    const robosItems=ROBOS.filter(r=>x.robos[r]).map(r=>({label:nomeRoboCurto(r),val:x.robos[r],cor:'linear-gradient(135deg,#a855f7,#7c3aed)'})).sort((a,b)=>b.val-a.val);
-    const nm=nomePeca(x.cod);
-    return `<div class="card glass"><div style="display:flex;align-items:baseline;gap:12px;margin-bottom:14px">
-      <div style="font-family:'Space Grotesk';font-weight:700;font-size:18px;color:var(--cyan)">${esc(x.cod)}</div>
-      ${nm?`<div style="font-size:13px;color:var(--mut)">${esc(nm)}</div>`:''}
-      <div style="margin-left:auto;font-family:'Space Grotesk';font-weight:700;font-size:22px">${x.total.toLocaleString("pt-BR")}</div>
-      <div style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:1px">peças</div></div>${barList(robosItems)}</div>`;
-  }).join("");
-  return pageHead(IC.ppeca,"Produção por Peça","Totais por código — "+MESES[selMes]+" / "+selAno)
-    + `<div class="selrow card glass">
-        <div class="sel"><label>Mês</label><select onchange="setPeriodo('mes',+this.value)">${MESES.map((m,i)=>`<option value="${i}" ${i===selMes?'selected':''}>${m}</option>`).join("")}</select></div>
-        <div class="sel"><label>Ano</label><select onchange="setPeriodo('ano',+this.value)">${anosOpts()}</select></div>
-        <div class="sel" style="flex:1;min-width:150px"><label>Buscar código</label><input class="inp" value="${esc(pecaBusca)}" placeholder="ex: 50698" oninput="pecaBusca=this.value;_mainSig='';renderMain()"></div>
-        <div class="metrics"><div class="metric"><div class="k">Total do mês</div><div class="v" style="color:var(--cyan)">${totalPeriodo.toLocaleString("pt-BR")}</div></div></div></div>`
-    + corpo;
+/* ---------- PRODUÇÃO POR PEÇA (mesmas funções do Células) ---------- */
+function _ppmSetModo(mo){ _ppmModo=mo; _mainSig=''; renderMain(); }
+function _ppmSetMes(m){ _ppmMes=m; _mainSig=''; renderMain(); }
+function _ppmSetAno(a){ _ppmAno=a; _mainSig=''; renderMain(); }
+function _ppmSetDataDia(v){ if(v)_ppmDataDia=v; _mainSig=''; renderMain(); }
+function _ppmSetDataSemana(v){ if(v)_ppmDataSemana=v; _mainSig=''; renderMain(); }
+function _ppmSetDataIni(v){ if(v)_ppmDataIni=v; _mainSig=''; renderMain(); }
+function _ppmSetDataFim(v){ if(v)_ppmDataFim=v; _mainSig=''; renderMain(); }
+function buscarPeca(v){ pecaBusca=(v||'').trim(); const cont=document.getElementById('ppeca-resultado'); if(cont) cont.innerHTML=_ppmRenderLista(); else { _mainSig=''; renderMain(); } }
+function _ppecaEmPeriodo(chave,per){ const p=chave.split('_').map(Number); const t=new Date(p[0],p[1],p[2]).getTime(); return t>=per.iniMs && t<=per.fimMs; }
+function _ppmPeriodo(){
+  const y=_ppmAno; let ini,fim,label,gran='dia';
+  if(_ppmModo==='ano'){ ini=new Date(y,0,1); fim=new Date(y,11,31); label='Ano '+y+' inteiro'; gran='mes'; }
+  else if(_ppmModo==='dia'){ ini=_ppParseInput(_ppmDataDia); fim=new Date(ini); label=_ppFmtData(ini); gran='hora'; }
+  else if(_ppmModo==='semana'){ ini=_ppSegunda(_ppParseInput(_ppmDataSemana)); fim=new Date(ini); fim.setDate(fim.getDate()+6); label='Semana '+_ppFmtData(ini)+' – '+_ppFmtData(fim); gran='dia'; }
+  else if(_ppmModo==='intervalo'){ ini=_ppParseInput(_ppmDataIni); fim=_ppParseInput(_ppmDataFim); if(fim<ini){ const t=ini; ini=fim; fim=t; } label=_ppFmtData(ini)+' – '+_ppFmtData(fim); gran='dia'; }
+  else { ini=new Date(y,_ppmMes,1); fim=new Date(y,_ppmMes+1,0); label=MESES[_ppmMes]+' de '+y; gran='dia'; }
+  const iniMs=new Date(ini.getFullYear(),ini.getMonth(),ini.getDate()).getTime();
+  const fimMs=new Date(fim.getFullYear(),fim.getMonth(),fim.getDate()).getTime();
+  const numDias=Math.round((fimMs-iniMs)/_ppDIAMS)+1;
+  return {modo:_ppmModo, iniMs, fimMs, label, numDias, gran};
 }
+function _ppmAgregar(per){
+  const out={}, md=prod().metas_dias||{}, HORAS=[...HORAS_DIA,...HORAS_NOITE];
+  Object.entries(md).forEach(([chave,diaData])=>{
+    if(!diaData || !_ppecaEmPeriodo(chave,per)) return;
+    Object.keys(robos()).forEach(robo=>{
+      const rd=diaData[robo]||{}; const cod=(rd.cod||'').trim(); if(!cod||cod==='—') return;
+      const o=out[cod] || (out[cod]={total:0, porDia:{}, porHora:{}, robos:{}, horasRobo:0});
+      let ts=0;
+      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v>0){ ts+=v; o.porHora[h]=(o.porHora[h]||0)+v; o.horasRobo++; } });
+      if(ts<=0) return;
+      o.total+=ts; o.porDia[chave]=(o.porDia[chave]||0)+ts; o.robos[robo]=(o.robos[robo]||0)+ts;
+    });
+  });
+  return out;
+}
+function viewProducaoPeca(){
+  const per=_ppmPeriodo(); const agg=_ppmAgregar(per);
+  let totalGeral=0,numCodigos=0; Object.values(agg).forEach(d=>{totalGeral+=d.total;numCodigos++;});
+  const modos=[['dia','📆 Dia'],['semana','🗓 Semana'],['mes','📅 Mês'],['ano','📊 Ano'],['intervalo','↔ Período']];
+  const modoPills=modos.map(([mo,lbl])=>`<button type="button" class="ppeca-modo ${_ppmModo===mo?'on':''}" onclick="_ppmSetModo('${mo}')">${lbl}</button>`).join('');
+  const mesesOpts=MESES.map((m,i)=>`<option value="${i}" ${i===_ppmMes?'selected':''}>${m}</option>`).join('');
+  const y=new Date().getFullYear(); const anosOpts=[y-2,y-1,y,y+1].map(a=>`<option value="${a}" ${a===_ppmAno?'selected':''}>${a}</option>`).join('');
+  let controles='';
+  if(_ppmModo==='dia') controles=`<div class="ppeca-sel"><label>Escolha o dia</label><input class="inp" type="date" value="${_ppmDataDia}" onchange="_ppmSetDataDia(this.value)"></div>`;
+  else if(_ppmModo==='semana') controles=`<div class="ppeca-sel"><label>Um dia da semana</label><input class="inp" type="date" value="${_ppmDataSemana}" onchange="_ppmSetDataSemana(this.value)"></div>`;
+  else if(_ppmModo==='intervalo') controles=`<div class="ppeca-sel"><label>De</label><input class="inp" type="date" value="${_ppmDataIni}" onchange="_ppmSetDataIni(this.value)"></div><div class="ppeca-sel"><label>Até</label><input class="inp" type="date" value="${_ppmDataFim}" onchange="_ppmSetDataFim(this.value)"></div>`;
+  else if(_ppmModo==='ano') controles=`<div class="ppeca-sel"><label>Ano</label><select onchange="_ppmSetAno(+this.value)">${anosOpts}</select></div>`;
+  else controles=`<div class="ppeca-sel"><label>Mês</label><select onchange="_ppmSetMes(+this.value)">${mesesOpts}</select></div><div class="ppeca-sel"><label>Ano</label><select onchange="_ppmSetAno(+this.value)">${anosOpts}</select></div>`;
+  return pageHead(IC.ppeca,'Produção por Peça','Toque numa peça para ver todos os detalhes')
+    + `<div class="card glass" style="padding:16px 18px">
+        <div class="ppeca-sub">Período: <b style="color:var(--ok)">${esc(per.label)}</b> · leitura da Meta Diária</div>
+        <div class="ppeca-modos">${modoPills}</div>
+        <div class="ppeca-filtros">${controles}
+          <div class="ppeca-kpis">
+            <div class="ppeca-kpi cods"><b>${numCodigos}</b> código${numCodigos===1?'':'s'}</div>
+            <div class="ppeca-kpi tot">∑ <b>${totalGeral.toLocaleString('pt-BR')}</b> peças</div>
+          </div>
+        </div>
+        <div class="ppeca-busca">
+          <span>🔍</span>
+          <input id="buscaPeca" placeholder="Buscar código de peça..." value="${esc(pecaBusca)}" oninput="buscarPeca(this.value)" autocomplete="off">
+          <button type="button" onclick="document.getElementById('buscaPeca').value='';buscarPeca('')" title="Limpar">✕</button>
+        </div>
+      </div>
+      <div id="ppeca-resultado">${_ppmRenderLista()}</div>`;
+}
+function _ppmRenderLista(){
+  const per=_ppmPeriodo(); const dados=_ppmAgregar(per);
+  const termo=pecaBusca.trim().toUpperCase();
+  const codigos=Object.keys(dados).filter(c=>!termo || c.toUpperCase().includes(termo)).sort((a,b)=>dados[b].total-dados[a].total);
+  if(!codigos.length){
+    return `<div class="card glass empty"><svg viewBox="0 0 24 24">${IC.ppeca}</svg><div class="soon">${termo?'Nenhuma peça encontrada para "<b>'+esc(termo)+'</b>"':'Nenhum código com produção neste período.'}</div><div style="font-size:12.5px;color:var(--faint)">Os dados vêm da Meta Diária. Lance a produção e o código da peça em cada robô.</div></div>`;
+  }
+  const maxTotal=Math.max(...codigos.map(c=>dados[c].total),1);
+  const corAcento = per.modo==='ano' ? 'var(--blue)' : 'var(--ok)';
+  const HORAS=[...HORAS_DIA,...HORAS_NOITE];
+  return codigos.map(cod=>{
+    const d=dados[cod]; const total=d.total; const pct=Math.round(total/maxTotal*100);
+    let sparkBars='', sparkLabel='';
+    if(per.gran==='mes'){
+      const vals=Array.from({length:12},()=>0);
+      Object.entries(d.porDia).forEach(([ch,q])=>{ vals[ch.split('_').map(Number)[1]]+=q; });
+      const mx=Math.max(...vals,1); sparkLabel='Meses do ano';
+      sparkBars=vals.map((v,i)=>`<div title="${MESES[i]}: ${v.toLocaleString('pt-BR')}" style="width:12px;height:${v>0?Math.max(Math.round(v/mx*22),3):1}px;background:${v>0?'var(--blue)':'#1a2540'};border-radius:2px;flex-shrink:0"></div>`).join('');
+    } else if(per.gran==='hora'){
+      const mx=Math.max(...HORAS.map(h=>d.porHora[h]||0),1); sparkLabel='Horas do dia';
+      sparkBars=HORAS.map(h=>{ const v=d.porHora[h]||0; const cafe=ehCafe(h); return `<div title="${h}: ${v.toLocaleString('pt-BR')}${cafe?' (café)':''}" style="width:8px;height:${v>0?Math.max(Math.round(v/mx*22),3):1}px;background:${v>0?(cafe?'var(--ny)':'var(--ok)'):'#1a2540'};border-radius:2px;flex-shrink:0"></div>`; }).join('');
+    } else {
+      const dias=[]; for(let t=per.iniMs;t<=per.fimMs;t+=_ppDIAMS){ const dt=new Date(t); dias.push(dt.getFullYear()+'_'+dt.getMonth()+'_'+dt.getDate()); }
+      const mx=Math.max(...dias.map(k=>d.porDia[k]||0),1); sparkLabel=per.modo==='semana'?'Dias da semana':'Dias do período';
+      const w = dias.length>31?4:(dias.length>14?5:9);
+      sparkBars=dias.map(k=>{ const v=d.porDia[k]||0; const dd=k.split('_')[2]; return `<div title="Dia ${dd}: ${v.toLocaleString('pt-BR')}" style="width:${w}px;height:${v>0?Math.max(Math.round(v/mx*22),3):1}px;background:${v>0?'var(--ok)':'#1a2540'};border-radius:2px;flex-shrink:0"></div>`; }).join('');
+    }
+    const robosOrd=Object.entries(d.robos).sort((a,b)=>b[1]-a[1]);
+    const robResumo = robosOrd.length>1 ? robosOrd.length+' robôs' : (robosOrd.length===1?'Robô '+robosOrd[0][0]:'');
+    const nm=nomePeca(cod);
+    const codEsc = String(cod).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return `<div class="ppeca-card card glass" onclick="_ppmAbrirDetalhe('${codEsc}')" title="Ver detalhes de ${esc(cod)}">
+      <div class="ppeca-head">
+        <div class="ppeca-col-cod">
+          <div class="ppeca-lbl">Código</div>
+          <div class="ppeca-cod">${esc(cod)}</div>
+          ${nm?`<div class="ppeca-cod-sub">${esc(nm)}</div>`:''}
+          ${robResumo?`<div class="ppeca-cod-sub">${robResumo}</div>`:''}
+        </div>
+        <div class="ppeca-col-spark">
+          <div class="ppeca-lbl">${sparkLabel}</div>
+          <div class="ppeca-spark">${sparkBars}</div>
+        </div>
+        <div class="ppeca-col-prop">
+          <div class="ppeca-lbl">Proporção</div>
+          <div class="ppeca-prop-bar"><div style="width:${pct}%;background:${corAcento}"></div></div>
+          <div class="ppeca-prop-pct">${pct}% do maior</div>
+        </div>
+        <div class="ppeca-col-tot">
+          <div class="ppeca-lbl">Total</div>
+          <div class="ppeca-tot" style="color:${corAcento}">${total.toLocaleString('pt-BR')}</div>
+          <div class="ppeca-ver">ver detalhes ›</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function _ppmAbrirDetalhe(cod){
+  const per=_ppmPeriodo(); const d=_ppmAgregar(per)[cod];
+  if(!d){ showToast('Sem dados para '+cod,true); return; }
+  const total=d.total, diasProd=Object.keys(d.porDia).length, horasRobo=d.horasRobo;
+  const mediaDia = diasProd>0?Math.round(total/diasProd):0;
+  const mediaHora = horasRobo>0?Math.round(total/horasRobo):0;
+  const mediaMin = horasRobo>0? +(total/(horasRobo*60)).toFixed(2):0;
+  // meta = média das metas dos robôs que produziram esta peça
+  const robosOrd=Object.entries(d.robos).sort((a,b)=>b[1]-a[1]);
+  const metaSum=robosOrd.reduce((s,[r])=>s+(parseInt((robos()[r]||{}).meta_hora)||0),0);
+  const meta = robosOrd.length? Math.round(metaSum/robosOrd.length) : 0;
+  const pctMeta = meta>0? Math.round(mediaHora/meta*100):null;
+  let melhorDia=null,piorDia=null;
+  Object.entries(d.porDia).forEach(([k,v])=>{ if(!melhorDia||v>melhorDia.v)melhorDia={k,v}; if(!piorDia||v<piorDia.v)piorDia={k,v}; });
+  let melhorHora=null;
+  Object.entries(d.porHora).forEach(([h,v])=>{ if(!melhorHora||v>melhorHora.v)melhorHora={h,v}; });
+  const fmtK=k=>{ const p=k.split('_').map(Number); return String(p[2]).padStart(2,'0')+'/'+String(p[1]+1).padStart(2,'0'); };
+  const kpi=(l,v,s,c)=>`<div class="ppd-kpi" style="--kc:${c}"><div class="ppd-kpi-l">${l}</div><div class="ppd-kpi-v">${v}</div><div class="ppd-kpi-s">${s}</div></div>`;
+  const kpis=[
+    kpi('Média por dia', mediaDia.toLocaleString('pt-BR'), diasProd+' dia'+(diasProd!==1?'s':'')+' produtivo'+(diasProd!==1?'s':''), 'var(--warn)'),
+    kpi('Média por hora', mediaHora.toLocaleString('pt-BR'), 'por robô ativo', 'var(--blue)'),
+    kpi('Média por minuto', String(mediaMin).replace('.',','), 'peça/min por robô', 'var(--purple)'),
+    kpi('Meta/hora', meta>0?meta.toLocaleString('pt-BR'):'—', pctMeta!=null?pctMeta+'% da meta atingido':'sem meta cadastrada', pctMeta==null?'var(--faint)':(pctMeta>=100?'var(--ok)':'#ff6a00')),
+    melhorDia?kpi('Melhor dia', melhorDia.v.toLocaleString('pt-BR'), fmtK(melhorDia.k), 'var(--ok)'):'',
+    (piorDia&&diasProd>1)?kpi('Menor dia', piorDia.v.toLocaleString('pt-BR'), fmtK(piorDia.k), 'var(--danger)'):'',
+    melhorHora?kpi('Melhor hora', melhorHora.v.toLocaleString('pt-BR'), 'às '+melhorHora.h, 'var(--ok)'):'',
+    kpi('Dias produtivos', diasProd+'/'+per.numDias, 'dias com produção', 'var(--blue)'),
+    kpi('Robôs', String(robosOrd.length), robosOrd.length===1?'único robô':'robôs envolvidos', 'var(--purple)')
+  ].filter(Boolean).join('');
+  const HORAS=[...HORAS_DIA,...HORAS_NOITE];
+  const mxH=Math.max(...HORAS.map(h=>d.porHora[h]||0),1);
+  const hbars=HORAS.map(h=>{ const v=d.porHora[h]||0; const cafe=ehCafe(h);
+    return `<div class="ppd-hbar"><div class="ppd-hbar-v">${v>0?v.toLocaleString('pt-BR'):''}</div><div class="ppd-hbar-fill${cafe?' cafe':''}" style="height:${v>0?Math.max(Math.round(v/mxH*54),3):2}px"></div><div class="ppd-hbar-h">${h}${cafe?' ☕':''}</div></div>`;
+  }).join('');
+  const robHTML = robosOrd.length ? `<div class="ppd-rob-grid">${robosOrd.map(([robo,qtd])=>{ const pctR=Math.round(qtd/total*100);
+    return `<div class="ppd-rob-card"><div class="ppd-rob-nome">⚙ Robô ${esc(robo)}</div><div class="ppd-rob-val">${qtd.toLocaleString('pt-BR')}</div><div class="ppd-rob-bar"><div style="width:${pctR}%"></div></div><div class="ppd-rob-pct">${pctR}% do total</div></div>`;
+  }).join('')}</div>` : '<div class="ppd-empty">Sem robôs.</div>';
+  let ov=document.getElementById('ppdOv');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='ppdOv'; ov.className='ppd-ov';
+    ov.addEventListener('click',e=>{ if(e.target===ov) _ppecaFecharDetalhe(); });
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape' && ov.classList.contains('open')) _ppecaFecharDetalhe(); });
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML=`<div class="ppd-card glass">
+    <div class="ppd-head"><div><div class="ppd-head-cod">${esc(cod)}</div><div class="ppd-head-sub">📅 ${esc(per.label)}${nomePeca(cod)?' · '+esc(nomePeca(cod)):''}</div></div><button type="button" class="ppd-head-x" onclick="_ppecaFecharDetalhe()">✕</button></div>
+    <div class="ppd-body">
+      <div class="ppd-hero"><div class="ppd-hero-v">${total.toLocaleString('pt-BR')}</div><div class="ppd-hero-l">peças produzidas no período</div></div>
+      <div class="ppd-kpis">${kpis}</div>
+      <div class="ppd-sec-t">⏱ Distribuição por hora</div>
+      <div class="ppd-hbars">${hbars}</div>
+      <div class="ppd-sec-t">⚙ Produção por robô</div>
+      ${robHTML}
+    </div></div>`;
+  ov.classList.add('open'); document.body.style.overflow='hidden';
+}
+function _ppecaFecharDetalhe(){ const ov=document.getElementById('ppdOv'); if(ov) ov.classList.remove('open'); document.body.style.overflow=''; }
 
 /* ============================================================
    PEÇAS — Cadastro e Catálogo

@@ -1381,10 +1381,20 @@ function parseTempoPeca(str){
 function calcRitmo(mh,tp){
   const meta=parseFloat(mh); const seg=parseTempoPeca(tp);
   if(!seg || seg<=0) return '—';
-  const pecasPorHora = Math.round(3600/seg);
-  if(!meta || meta<=0) return `${pecasPorHora} peças/h`;
-  const pct = Math.round((pecasPorHora/meta)*100);
-  return `${pecasPorHora} peças/h · ${pct}% da meta`;
+  if(!meta || meta<=0){
+    const pph = Math.round(3600/seg);
+    return `${pph} peças/h`;
+  }
+  const totalSeg = Math.round(meta*seg);         // tempo pra fazer <meta> peças
+  const fmt = s => { const m=Math.floor(s/60), r=s%60; return `${m}min${r>0?' '+r+'s':''}`; };
+  const totalTxt = fmt(totalSeg);
+  if(totalSeg <= 3600){
+    const folga = 3600 - totalSeg;
+    return `${meta} peças em ${totalTxt} · folga de ${fmt(folga)}`;
+  }
+  const excede = totalSeg - 3600;
+  const pph = Math.floor(3600/seg);
+  return `${meta} peças precisariam de ${totalTxt} · excede em ${fmt(excede)} (bate ${pph} pçs/h)`;
 }
 function registrarLimpeza(k){
   if(!isHost){ showToast("Apenas o HOST pode registrar",true); return; }

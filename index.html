@@ -856,16 +856,27 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 <!-- MODAL: Chamado de manutenção -->
 <div class="modal-bg" id="modalChamado">
   <div class="modal glass">
-    <h2 id="chTit">Chamado</h2>
+    <h2 id="chTit">Nova manutenção</h2>
     <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
       <div class="field"><label>Robô</label><select id="chRobo" class="inp"></select></div>
+      <div class="field"><label>Tipo</label><select id="chTipo" class="inp">
+        <option value="Corretiva">🔧 Corretiva</option>
+        <option value="Preventiva">🛡 Preventiva</option>
+        <option value="Preditiva">📊 Preditiva</option>
+        <option value="Melhoria">⬆ Melhoria</option></select></div>
       <div class="field"><label>Prioridade</label><select id="chPrio" class="inp">
-        <option>Baixa</option><option>Média</option><option>Alta</option><option>Urgente</option></select></div>
+        <option value="Baixa">🟢 Baixa</option>
+        <option value="Média" selected>🟡 Média</option>
+        <option value="Alta">🟠 Alta</option>
+        <option value="Urgente">🔴 Urgente</option></select></div>
+      <div class="field"><label>Data de abertura</label><input id="chData" placeholder="dd/mm/aaaa"></div>
     </div>
     <div class="field"><label>Título</label><input id="chTitulo" placeholder="Ex: Superaquecimento no painel"></div>
-    <div class="field"><label>Descrição</label><textarea id="chDesc" placeholder="Detalhes do problema"></textarea></div>
-    <div class="field"><label>Status</label><select id="chStatus" class="inp">
-      <option>Aberto</option><option>Em andamento</option><option>Concluído</option></select></div>
+    <div class="field"><label>Descrição do problema</label><textarea id="chDesc" placeholder="Descreva o problema encontrado..."></textarea></div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Peça / Componente afetado</label><input id="chPeca" placeholder="Ex: Tocha MIG, Servo motor eixo 1, Sensor..."></div>
+      <div class="field"><label>Responsável pela abertura</label><input id="chResp" placeholder="Nome de quem identificou"></div>
+    </div>
     <div class="modal-actions">
       <button type="button" class="btn danger" id="chExcluir" onclick="deleteChamado()" style="flex:0 0 auto;padding:0 16px">Excluir</button>
       <button type="button" class="btn ghost" onclick="closeModal('modalChamado')">Fechar</button>
@@ -974,7 +985,11 @@ function _ppSegunda(d){ const x=new Date(d.getFullYear(),d.getMonth(),d.getDate(
 let _ppmModo='mes', _ppmMes=new Date().getMonth(), _ppmAno=new Date().getFullYear();
 let _ppmDataDia=_ppHojeStr(), _ppmDataSemana=_ppHojeStr(), _ppmDataIni=_ppHojeStr(), _ppmDataFim=_ppHojeStr();
 
-let _manutFiltro = "todos", _manutRobo = "todos";
+let _manutFiltro = "pendentes", _manutRobo = "todos", _manutFiltroPrio = "todos";
+const MANU_TIPOS = ["Corretiva","Preventiva","Preditiva","Melhoria"];
+const MANU_TIPO_IC = {"Corretiva":"🔧","Preventiva":"🛡","Preditiva":"📊","Melhoria":"⬆"};
+const PRIO_IC = {"Baixa":"🟢","Média":"🟡","Alta":"🟠","Urgente":"🔴"};
+const PRIO_PESO = {"Urgente":0,"Alta":1,"Média":2,"Baixa":3};
 const PRIORIDADES = ["Baixa","Média","Alta","Urgente"];
 const PRIO_COR = {"Baixa":"var(--cyan)","Média":"var(--blue)","Alta":"var(--warn)","Urgente":"var(--danger)"};
 const MANUT_STATUS = ["Aberto","Em andamento","Concluído"];
@@ -2390,67 +2405,183 @@ function limparProducao(){ if(!isHost) return;
    MANUTENÇÃO — chamados por robô
    ============================================================ */
 function chamados(){ if(!dados.manutencao) dados.manutencao={chamados:[]}; if(!Array.isArray(dados.manutencao.chamados)) dados.manutencao.chamados=[]; return dados.manutencao.chamados; }
+function _isConcluido(c){ return c.status==="Concluído" || !!c.concluido_em; }
 function viewManutencao(){
   const lista=chamados();
-  const nAb=lista.filter(c=>c.status==="Aberto").length, nAnd=lista.filter(c=>c.status==="Em andamento").length, nCon=lista.filter(c=>c.status==="Concluído").length;
+  const nPend=lista.filter(c=>!_isConcluido(c)).length;
+  const nConc=lista.filter(c=>_isConcluido(c)).length;
+  const nTot=lista.length;
+  const taxa = nTot>0 ? Math.round((nConc/nTot)*100) : 100;
+  const taxaCor = taxa>=80?'var(--ok)':taxa>=50?'var(--ny)':'var(--danger)';
+
   let filtrada=lista.slice();
-  if(_manutFiltro!=="todos") filtrada=filtrada.filter(c=>c.status===_manutFiltro);
+  if(_manutFiltro==='pendentes') filtrada=filtrada.filter(c=>!_isConcluido(c));
+  else if(_manutFiltro==='concluidas') filtrada=filtrada.filter(c=>_isConcluido(c));
   if(_manutRobo!=="todos") filtrada=filtrada.filter(c=>String(c.robo)===_manutRobo);
-  const ordem={"Urgente":0,"Alta":1,"Média":2,"Baixa":3};
-  filtrada.sort((a,b)=>{ const sa=a.status==="Concluído"?1:0, sb=b.status==="Concluído"?1:0; if(sa!==sb) return sa-sb;
-    const pa=ordem[a.prioridade]??2, pb=ordem[b.prioridade]??2; if(pa!==pb) return pa-pb; return (b.criado||0)-(a.criado||0); });
+  if(_manutFiltroPrio!=="todos") filtrada=filtrada.filter(c=>(c.prioridade||"Média")===_manutFiltroPrio);
+  filtrada.sort((a,b)=>{
+    const da=_isConcluido(a)?1:0, db=_isConcluido(b)?1:0; if(da!==db) return da-db;
+    if(!da){ const pa=PRIO_PESO[a.prioridade]??2, pb=PRIO_PESO[b.prioridade]??2; if(pa!==pb) return pa-pb; }
+    return (b.criado||0)-(a.criado||0);
+  });
+
+  // KPI cards (clicáveis)
+  const kpis=[
+    {id:'pendentes', val:nPend,  lbl:'Pendentes',       cor:'var(--ny)',      corVar:'--ny'},
+    {id:'concluidas',val:nConc,  lbl:'Concluídas',      cor:'var(--ok)',      corVar:'--ok'},
+    {id:null,        val:taxa+'%',lbl:'Taxa Conclusão', cor:taxaCor},
+    {id:'todos',     val:nTot,   lbl:'Total Registros', cor:'var(--nc)',      corVar:'--nc'}
+  ];
+  const kpisHtml=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px">${
+    kpis.map(k=>{
+      const ativo=k.id && _manutFiltro===k.id;
+      const clickable=!!k.id;
+      return `<div ${clickable?`onclick="manuSetFiltro('${k.id}')"`:''} style="background:${ativo?'rgba(0,240,255,.08)':'rgba(10,14,28,.55)'};border:1px solid ${ativo?k.cor:'rgba(255,255,255,.08)'};border-radius:12px;padding:14px 16px;${clickable?'cursor:pointer;':''}transition:.2s">
+        <div style="font-size:30px;font-weight:900;color:${k.cor};font-family:Orbitron,sans-serif;line-height:1;text-shadow:0 0 10px ${k.cor}">${k.val}</div>
+        <div style="font-size:10.5px;color:${k.cor};font-weight:800;margin-top:6px;text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace">${k.lbl}</div>
+      </div>`;
+    }).join('')
+  }</div>`;
+
+  // Filtros (chips + selects)
+  const chips=[
+    {id:'pendentes', lbl:'Pendentes',  count:nPend, cor:'var(--ny)'},
+    {id:'concluidas',lbl:'Concluídas', count:nConc, cor:'var(--ok)'},
+    {id:'todos',     lbl:'Todas',      count:nTot,  cor:'var(--nc)'}
+  ];
+  const filtroHtml=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">${
+    chips.map(ch=>{const on=_manutFiltro===ch.id;
+      return `<button type="button" onclick="manuSetFiltro('${ch.id}')" style="background:${on?'rgba(0,240,255,.1)':'rgba(10,14,28,.55)'};border:1px solid ${on?ch.cor:'rgba(255,255,255,.08)'};color:${on?ch.cor:'var(--faint)'};border-radius:10px;padding:7px 13px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:'Share Tech Mono',monospace;letter-spacing:.06em">${ch.lbl}<span style="background:rgba(255,255,255,.06);border-radius:20px;padding:1px 8px;font-size:11px;font-family:Orbitron,sans-serif">${ch.count}</span></button>`;
+    }).join('')
+  }
+    <div style="width:1px;height:22px;background:rgba(255,255,255,.08);margin:0 4px"></div>
+    <select onchange="_manutRobo=this.value;_mainSig='';renderMain()" style="background:rgba(10,14,28,.55);border:1px solid rgba(255,255,255,.08);color:var(--txt);border-radius:10px;padding:7px 10px;font-size:12.5px;font-weight:700;cursor:pointer;outline:none;font-family:'Share Tech Mono',monospace">
+      <option value="todos">🤖 Todos os robôs</option>
+      ${Object.keys(robos()).sort((a,b)=>Number(a)-Number(b)).map(k=>`<option value="${k}" ${_manutRobo===k?'selected':''}>${esc(robos()[k].nome||("Robô "+k))}</option>`).join('')}
+    </select>
+    <select onchange="_manutFiltroPrio=this.value;_mainSig='';renderMain()" style="background:rgba(10,14,28,.55);border:1px solid rgba(255,255,255,.08);color:var(--txt);border-radius:10px;padding:7px 10px;font-size:12.5px;font-weight:700;cursor:pointer;outline:none;font-family:'Share Tech Mono',monospace">
+      <option value="todos" ${_manutFiltroPrio==='todos'?'selected':''}>⚑ Toda prioridade</option>
+      ${Object.keys(PRIO_IC).map(p=>`<option value="${p}" ${p===_manutFiltroPrio?'selected':''}>${PRIO_IC[p]} ${p}</option>`).join('')}
+    </select>
+    ${isHost?`<button type="button" class="btn primary tiny" onclick="openChamado()" style="margin-left:auto">+ Nova manutenção</button>`:''}
+  </div>`;
+
+  // Lista de cards
   let corpo;
-  if(!filtrada.length) corpo=`<div class="card glass empty"><svg viewBox="0 0 24 24">${IC.manut}</svg><div class="soon">${lista.length?'Nenhum chamado neste filtro':'Nenhum chamado de manutenção'}</div>${isHost?`<button type="button" class="btn primary tiny" onclick="openChamado()">+ Abrir chamado</button>`:''}</div>`;
-  else corpo=filtrada.map(c=>{ const pc=PRIO_COR[c.prioridade]||"var(--mut)", sc=MANUT_COR[c.status]||"var(--mut)"; const rob=robos()[String(c.robo)];
-    return `<div class="card glass mchamado" style="border-left:3px solid ${sc}">
-      <div class="mtop">
-        <span class="mbadge" style="color:${sc};border-color:${sc}55;background:${sc}18">${esc(c.status)}</span>
-        <span class="mprio" style="color:${pc}">● ${esc(c.prioridade||"—")}</span>
-        <span class="mrobo">${esc(rob?rob.nome:("Robô "+c.robo))}</span>
-        <span style="flex:1"></span>
-        <span class="mdata">${c.criado?new Date(c.criado).toLocaleDateString("pt-BR"):""}</span>
-        ${isHost?`<button type="button" class="icon-btn" title="Editar" onclick="openChamado('${c.id}')"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>`:''}
-      </div>
-      <div class="mtitulo">${esc(c.titulo||"(sem título)")}</div>
-      ${c.descricao?`<div class="mdesc">${esc(c.descricao)}</div>`:''}
-      ${isHost?`<div class="macts">${MANUT_STATUS.map(s=>`<button type="button" class="mstat ${s===c.status?'on':''}" style="${s===c.status?`color:${MANUT_COR[s]};border-color:${MANUT_COR[s]}`:''}" onclick="setChamadoStatus('${c.id}','${s}')">${s}</button>`).join("")}</div>`:''}
+  if(!filtrada.length){
+    const msg=_manutFiltro==='concluidas'?'Nenhuma manutenção concluída ainda.':_manutFiltro==='pendentes'?'Nenhuma manutenção pendente. Tudo em dia.':'Nenhuma manutenção registrada.';
+    corpo=`<div style="text-align:center;padding:48px 20px;border:1px dashed rgba(255,255,255,.1);border-radius:14px;background:rgba(10,14,28,.35)">
+      <div style="font-size:38px;margin-bottom:8px;opacity:.6">🛠️</div>
+      <div style="font-size:14px;font-weight:700;color:var(--faint);font-family:'Share Tech Mono',monospace">${msg}</div>
     </div>`;
-  }).join("");
-  const roboOpts=`<option value="todos">Todos os robôs</option>`+Object.keys(robos()).sort((a,b)=>Number(a)-Number(b)).map(k=>`<option value="${k}" ${_manutRobo===k?'selected':''}>${esc(robos()[k].nome||("Robô "+k))}</option>`).join("");
-  const statOpts=`<option value="todos" ${_manutFiltro==='todos'?'selected':''}>Todos os status</option>`+MANUT_STATUS.map(s=>`<option value="${s}" ${_manutFiltro===s?'selected':''}>${s}</option>`).join("");
-  return pageHead(IC.manut,"Manutenção","Chamados por robô", isHost?`<button type="button" class="btn primary tiny" onclick="openChamado()">+ Novo chamado</button>`:'')
-    + `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">
-        ${gerMetric("Abertos",nAb,"var(--danger)")}${gerMetric("Em andamento",nAnd,"var(--warn)")}${gerMetric("Concluídos",nCon,"var(--ok)")}</div>`
-    + `<div class="selrow card glass">
-        <div class="sel"><label>Status</label><select onchange="_manutFiltro=this.value;_mainSig='';renderMain()">${statOpts}</select></div>
-        <div class="sel"><label>Robô</label><select onchange="_manutRobo=this.value;_mainSig='';renderMain()">${roboOpts}</select></div></div>`
-    + corpo;
+  } else {
+    corpo=`<div style="display:flex;flex-direction:column;gap:10px">`+filtrada.map(c=>{
+      const done=_isConcluido(c);
+      const pc=PRIO_COR[c.prioridade]||"var(--faint)";
+      const barCor=done?'var(--ok)':pc;
+      const rob=robos()[String(c.robo)];
+      const tipoIc=MANU_TIPO_IC[c.tipo]||'🔧';
+      const dataAb=c.data||(c.criado?new Date(c.criado).toLocaleDateString("pt-BR"):'—');
+      const acoes=!isHost?'':(done
+        ? `<button type="button" class="btn ghost tiny" onclick="reabrirChamado('${c.id}')" style="border-color:rgba(0,240,255,.35);color:var(--nc)">↺ Reabrir</button>
+           <button type="button" class="btn ghost tiny" onclick="openChamado('${c.id}')" style="border-color:rgba(167,139,250,.35);color:#a78bfa">✏ Editar</button>
+           <button type="button" class="btn ghost tiny" onclick="deleteChamado('${c.id}')" style="border-color:rgba(255,43,94,.4);color:var(--danger)">🗑</button>`
+        : `<button type="button" class="btn primary tiny" onclick="concluirChamado('${c.id}')">✓ Concluir</button>
+           <button type="button" class="btn ghost tiny" onclick="openChamado('${c.id}')" style="border-color:rgba(167,139,250,.35);color:#a78bfa">✏ Editar</button>
+           <button type="button" class="btn ghost tiny" onclick="deleteChamado('${c.id}')" style="border-color:rgba(255,43,94,.4);color:var(--danger)">🗑</button>`);
+      return `<div style="display:flex;background:rgba(10,14,28,.6);border:1px solid ${done?'rgba(0,255,174,.22)':_prioBd(c.prioridade)};border-radius:14px;overflow:hidden;box-shadow:0 0 12px ${done?'rgba(0,255,174,.06)':'rgba(0,240,255,.05)'}">
+        <div style="width:5px;background:${barCor};box-shadow:0 0 8px ${barCor};flex-shrink:0"></div>
+        <div style="flex:1;padding:14px 16px;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+            <span style="display:flex;align-items:center;gap:6px;background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.35);border-radius:8px;padding:4px 10px">
+              <span style="font-size:13px;font-weight:900;color:var(--nc);font-family:Orbitron,sans-serif">${esc(c.robo)}</span>
+              <span style="font-size:9px;font-weight:800;color:var(--nc);letter-spacing:.1em;font-family:'Share Tech Mono',monospace">FANUC</span>
+            </span>
+            ${c.tipo?`<span style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:3px 9px;font-size:11px;color:var(--faint);font-weight:700;font-family:'Share Tech Mono',monospace">${tipoIc} ${esc(c.tipo)}</span>`:''}
+            <span style="background:${_prioBg(c.prioridade)};border:1px solid ${_prioBd(c.prioridade)};border-radius:6px;padding:3px 9px;font-size:11px;color:${pc};font-weight:800;font-family:'Share Tech Mono',monospace">${PRIO_IC[c.prioridade]||''} ${esc(c.prioridade||'Média')}</span>
+            <span style="margin-left:auto;font-size:11px;font-weight:800;color:${done?'var(--ok)':'var(--ny)'};display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace"><span style="width:8px;height:8px;border-radius:50%;background:${done?'var(--ok)':'var(--ny)'};box-shadow:0 0 6px ${done?'var(--ok)':'var(--ny)'}"></span>${done?'CONCLUÍDA':'PENDENTE'}</span>
+          </div>
+          <div style="font-size:15px;font-weight:800;color:${done?'var(--faint)':'var(--txt)'};line-height:1.35;${done?'text-decoration:line-through':''}">${esc(c.titulo||c.descricao||"(sem título)")}</div>
+          ${c.descricao && c.titulo?`<div style="font-size:12.5px;color:var(--faint);margin-top:6px;line-height:1.4">${esc(c.descricao)}</div>`:''}
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--faint);font-family:'Share Tech Mono',monospace">
+            ${c.peca?`<span>🔩 <b style="color:var(--nc);font-weight:700">${esc(c.peca)}</b></span>`:''}
+            <span>📅 ${esc(dataAb)}</span>
+            ${c.responsavel?`<span>👤 ${esc(c.responsavel)}</span>`:''}
+            ${done&&c.data_conclusao?`<span style="color:var(--ok)">✓ ${esc(c.data_conclusao)}${c.realizado_por?' · '+esc(c.realizado_por):''}</span>`:''}
+            ${done&&c.tempo_parada?`<span style="color:var(--ny)">⏱ ${esc(c.tempo_parada)} min</span>`:''}
+          </div>
+          ${done&&c.como_foi?`<div style="font-size:12px;color:var(--faint);margin-top:8px;padding:8px 11px;background:rgba(0,255,174,.05);border-radius:8px;border-left:3px solid rgba(0,255,174,.45)"><b style="color:var(--ok)">Como foi:</b> ${esc(c.como_foi)}${c.pecas_trocadas?` · <b style="color:var(--txt)">Peças:</b> ${esc(c.pecas_trocadas)}`:''}</div>`:''}
+          ${acoes?`<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">${acoes}</div>`:''}
+        </div>
+      </div>`;
+    }).join('')+`</div>`;
+  }
+
+  return pageHead(IC.manut,"Manutenção","Gestão de manutenção preventiva e corretiva")
+    + kpisHtml + filtroHtml + corpo;
 }
+function manuSetFiltro(f){ _manutFiltro=f; _mainSig=""; renderMain(); }
+const _PRIO_RGB = {"Baixa":"0,240,255","Média":"61,158,255","Alta":"255,179,0","Urgente":"255,43,94"};
+function _prioBg(p){ const rgb=_PRIO_RGB[p]||"255,255,255"; return `rgba(${rgb},.1)`; }
+function _prioBd(p){ const rgb=_PRIO_RGB[p]||"255,255,255"; return `rgba(${rgb},.4)`; }
 let _chamEdit=null;
 function openChamado(id){ if(!isHost) return; _chamEdit=id||null; const c=id?chamados().find(x=>x.id===id):null;
   const rsel=document.getElementById("chRobo"); rsel.innerHTML=Object.keys(robos()).sort((a,b)=>Number(a)-Number(b)).map(k=>`<option value="${k}">${esc(robos()[k].nome||("Robô "+k))}</option>`).join("");
   rsel.value=c?String(c.robo):String(ROBOS[0]);
   document.getElementById("chTitulo").value=(c&&c.titulo)||"";
   document.getElementById("chDesc").value=(c&&c.descricao)||"";
+  document.getElementById("chTipo").value=(c&&c.tipo)||"Corretiva";
   document.getElementById("chPrio").value=(c&&c.prioridade)||"Média";
-  document.getElementById("chStatus").value=(c&&c.status)||"Aberto";
-  document.getElementById("chTit").textContent=id?"Editar chamado":"Novo chamado";
+  document.getElementById("chData").value=(c&&c.data)||new Date().toLocaleDateString("pt-BR");
+  document.getElementById("chPeca").value=(c&&c.peca)||"";
+  document.getElementById("chResp").value=(c&&c.responsavel)||"";
+  document.getElementById("chTit").textContent=id?"Editar manutenção":"Nova manutenção";
   document.getElementById("chExcluir").style.display=id?"":"none";
   openModal("modalChamado");
 }
 function saveChamado(){ if(!isHost) return;
-  const titulo=document.getElementById("chTitulo").value.trim(); if(!titulo){ showToast("Informe o título",true); return; }
-  const obj={ robo:document.getElementById("chRobo").value, titulo, descricao:document.getElementById("chDesc").value.trim(),
-    prioridade:document.getElementById("chPrio").value, status:document.getElementById("chStatus").value };
+  const titulo=document.getElementById("chTitulo").value.trim();
+  const desc=document.getElementById("chDesc").value.trim();
+  if(!titulo && !desc){ showToast("Informe o título ou a descrição",true); return; }
+  const obj={
+    robo:document.getElementById("chRobo").value,
+    titulo, descricao:desc,
+    tipo:document.getElementById("chTipo").value,
+    prioridade:document.getElementById("chPrio").value,
+    data:document.getElementById("chData").value.trim(),
+    peca:document.getElementById("chPeca").value.trim(),
+    responsavel:document.getElementById("chResp").value.trim()
+  };
   if(_chamEdit){ const c=chamados().find(x=>x.id===_chamEdit); if(c) Object.assign(c,obj); }
-  else { obj.id="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); obj.criado=Date.now(); chamados().push(obj); }
-  closeModal("modalChamado"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Chamado salvo",false,true));
+  else { obj.id="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); obj.criado=Date.now(); obj.status="Aberto"; chamados().push(obj); }
+  closeModal("modalChamado"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Manutenção salva",false,true));
+}
+function concluirChamado(id){ if(!isHost) return;
+  const c=chamados().find(x=>x.id===id); if(!c) return;
+  const como=prompt("Como foi resolvida a manutenção?",""); if(como===null) return;
+  const pecas=prompt("Peças trocadas (opcional, pode deixar vazio):",""); if(pecas===null) return;
+  const tempo=prompt("Tempo de parada em minutos (opcional):",""); if(tempo===null) return;
+  const por=prompt("Realizado por (nome):",c.responsavel||""); if(por===null) return;
+  c.status="Concluído";
+  c.concluido_em=Date.now();
+  c.data_conclusao=new Date().toLocaleDateString("pt-BR");
+  c.como_foi=como.trim();
+  c.pecas_trocadas=pecas.trim();
+  c.tempo_parada=tempo.trim();
+  c.realizado_por=por.trim();
+  _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Manutenção concluída ✓",false,true));
+}
+function reabrirChamado(id){ if(!isHost) return;
+  const c=chamados().find(x=>x.id===id); if(!c) return;
+  if(!confirm("Reabrir esta manutenção?")) return;
+  c.status="Aberto"; delete c.concluido_em; delete c.data_conclusao; delete c.como_foi; delete c.pecas_trocadas; delete c.tempo_parada; delete c.realizado_por;
+  _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Manutenção reaberta",false,true));
 }
 function setChamadoStatus(id,s){ if(!isHost) return; const c=chamados().find(x=>x.id===id); if(!c) return;
-  c.status=s; if(s==="Concluído") c.concluido=Date.now(); _mainSig=""; renderMain(); saveDebounced(); }
+  c.status=s; if(s==="Concluído") c.concluido_em=Date.now(); _mainSig=""; renderMain(); saveDebounced(); }
 function deleteChamado(id){ if(!isHost) return; id=id||_chamEdit; if(!id) return;
-  if(!confirm("Excluir este chamado?")) return;
-  dados.manutencao.chamados=chamados().filter(x=>x.id!==id); closeModal("modalChamado"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Chamado excluído",false,true)); }
+  if(!confirm("Excluir esta manutenção?")) return;
+  dados.manutencao.chamados=chamados().filter(x=>x.id!==id); closeModal("modalChamado"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Manutenção excluída",false,true)); }
 
 /* ============================================================
    MAPA DOS ROBÔS — chão de fábrica

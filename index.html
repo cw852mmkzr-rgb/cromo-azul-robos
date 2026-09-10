@@ -1219,6 +1219,28 @@ function viewRobot(k){
     </div>
   </div>`;
 
+  // ── Limpeza do Robô e Célula ──
+  const histLimp=Array.isArray(c.historico_limpeza)?c.historico_limpeza:[];
+  const ultLimp=c.ultima_limpeza||'';
+  const respLimp=histLimp.length?histLimp[histLimp.length-1].responsavel||'—':'';
+  html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24"><path d="M3 3l18 18M14.7 6.3a4 4 0 0 0-5.4 5.4l-6 6a2 2 0 1 0 2.8 2.8l6-6"/></svg>Limpeza do Robô e Célula${isHost?` <button type="button" class="btn primary tiny" onclick="registrarLimpeza('${k}')" style="margin-left:auto">+ Registrar limpeza agora</button>`:''}</h3>
+    <div class="grid">
+      <div class="field"><label>Última limpeza registrada</label><div class="val" style="color:var(--nc)">${ultLimp?esc(ultLimp):"—"}</div></div>
+      <div class="field"><label>Realizado por</label><div class="val">${respLimp?esc(respLimp):"—"}</div></div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.06)">📋 Histórico de limpezas (${histLimp.length})</div>
+      <div style="max-height:180px;overflow-y:auto">
+        ${histLimp.length?[...histLimp].reverse().map((h,i)=>`
+          <div class="hist-item" style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">
+            <span style="color:var(--nc);min-width:140px;font-family:'Share Tech Mono',monospace">📅 ${esc(h.data||"")}</span>
+            <span style="flex:1;color:var(--txt)">🧹 ${esc(h.responsavel||"—")}${h.obs?` <span style="color:var(--faint);font-size:11px">${esc(h.obs)}</span>`:""}</span>
+            ${isHost?`<button type="button" onclick="removerHistLimpeza('${k}',${histLimp.length-1-i})" style="background:none;border:1px solid rgba(255,43,94,.35);color:var(--danger);border-radius:4px;width:22px;height:22px;cursor:pointer;font-size:11px">✕</button>`:""}
+          </div>`).join(""):`<div class="hist-empty" style="color:var(--faint);font-size:12px;padding:8px 0">Nenhuma limpeza registrada.</div>`}
+      </div>
+    </div>
+  </div>`;
+
   // ── Restante do GRUPOS (Operação, Parâmetros de Solda, Equipe, Observações) ──
   GRUPOS.slice(1).forEach(g=>{
     html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24">${g.ico}</svg>${g.titulo}</h3><div class="grid">`;
@@ -1230,8 +1252,146 @@ function viewRobot(k){
       html+=`</div>`; });
     html+=`</div></div>`;
   });
+
+  // ── Ritmo por peça / hora ──
+  const ritmo=calcRitmo(c.meta_hora,c.tempo_peca);
+  html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Ritmo de Produção</h3>
+    <div class="grid">
+      <div class="field"><label>🎯 Meta por hora (peças)</label>${isHost?`<input type="number" value="${c.meta_hora||0}" onchange="setField('${k}','meta_hora',this.value)">`:`<div class="val">${c.meta_hora||"—"}</div>`}</div>
+      <div class="field"><label>📊 Ritmo por peça / hora</label><div class="val" style="color:var(--ok);font-weight:800;font-family:Orbitron,sans-serif">${ritmo}</div></div>
+    </div>
+  </div>`;
+
+  // ── Alertas ──
+  const alertas=Array.isArray(c.alertas)?c.alertas:[];
+  html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Alertas${isHost?` <button type="button" class="btn ghost tiny" onclick="addAlert('${k}')" style="margin-left:auto">+ Adicionar</button>`:''}</h3>
+    <div style="margin-top:6px">
+      ${alertas.length?alertas.map((a,i)=>`
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          ${isHost?`<input value="${esc(a)}" onchange="updAlert('${k}',${i},this.value)" style="flex:1;background:rgba(255,179,0,.06);border:1px solid rgba(255,179,0,.35);color:var(--ny);padding:8px 12px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:12.5px">
+          <button type="button" onclick="delAlert('${k}',${i})" style="background:none;border:1px solid rgba(255,43,94,.35);color:var(--danger);border-radius:4px;width:26px;height:26px;cursor:pointer;font-size:11px">✕</button>`
+          :`<span style="flex:1;color:var(--ny);font-family:'Share Tech Mono',monospace;font-size:12.5px;padding:8px 12px;background:rgba(255,179,0,.06);border:1px solid rgba(255,179,0,.2);border-radius:6px">${esc(a)}</span>`}
+        </div>`).join(""):`<div style="font-size:12px;color:var(--faint);padding:6px 0">Nenhum alerta</div>`}
+    </div>
+  </div>`;
+
+  // ── Histórico de Produção (via Metas Diárias) ──
+  html+=renderHistoricoRobo(k);
+
   return html;
 }
+
+function renderHistoricoRobo(k){
+  const md=prod().metas_dias||{};
+  const registros=[];
+  Object.entries(md).forEach(([chave,dia])=>{
+    const p=chave.split('_').map(Number); if(p.length!==3) return;
+    const rd=dia[k]||{};
+    const tDia=HORAS_DIA.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]||'').num,0);
+    const tNoi=HORAS_NOITE.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]||'').num,0);
+    const total=tDia+tNoi;
+    if(total===0) return;
+    registros.push({chave,ano:p[0],mes:p[1],dia:p[2],cod:rd.cod||'—',totalDia:tDia,totalNoite:tNoi,totalGeral:total});
+  });
+  if(!registros.length){
+    return `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.anual}</svg>Histórico de Produção — Robô ${esc(k)}</h3>
+      <div style="font-size:12px;color:var(--faint);padding:8px 0">Nenhum registro ainda. Os dados vêm automaticamente das Metas Diárias.</div>
+    </div>`;
+  }
+  registros.sort((a,b)=>b.ano!==a.ano?b.ano-a.ano:b.mes!==a.mes?b.mes-a.mes:b.dia-a.dia);
+  const maxTot=Math.max(...registros.map(r=>r.totalGeral),1);
+  const acum=registros.reduce((s,r)=>s+r.totalGeral,0);
+  const media=Math.round(acum/registros.length);
+  const melhor=registros.reduce((b,r)=>r.totalGeral>b.totalGeral?r:b,registros[0]);
+  const meta=parseInt(robos()[k]?.meta_hora)||0; const metaDia=meta*(HORAS_DIA.length+HORAS_NOITE.length);
+  const linhas=registros.map(r=>{
+    const pct=Math.round(r.totalGeral/maxTot*100);
+    const atingiu=metaDia>0 && r.totalGeral>=metaDia;
+    const cor=atingiu?'var(--ok)':(metaDia>0?'var(--danger)':'var(--txt)');
+    const dataFmt=`${String(r.dia).padStart(2,'0')}/${String(r.mes+1).padStart(2,'0')}/${r.ano}`;
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+      <td style="padding:8px 10px;font-size:12px;color:var(--faint);white-space:nowrap;font-family:'Share Tech Mono',monospace">${dataFmt}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--txt);white-space:nowrap;font-family:'Share Tech Mono',monospace">${esc(r.cod)}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--ok);text-align:center;font-family:Orbitron,sans-serif;font-weight:700">${r.totalDia||'—'}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--purple,#a78bfa);text-align:center;font-family:Orbitron,sans-serif;font-weight:700">${r.totalNoite||'—'}</td>
+      <td style="padding:8px 10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;background:rgba(255,255,255,.06);border-radius:99px;height:5px;min-width:60px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${cor};box-shadow:0 0 5px ${cor};border-radius:99px"></div>
+          </div>
+          <span style="font-size:13px;font-weight:900;color:${cor};min-width:44px;text-align:right;font-family:Orbitron,sans-serif">${r.totalGeral}</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  return `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.anual}</svg>Histórico de Produção — Robô ${esc(k)} <span style="font-size:10px;color:var(--faint);font-family:'Share Tech Mono',monospace;margin-left:auto">${registros.length} DIA(S)</span></h3>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+      <div style="background:rgba(0,255,174,.06);border:1px solid rgba(0,255,174,.25);border-radius:10px;padding:12px 14px">
+        <div style="font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;font-family:'Share Tech Mono',monospace;margin-bottom:4px">Total acumulado</div>
+        <div style="font-size:24px;font-weight:900;color:var(--ok);font-family:Orbitron,sans-serif">${acum.toLocaleString("pt-BR")}</div>
+      </div>
+      <div style="background:rgba(0,240,255,.06);border:1px solid rgba(0,240,255,.25);border-radius:10px;padding:12px 14px">
+        <div style="font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;font-family:'Share Tech Mono',monospace;margin-bottom:4px">Média diária</div>
+        <div style="font-size:24px;font-weight:900;color:var(--nc);font-family:Orbitron,sans-serif">${media.toLocaleString("pt-BR")}</div>
+      </div>
+      <div style="background:rgba(249,248,113,.06);border:1px solid rgba(249,248,113,.28);border-radius:10px;padding:12px 14px">
+        <div style="font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;font-family:'Share Tech Mono',monospace;margin-bottom:4px">Melhor dia</div>
+        <div style="font-size:24px;font-weight:900;color:var(--ny);font-family:Orbitron,sans-serif">${melhor.totalGeral.toLocaleString("pt-BR")}</div>
+        <div style="font-size:11px;color:var(--faint);margin-top:3px;font-family:'Share Tech Mono',monospace">${String(melhor.dia).padStart(2,'0')}/${String(melhor.mes+1).padStart(2,'0')}/${melhor.ano}</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid rgba(255,255,255,.06);border-radius:10px;overflow:hidden;max-height:340px;overflow-y:auto">
+      <table style="border-collapse:collapse;width:100%;min-width:440px">
+        <thead>
+          <tr style="background:rgba(0,0,0,.35);position:sticky;top:0">
+            <th style="padding:9px 10px;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;text-align:left;font-weight:700;font-family:'Share Tech Mono',monospace">Data</th>
+            <th style="padding:9px 10px;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;text-align:left;font-weight:700;font-family:'Share Tech Mono',monospace">Cód. Peça</th>
+            <th style="padding:9px 10px;font-size:10px;color:var(--ok);text-transform:uppercase;letter-spacing:.1em;text-align:center;font-weight:700;font-family:'Share Tech Mono',monospace">☀ Dia</th>
+            <th style="padding:9px 10px;font-size:10px;color:var(--purple,#a78bfa);text-transform:uppercase;letter-spacing:.1em;text-align:center;font-weight:700;font-family:'Share Tech Mono',monospace">🌙 Noite</th>
+            <th style="padding:9px 10px;font-size:10px;color:var(--ny);text-transform:uppercase;letter-spacing:.1em;text-align:left;font-weight:700;font-family:'Share Tech Mono',monospace">Total Geral</th>
+          </tr>
+        </thead>
+        <tbody>${linhas}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function parseTempoPeca(str){
+  if(!str||str==='—') return null; str=String(str).trim();
+  const ms=str.match(/(\d+)\s*min\s*(\d*)\s*s?/i); if(ms) return parseInt(ms[1])*60+(parseInt(ms[2])||0);
+  const co=str.match(/^(\d+):(\d{2})$/); if(co) return parseInt(co[1])*60+parseInt(co[2]);
+  const sg=str.match(/^(\d+)\s*s$/i); if(sg) return parseInt(sg[1]);
+  const nm=parseFloat(str); if(!isNaN(nm)) return Math.round(nm*60); return null;
+}
+function calcRitmo(mh,tp){
+  const mn=parseFloat(mh); const st=parseTempoPeca(tp);
+  if(!mn||mn<=0||!st) return '—';
+  const d=3600/mn; const ef=Math.round((st/d)*100);
+  const m=Math.floor(d/60); const s=Math.round(d%60);
+  return `${m>0?m+'min ':''}${s>0?s+'s':''} / peça (${ef}% do tempo)`.trim();
+}
+function registrarLimpeza(k){
+  if(!isHost){ showToast("Apenas o HOST pode registrar",true); return; }
+  const c=robos()[k]; if(!c) return;
+  const resp=prompt("Quem realizou a limpeza?",""); if(resp===null) return;
+  const obs=prompt("Observações (opcional, pode deixar vazio)",""); if(obs===null) return;
+  if(!c.historico_limpeza) c.historico_limpeza=[];
+  const agora=new Date().toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  c.historico_limpeza.push({data:agora,responsavel:resp.trim()||'—',obs:obs.trim()});
+  c.ultima_limpeza=agora;
+  _mainSig=""; renderMain();
+  saveToAPI().then(()=>showToast("Limpeza registrada ✓",false,true));
+}
+function removerHistLimpeza(k,idx){
+  if(!isHost) return;
+  const c=robos()[k]; if(!c.historico_limpeza) return;
+  c.historico_limpeza.splice(idx,1);
+  _mainSig=""; renderMain(); saveToAPI();
+}
+function addAlert(k){ if(!isHost) return; const c=robos()[k]; if(!c.alertas) c.alertas=[]; c.alertas.push("Novo alerta"); _mainSig=""; renderMain(); saveToAPI(); }
+function updAlert(k,i,v){ if(!isHost) return; const c=robos()[k]; if(!c.alertas) return; c.alertas[i]=v; saveDebounced(); }
+function delAlert(k,i){ if(!isHost) return; const c=robos()[k]; if(!c.alertas) return; c.alertas.splice(i,1); _mainSig=""; renderMain(); saveToAPI(); }
 
 let _selRobo=null;
 function calcDesgaste(k){

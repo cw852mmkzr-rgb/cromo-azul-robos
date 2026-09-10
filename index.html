@@ -1379,11 +1379,12 @@ function parseTempoPeca(str){
   const nm=parseFloat(str); if(!isNaN(nm)) return Math.round(nm*60); return null;
 }
 function calcRitmo(mh,tp){
-  const mn=parseFloat(mh); const st=parseTempoPeca(tp);
-  if(!mn||mn<=0||!st) return '—';
-  const d=3600/mn; const ef=Math.round((st/d)*100);
-  const m=Math.floor(d/60); const s=Math.round(d%60);
-  return `${m>0?m+'min ':''}${s>0?s+'s':''} / peça (${ef}% do tempo)`.trim();
+  const meta=parseFloat(mh); const seg=parseTempoPeca(tp);
+  if(!seg || seg<=0) return '—';
+  const pecasPorHora = Math.round(3600/seg);
+  if(!meta || meta<=0) return `${pecasPorHora} peças/h`;
+  const pct = Math.round((pecasPorHora/meta)*100);
+  return `${pecasPorHora} peças/h · ${pct}% da meta`;
 }
 function registrarLimpeza(k){
   if(!isHost){ showToast("Apenas o HOST pode registrar",true); return; }

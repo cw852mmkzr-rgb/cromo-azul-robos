@@ -1394,7 +1394,7 @@ function calcRitmo(mh,tp){
   if(!mn||mn<=0||!st) return '—';
   const d=3600/mn; const ef=Math.round((st/d)*100);
   const m=Math.floor(d/60); const s=Math.round(d%60);
-  return `${m>0?m+'min ':''}${s>0?s+'s':''} por peça (${ef}% do tempo)`.trim();
+  return `${m>0?m+'min ':''}${s>0?s+'s':''} por peça · ${ef}% do tempo`.trim();
 }
 function registrarLimpeza(k){
   if(!isHost){ showToast("Apenas o HOST pode registrar",true); return; }

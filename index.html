@@ -850,9 +850,18 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
     <input type="file" id="imgCameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImgUpload(this.files[0]);this.value=''">
     <div class="field"><label>Código</label><input id="pkCod" placeholder="Ex: 50698"></div>
     <div class="field"><label>Nome</label><input id="pkNome" placeholder="Nome da peça"></div>
+    <div class="field"><label>Cliente</label><input id="pkCliente" placeholder="Cliente"></div>
     <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
-      <div class="field"><label>Cliente</label><input id="pkCliente" placeholder="Cliente"></div>
+      <div class="field"><label>Tempo/peça</label><input id="pkTempoPeca" placeholder="Ex: 45s"></div>
+      <div class="field"><label>Meta/hora</label><input id="pkMetaHora" type="number" placeholder="Ex: 80"></div>
+      <div class="field"><label>Corrente</label><input id="pkCorrente" placeholder="Ex: 3,40Ka"></div>
+      <div class="field"><label>Pré-pressão</label><input id="pkPrePressao" placeholder="Ex: 120"></div>
       <div class="field"><label>Pontos de solda</label><input id="pkPontos" placeholder="Ex: 13"></div>
+      <div class="field"><label>Tipo de eletrodo</label><input id="pkTipoEletrodo" placeholder="Ex: F1"></div>
+      <div class="field"><label>Tempo de solda</label><input id="pkTempoSolda" placeholder="Ex: 140"></div>
+      <div class="field"><label>Turno</label><input id="pkTurno" placeholder="Ex: 07:00 às 22:00"></div>
+      <div class="field"><label>Pares de gabarito</label><input id="pkGabarito" placeholder="Ex: 4"></div>
+      <div class="field"><label>Responsável técnico</label><input id="pkResp" placeholder="Nome"></div>
     </div>
     <div class="field"><label>Descrição</label><textarea id="pkDesc" placeholder="Observações"></textarea></div>
     <div class="modal-actions">
@@ -2318,15 +2327,26 @@ function viewCatalogoPecas(){
 
 /* modal add/edit peça */
 let _pecaEdit=null, _pecaFoto="";
+const _PECA_CAMPOS=["pkCod","pkNome","pkCliente","pkTempoPeca","pkMetaHora","pkCorrente","pkPrePressao","pkPontos","pkTipoEletrodo","pkTempoSolda","pkTurno","pkGabarito","pkResp","pkDesc"];
 function openPeca(cod){
   _pecaEdit=cod||null; const p=cod?pecasObj()[cod]:null; _pecaFoto=(p&&p.foto)||"";
-  document.getElementById("pkCod").value=cod||""; document.getElementById("pkCod").disabled=!!cod;
+  document.getElementById("pkCod").value=cod||"";
   document.getElementById("pkNome").value=(p&&p.nome)||"";
   document.getElementById("pkCliente").value=(p&&p.cliente)||"";
+  document.getElementById("pkTempoPeca").value=(p&&p.tempo_peca)||"";
+  document.getElementById("pkMetaHora").value=(p&&p.meta_hora)||"";
+  document.getElementById("pkCorrente").value=(p&&p.corrente)||"";
+  document.getElementById("pkPrePressao").value=(p&&p.pre_pressao)||"";
   document.getElementById("pkPontos").value=(p&&p.pontos)||"";
+  document.getElementById("pkTipoEletrodo").value=(p&&p.tipo_eletrodo)||"";
+  document.getElementById("pkTempoSolda").value=(p&&p.tempo_solda)||"";
+  document.getElementById("pkTurno").value=(p&&p.turno)||"";
+  document.getElementById("pkGabarito").value=(p&&p.gabarito)||"";
+  document.getElementById("pkResp").value=(p&&p.responsavel)||"";
   document.getElementById("pkDesc").value=(p&&p.descricao)||"";
   document.getElementById("pkTitulo").textContent=cod?("Peça "+cod):"Nova Peça";
-  const canEdit=isHost; ["pkCod","pkNome","pkCliente","pkPontos","pkDesc"].forEach(id=>document.getElementById(id).disabled=(id==="pkCod"?!!cod:!canEdit));
+  const canEdit=isHost;
+  _PECA_CAMPOS.forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=(id==="pkCod"?!!cod:!canEdit); });
   document.getElementById("pkFotoBtn").style.display=canEdit?"":"none";
   document.getElementById("pkSalvar").style.display=canEdit?"":"none";
   document.getElementById("pkExcluir").style.display=(canEdit&&cod)?"":"none";
@@ -2348,8 +2368,16 @@ function savePeca(){ if(!isHost) return;
   let cod=(_pecaEdit||document.getElementById("pkCod").value).trim().toUpperCase();
   if(!cod){ showToast("Informe o código da peça",true); return; }
   if(!_pecaEdit && pecasObj()[cod]){ showToast("Já existe uma peça com esse código",true); return; }
-  pecasObj()[cod]={ nome:document.getElementById("pkNome").value.trim(), cliente:document.getElementById("pkCliente").value.trim(),
-    pontos:document.getElementById("pkPontos").value.trim(), descricao:document.getElementById("pkDesc").value.trim(), foto:_pecaFoto||"" };
+  const g=id=>document.getElementById(id).value.trim();
+  pecasObj()[cod]={
+    nome:g("pkNome"), cliente:g("pkCliente"),
+    tempo_peca:g("pkTempoPeca"), meta_hora:g("pkMetaHora"),
+    corrente:g("pkCorrente"), pre_pressao:g("pkPrePressao"),
+    pontos:g("pkPontos"), tipo_eletrodo:g("pkTipoEletrodo"),
+    tempo_solda:g("pkTempoSolda"), turno:g("pkTurno"),
+    gabarito:g("pkGabarito"), responsavel:g("pkResp"),
+    descricao:g("pkDesc"), foto:_pecaFoto||""
+  };
   closeModal("modalPeca"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Peça salva",false,true));
 }
 function deletePeca(cod){ if(!isHost) return;

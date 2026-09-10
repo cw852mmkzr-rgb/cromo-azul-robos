@@ -1598,22 +1598,174 @@ function selMesAnoRow(){
 
 /* ---------- RELATÓRIO ANUAL ---------- */
 function viewRelAnual(){
-  const meses=[]; let totalAno=0,melhor={m:-1,v:0};
-  for(let m=0;m<12;m++){ const t=datasDoMes(selAno,m).reduce((s,[a,mm,d])=>s+totalDia(a,mm,d),0); meses.push(t); totalAno+=t; if(t>melhor.v) melhor={m,v:t}; }
-  const mesesComProd=meses.filter(t=>t>0).length; const mediaMes=mesesComProd?Math.round(totalAno/mesesComProd):0;
-  const maxMes=Math.max(1,...meses);
-  const porRobo=aggPorRobo(datasDoAno(selAno)); const robosItems=ROBOS.map(r=>({label:nomeRoboCurto(r),val:porRobo[r]})).sort((a,b)=>b.val-a.val);
-  const bars=meses.map((t,i)=>`<div class="ybar"><div class="yb"><i style="height:${Math.round((t/maxMes)*100)}%"></i></div>
-    <div class="yv">${t>0?t.toLocaleString("pt-BR"):''}</div><div class="ym">${MESES[i].slice(0,3)}</div></div>`).join("");
-  return pageHead(IC.anual,"Relatório Anual","Ano de "+selAno)
-    + `<div class="selrow card glass"><div class="sel"><label>Ano</label><select onchange="setPeriodo('ano',+this.value)">${anosOpts()}</select></div></div>`
-    + `<div class="kpi card glass"><div><div class="lbl">Total do ano</div><div class="big">${totalAno.toLocaleString("pt-BR")}</div></div>
-        <div style="display:flex;gap:22px;flex-wrap:wrap;text-align:right">
-          <div><div class="lbl">Média/mês</div><div class="side"><div class="n">${mediaMes.toLocaleString("pt-BR")}</div></div></div>
-          <div><div class="lbl">Melhor mês</div><div class="side"><div class="n" style="color:var(--cyan)">${melhor.m>=0&&melhor.v?MESES[melhor.m].slice(0,3):'—'}</div></div></div>
-        </div></div>`
-    + `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.anual}</svg>Produção por mês</h3><div class="ygrid">${bars}</div></div>`
-    + `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.robot}</svg>Produção por robô no ano</h3>${barList(robosItems)}</div>`;
+  const anoAtual=new Date().getFullYear(); const anoSel=selAno;
+  const md=prod().metas_dias||{};
+  // mesData[mes] = { totalGeral, totalDia, totalNoite, dias:Set, robos:{r:{total,dias}}, pecas:{cod:total} }
+  const mesData={};
+  Object.entries(md).forEach(([chave,diaData])=>{
+    const p=chave.split('_').map(Number); if(p.length!==3) return;
+    const [a,m]=p; if(a!==anoSel) return;
+    if(!mesData[m]) mesData[m]={totalGeral:0,totalDia:0,totalNoite:0,dias:new Set(),robos:{},pecas:{}};
+    let algumaProd=false;
+    ROBOS.forEach(r=>{ const rk=String(r); const rd=diaData[rk]||{};
+      const tDia=HORAS_DIA.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]||'').num,0);
+      const tNoi=HORAS_NOITE.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]||'').num,0);
+      const tot=tDia+tNoi; if(tot>0) algumaProd=true;
+      if(!mesData[m].robos[rk]) mesData[m].robos[rk]={total:0,dias:0};
+      if(tot>0){ mesData[m].robos[rk].total+=tot; mesData[m].robos[rk].dias++; }
+      mesData[m].totalGeral+=tot; mesData[m].totalDia+=tDia; mesData[m].totalNoite+=tNoi;
+      const cod=rd.cod||''; if(cod && tot>0){ mesData[m].pecas[cod]=(mesData[m].pecas[cod]||0)+tot; }
+    });
+    if(algumaProd) mesData[m].dias.add(chave);
+  });
+  const mesesComDados=Object.keys(mesData).map(Number).filter(m=>mesData[m].totalGeral>0).sort((a,b)=>a-b);
+  const totalAno=mesesComDados.reduce((s,m)=>s+mesData[m].totalGeral,0);
+  const mediaMes=mesesComDados.length?Math.round(totalAno/mesesComDados.length):0;
+  const melhorMes=mesesComDados.reduce((b,m)=>mesData[m].totalGeral>(mesData[b]?.totalGeral||0)?m:b, mesesComDados[0]);
+  const totalDiasTrab=mesesComDados.reduce((s,m)=>s+mesData[m].dias.size,0);
+  const roboAno=ROBOS.map(r=>{ const rk=String(r); let total=0,dias=0;
+    mesesComDados.forEach(m=>{ const x=mesData[m].robos[rk]; if(x){ total+=x.total; dias+=x.dias; } });
+    return {robo:rk,total,dias};
+  }).filter(x=>x.total>0).sort((a,b)=>b.total-a.total);
+  const maxRobo=roboAno.length?roboAno[0].total:1;
+  const pecasAno={}; mesesComDados.forEach(m=>Object.entries(mesData[m].pecas).forEach(([c,t])=>{pecasAno[c]=(pecasAno[c]||0)+t;}));
+  const topPecas=Object.entries(pecasAno).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxPeca=topPecas.length?topPecas[0][1]:1;
+  const maxMes=Math.max(1,...mesesComDados.map(m=>mesData[m].totalGeral));
+
+  let html=pageHead(IC.anual,"Relatório Anual","Análise consolidada do ano — mês a mês")
+    + `<div class="selrow card glass">
+         <div class="sel"><label>Ano</label><select onchange="setPeriodo('ano',+this.value)">${anosOpts()}</select></div>
+         <div style="margin-left:auto;font-size:11px;color:var(--faint);font-family:'Share Tech Mono',monospace;letter-spacing:.08em">${mesesComDados.length} MÊS(ES) COM DADOS · ${totalDiasTrab} DIA(S) TRABALHADOS</div>
+       </div>`;
+
+  if(mesesComDados.length===0){
+    return html + `<div class="card glass" style="padding:40px;text-align:center;color:var(--faint);font-size:13px">Nenhum dado para ${anoSel}.</div>`;
+  }
+
+  // 4 cards de KPI (cores neon)
+  html += `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    <div class="card glass" style="padding:14px 16px">
+      <div class="lbl">Total do Ano</div>
+      <div style="font-size:26px;font-weight:900;color:var(--ok);font-family:Orbitron,sans-serif">${totalAno.toLocaleString("pt-BR")}</div>
+      <div style="font-size:11px;color:var(--faint);margin-top:3px">peças produzidas</div>
+    </div>
+    <div class="card glass" style="padding:14px 16px">
+      <div class="lbl">Média Mensal</div>
+      <div style="font-size:26px;font-weight:900;color:var(--nc);font-family:Orbitron,sans-serif">${mediaMes.toLocaleString("pt-BR")}</div>
+      <div style="font-size:11px;color:var(--faint);margin-top:3px">peças/mês</div>
+    </div>
+    <div class="card glass" style="padding:14px 16px">
+      <div class="lbl">Melhor Mês</div>
+      <div style="font-size:26px;font-weight:900;color:var(--ny);font-family:Orbitron,sans-serif">${melhorMes!==undefined?mesData[melhorMes].totalGeral.toLocaleString("pt-BR"):'—'}</div>
+      <div style="font-size:11px;color:var(--faint);margin-top:3px">${melhorMes!==undefined?MESES[melhorMes]:''}</div>
+    </div>
+    <div class="card glass" style="padding:14px 16px">
+      <div class="lbl">Robôs Ativos</div>
+      <div style="font-size:26px;font-weight:900;color:var(--nm);font-family:Orbitron,sans-serif">${roboAno.length}</div>
+      <div style="font-size:11px;color:var(--faint);margin-top:3px">de ${ROBOS.length} robôs no ano</div>
+    </div>
+  </div>`;
+
+  // Gráfico mensal
+  html += `<div class="card glass" style="padding:16px 18px;margin-bottom:14px">
+    <h3><svg viewBox="0 0 24 24">${IC.anual}</svg>Produção mensal do ano</h3>
+    <div style="display:flex;align-items:flex-end;gap:8px;height:110px;margin-top:6px">
+      ${MESES.map((nome,m)=>{
+        const val=mesData[m]?mesData[m].totalGeral:0;
+        const h=val>0?Math.max(Math.round(val/maxMes*84),6):3;
+        const ehAtual=m===new Date().getMonth()&&anoSel===anoAtual;
+        const cor=val>0?(ehAtual?'var(--ny)':'var(--ok)'):'rgba(255,255,255,.08)';
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-size:9px;font-weight:800;color:${val>0?'var(--ok)':'transparent'};font-family:Orbitron,sans-serif">${val>0?val.toLocaleString('pt-BR'):'.'}</span>
+          <div title="${nome}: ${val.toLocaleString('pt-BR')}" style="width:100%;height:${h}px;background:${cor};border-radius:4px 4px 0 0;box-shadow:${val>0?'0 0 8px '+cor:'none'};transition:height .3s"></div>
+          <span style="font-size:9px;color:var(--faint);font-weight:700;font-family:'Share Tech Mono',monospace">${nome.slice(0,3)}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+
+  // Robô + Top peças
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+    <div class="card glass" style="padding:16px 18px">
+      <h3><svg viewBox="0 0 24 24">${IC.robot}</svg>Produção por robô no ano</h3>
+      ${roboAno.length?roboAno.map(r=>{
+        const pct=Math.round(r.total/maxRobo*100);
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:11px;color:var(--nc);font-weight:800;min-width:38px;font-family:Orbitron,sans-serif">${esc(r.robo)}</span>
+          <div style="flex:1;background:rgba(255,255,255,.06);border-radius:99px;height:6px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--nc);box-shadow:0 0 6px var(--nc);border-radius:99px"></div>
+          </div>
+          <span style="font-size:11px;font-weight:800;color:var(--txt);min-width:64px;text-align:right;font-family:Orbitron,sans-serif">${r.total.toLocaleString("pt-BR")}</span>
+          <span style="font-size:9px;color:var(--faint);min-width:44px;text-align:right">${r.dias} dia(s)</span>
+        </div>`;
+      }).join(''):`<div style="font-size:12px;color:var(--faint)">Sem dados</div>`}
+    </div>
+    <div class="card glass" style="padding:16px 18px">
+      <h3><svg viewBox="0 0 24 24">${IC.anual}</svg>Top peças do ano</h3>
+      ${topPecas.length?topPecas.map(([cod,total],i)=>{
+        const medalhas=['🥇','🥈','🥉','4º','5º'];
+        const pct=Math.round(total/maxPeca*100);
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:13px;min-width:22px">${medalhas[i]}</span>
+          <span style="font-size:11px;color:var(--ny);font-weight:800;min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Share Tech Mono',monospace">${esc(cod)}</span>
+          <div style="flex:1;background:rgba(255,255,255,.06);border-radius:99px;height:6px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--ny);box-shadow:0 0 6px var(--ny);border-radius:99px"></div>
+          </div>
+          <span style="font-size:11px;font-weight:800;color:var(--txt);min-width:56px;text-align:right;font-family:Orbitron,sans-serif">${total.toLocaleString("pt-BR")}</span>
+        </div>`;
+      }).join(''):`<div style="font-size:12px;color:var(--faint)">Sem dados</div>`}
+    </div>
+  </div>`;
+
+  // Tabela detalhada
+  html += `<div class="card glass" style="padding:0;overflow:hidden">
+    <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;font-weight:700;font-family:'Share Tech Mono',monospace">Detalhe por mês — todos os robôs</div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table style="border-collapse:collapse;width:100%;min-width:560px;font-family:'Share Tech Mono',monospace">
+        <thead>
+          <tr style="background:rgba(0,0,0,.35)">
+            <th style="padding:10px 12px;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,.06)">Mês</th>
+            <th style="padding:10px 12px;font-size:11px;color:var(--ok);text-transform:uppercase;letter-spacing:.1em;text-align:center;font-weight:700;border-bottom:1px solid rgba(255,255,255,.06)">☀ Dia</th>
+            <th style="padding:10px 12px;font-size:11px;color:var(--purple,#a78bfa);text-transform:uppercase;letter-spacing:.1em;text-align:center;font-weight:700;border-bottom:1px solid rgba(255,255,255,.06)">🌙 Noite</th>
+            <th style="padding:10px 12px;font-size:11px;color:var(--ny);text-transform:uppercase;letter-spacing:.1em;text-align:left;font-weight:700;border-bottom:1px solid rgba(255,255,255,.06)">Total Geral</th>
+            <th style="padding:10px 12px;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;text-align:center;font-weight:700;border-bottom:1px solid rgba(255,255,255,.06)">Dias Trab.</th>
+            <th style="padding:10px 12px;font-size:11px;color:var(--nc);text-transform:uppercase;letter-spacing:.1em;text-align:center;font-weight:700;border-bottom:1px solid rgba(255,255,255,.06)">Média/Dia</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${mesesComDados.map(m=>{
+            const x=mesData[m]; const nD=x.dias.size; const mD=nD>0?Math.round(x.totalGeral/nD):0; const pct=Math.round(x.totalGeral/maxMes*100);
+            return `<tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+              <td style="padding:10px 12px;font-size:12px;color:var(--txt);font-weight:700;font-family:Orbitron,sans-serif">${MESES[m]}</td>
+              <td style="padding:10px 12px;font-size:13px;color:var(--ok);text-align:center;font-weight:800;font-family:Orbitron,sans-serif">${x.totalDia.toLocaleString("pt-BR")}</td>
+              <td style="padding:10px 12px;font-size:13px;color:var(--purple,#a78bfa);text-align:center;font-weight:800;font-family:Orbitron,sans-serif">${x.totalNoite.toLocaleString("pt-BR")}</td>
+              <td style="padding:10px 12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="flex:1;background:rgba(255,255,255,.06);border-radius:99px;height:5px;min-width:70px;overflow:hidden">
+                    <div style="height:100%;width:${pct}%;background:var(--ny);box-shadow:0 0 6px var(--ny);border-radius:99px"></div>
+                  </div>
+                  <span style="font-size:14px;font-weight:900;color:var(--ny);min-width:60px;text-align:right;font-family:Orbitron,sans-serif">${x.totalGeral.toLocaleString("pt-BR")}</span>
+                </div>
+              </td>
+              <td style="padding:10px 12px;font-size:12px;color:var(--faint);text-align:center">${nD}</td>
+              <td style="padding:10px 12px;font-size:12px;color:var(--nc);text-align:center;font-weight:800;font-family:Orbitron,sans-serif">${mD.toLocaleString("pt-BR")}</td>
+            </tr>`;
+          }).join('')}
+          <tr style="background:rgba(249,248,113,.06)">
+            <td style="padding:11px 12px;font-size:11px;color:var(--ny);font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-family:Orbitron,sans-serif">Total ${anoSel}</td>
+            <td style="padding:11px 12px;font-size:13px;color:var(--ok);text-align:center;font-weight:900;font-family:Orbitron,sans-serif">${mesesComDados.reduce((s,m)=>s+mesData[m].totalDia,0).toLocaleString("pt-BR")}</td>
+            <td style="padding:11px 12px;font-size:13px;color:var(--purple,#a78bfa);text-align:center;font-weight:900;font-family:Orbitron,sans-serif">${mesesComDados.reduce((s,m)=>s+mesData[m].totalNoite,0).toLocaleString("pt-BR")}</td>
+            <td style="padding:11px 12px;font-size:16px;color:var(--ny);font-weight:900;font-family:Orbitron,sans-serif">${totalAno.toLocaleString("pt-BR")}</td>
+            <td style="padding:11px 12px;font-size:12px;color:var(--faint);text-align:center;font-weight:800">${totalDiasTrab}</td>
+            <td style="padding:11px 12px;font-size:12px;color:var(--nc);text-align:center;font-weight:900;font-family:Orbitron,sans-serif">${totalDiasTrab>0?Math.round(totalAno/totalDiasTrab).toLocaleString("pt-BR"):'—'}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+
+  return html;
 }
 
 /* ---------- PRODUÇÃO POR PEÇA (mesmas funções do Células) ---------- */

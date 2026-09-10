@@ -1246,7 +1246,7 @@ function viewMeta(){
   const totNoite=ROBOS.reduce((s,r)=>s+HORAS_NOITE.reduce((a,h)=>a+parseCelVal((md[r]||{})[campoH(h)]).num,0),0);
   const diasOpts=(()=>{let o="";for(let d=1;d<=ndias;d++)o+=`<option value="${d}" ${d===selDia?'selected':''}>${d}</option>`;return o;})();
 
-  let head=pageHead(IC.meta,"Meta Diária","Apontar produção por hora / robô", isHost?`<button type="button" class="btn ${divisaoAtiva()?'primary':'ghost'} tiny" onclick="toggleDivisao()" title="Divide o valor digitado pela quantidade de pontos de solda (coluna PTS)">➗ Divisão pts: ${divisaoAtiva()?'ON':'OFF'}</button>`:'')
+  let head=pageHead(IC.meta,"Meta Diária","Apontar produção por hora / robô", isHost?`<button type="button" class="btn ${divisaoAtiva()?'primary':'ghost'} tiny" onclick="toggleDivisao()" title="Divide o valor digitado pela quantidade de pontos de solda (coluna PTS)">➗ Divisão pts: ${divisaoAtiva()?'ON':'OFF'}</button> <button type="button" class="btn ghost tiny" onclick="copiarDiaAnterior()" title="Copia os códigos e pontos do dia anterior mais recente com dados">📋 Copiar dia anterior</button>`:'')
     + `<div class="selrow card glass">
         <div class="sel"><label>Dia</label><select onchange="setPeriodo('dia',+this.value)">${diasOpts}</select></div>
         <div class="sel"><label>Mês</label><select onchange="setPeriodo('mes',+this.value)">${MESES.map((m,i)=>`<option value="${i}" ${i===selMes?'selected':''}>${m}</option>`).join("")}</select></div>
@@ -1336,6 +1336,36 @@ function setPontos(chave,robo,v){ if(!isHost) return;
 function toggleDivisao(){ if(!isHost) return;
   cfg().divisao_pontos = divisaoAtiva() ? false : true;
   _mainSig=""; renderMain(); saveToAPI().then(()=>showToast(divisaoAtiva()?"Divisão de pontos ATIVADA":"Divisão de pontos DESATIVADA",false,true));
+}
+function copiarDiaAnterior(){
+  if(!isHost){ showToast("Entre como HOST para copiar",true); return; }
+  const md=prod().metas_dias||{};
+  // procura o dia mais recente com dados anterior a (selAno,selMes,selDia)
+  let a=selAno,m=selMes,d=selDia-1;
+  let dadosAnt=null,chaveAnt=null;
+  for(let i=0;i<400;i++){
+    if(d<1){ m--; if(m<0){ m=11; a--; } d=diasNoMes(a,m); }
+    const ch=chaveData(a,m,d);
+    if(md[ch] && Object.keys(md[ch]).length>0){
+      // só considera se tem algo útil (cod ou pontos ou alguma hora)
+      const temAlgo=Object.values(md[ch]).some(rd=>rd && (rd.cod||rd.pontos||Object.keys(rd).some(k=>k.startsWith('h'))));
+      if(temAlgo){ dadosAnt=md[ch]; chaveAnt=ch; break; }
+    }
+    d--;
+  }
+  if(!dadosAnt){ showToast("Nenhum dia anterior com dados encontrado",true); return; }
+  const chaveAtual=chaveData(selAno,selMes,selDia);
+  const p=prod();
+  if(!p.metas_dias[chaveAtual]) p.metas_dias[chaveAtual]={};
+  ROBOS.forEach(r=>{ const rk=String(r); const ant=dadosAnt[rk]||{};
+    if(ant.cod||ant.pontos){
+      if(!p.metas_dias[chaveAtual][rk]) p.metas_dias[chaveAtual][rk]={};
+      if(ant.cod) p.metas_dias[chaveAtual][rk].cod=ant.cod;
+      if(ant.pontos) p.metas_dias[chaveAtual][rk].pontos=ant.pontos;
+    }
+  });
+  _mainSig=""; renderMain();
+  saveToAPI().then(()=>showToast("Códigos e pontos copiados ✓",false,true));
 }
 let _rmTimer=null; function renderMainSoon(){ clearTimeout(_rmTimer); _rmTimer=setTimeout(()=>{ if(!document.querySelector('#main input:focus')){ _mainSig=""; renderMain(); } },1200); }
 

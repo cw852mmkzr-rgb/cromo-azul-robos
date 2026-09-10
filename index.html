@@ -380,6 +380,16 @@ body{ font-family:'Chakra Petch',system-ui,sans-serif; background:#05060d;
 .btn.danger{border-radius:4px}
 /* inputs */
 .field input,.field select,.field textarea,.inp,.login-input,table.mtable input{border-radius:4px;background:rgba(0,240,255,.045);border-color:rgba(120,150,210,.24)}
+/* Detalhe do robô — fonte maior */
+.robot-view .card h3{font-size:15px!important;letter-spacing:.16em}
+.robot-view .card h3 svg{width:20px;height:20px}
+.robot-view .field label{font-size:12.5px;letter-spacing:.14em}
+.robot-view .field .val{font-size:18px;min-height:24px;font-weight:600}
+.robot-view .field input,.robot-view .field select,.robot-view .field textarea{font-size:16px;padding:12px 14px}
+.robot-view .hero-info h1,.robot-view .hero-info .login-input{font-size:24px!important}
+.robot-view .hero-info .rid{font-size:13px}
+.robot-view .hist-item{font-size:14px!important}
+.robot-view .hist-item span:first-child{font-size:14px!important;min-width:170px!important}
 .field input:focus,.field select:focus,.field textarea:focus,.inp:focus,.login-input:focus,table.mtable input:focus{border-color:var(--nc);box-shadow:0 0 0 2px rgba(0,240,255,.18),0 0 14px -4px rgba(0,240,255,.6);background:rgba(0,240,255,.08)}
 .icon-btn{border-radius:5px} .icon-btn:hover{box-shadow:0 0 14px -6px rgba(0,240,255,.6)}
 /* números com glow */
@@ -1143,7 +1153,7 @@ function pageHead(ico,titulo,sub,extra){
 function viewRobot(k){
   const c=robos()[k]; if(!c) return `<div class="empty glass">Célula não encontrada</div>`;
   const cor=STATUS_COR[c.status]||"var(--faint)";
-  let html=`<div class="robot-hero card glass">
+  let html=`<div class="robot-view"><div class="robot-hero card glass">
     <div class="hero-badge"><svg viewBox="0 0 24 24">${IC.robot}</svg></div>
     <div class="hero-info">
       ${isHost?`<input class="login-input" style="text-align:left;font-family:'Space Grotesk';font-weight:700;font-size:20px;padding:8px 12px;letter-spacing:0" value="${esc(c.nome)}" onchange="setField('${k}','nome',this.value)">`
@@ -1292,7 +1302,7 @@ function viewRobot(k){
   // ── Histórico de Produção (via Metas Diárias) ──
   html+=renderHistoricoRobo(k);
 
-  return html;
+  return html+`</div>`;
 }
 
 function renderHistoricoRobo(k){
@@ -1384,7 +1394,7 @@ function calcRitmo(mh,tp){
   if(!mn||mn<=0||!st) return '—';
   const d=3600/mn; const ef=Math.round((st/d)*100);
   const m=Math.floor(d/60); const s=Math.round(d%60);
-  return `${m>0?m+'min ':''}${s>0?s+'s':''} / peça (${ef}% do tempo)`.trim();
+  return `${m>0?m+'min ':''}${s>0?s+'s':''} por peça (${ef}% do tempo)`.trim();
 }
 function registrarLimpeza(k){
   if(!isHost){ showToast("Apenas o HOST pode registrar",true); return; }

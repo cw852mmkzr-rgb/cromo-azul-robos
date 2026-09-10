@@ -2766,9 +2766,14 @@ function startDashboard(){ isHost=false;
   lastUserAction=0; loadFromAPI(); if(dados) renderDash();
   clearInterval(dashTimer); dashTimer=setInterval(loadFromAPI,3000);
   tickClock(); clearInterval(dashClockTimer); dashClockTimer=setInterval(tickClock,1000);
-  clearInterval(dashSlideTimer); dashSlideTimer=setInterval(dashNextSlide,6000);
+  dashScheduleNext();
 }
-function exitDashboard(){ [dashTimer,dashClockTimer,dashSlideTimer].forEach(t=>clearInterval(t));
+function dashScheduleNext(){
+  clearTimeout(dashSlideTimer);
+  const delay = _dashGeral ? 60000 : 5000; // Geral: 1 minuto · Robô: 5 segundos
+  dashSlideTimer = setTimeout(dashNextSlide, delay);
+}
+function exitDashboard(){ [dashTimer,dashClockTimer].forEach(t=>clearInterval(t)); clearTimeout(dashSlideTimer);
   document.getElementById("dashScreen").style.display="none"; document.getElementById("loginScreen").style.display="flex"; }
 function tickClock(){ const n=new Date(); const ce=document.getElementById("dashClock"), de=document.getElementById("dashDate");
   if(ce) ce.textContent=n.toLocaleTimeString("pt-BR");
@@ -2813,7 +2818,7 @@ function dashNextSlide(){ if(!dados) return; dashGlitch();
   if(_dashGeral||!_dashSeq.length) dashIniciarCarrossel();
   else if(_dashIdx>=_dashSeq.length-1) _dashGeral=true;
   else _dashIdx++;
-  _dashSigMain=""; renderDash(); }
+  _dashSigMain=""; renderDash(); dashScheduleNext(); }
 function renderDash(){ if(!dados) return; if(!_dashSeq.length) dashIniciarCarrossel();
   try{ if(_dashGeral) dashRenderGeral(); else dashRenderRobo(_dashSeq[_dashIdx]); }catch(e){ console.error("dash",e); }
   dashRenderFooter(); }

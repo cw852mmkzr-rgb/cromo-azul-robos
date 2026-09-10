@@ -1376,7 +1376,8 @@ function parseTempoPeca(str){
   const ms=str.match(/(\d+)\s*min\s*(\d*)\s*s?/i); if(ms) return parseInt(ms[1])*60+(parseInt(ms[2])||0);
   const co=str.match(/^(\d+):(\d{2})$/); if(co) return parseInt(co[1])*60+parseInt(co[2]);
   const sg=str.match(/^(\d+)\s*s$/i); if(sg) return parseInt(sg[1]);
-  const nm=parseFloat(str); if(!isNaN(nm)) return Math.round(nm*60); return null;
+  // número puro = segundos (padrão para ciclos de solda)
+  const nm=parseFloat(str); if(!isNaN(nm)) return Math.round(nm); return null;
 }
 function calcRitmo(mh,tp){
   const mn=parseFloat(mh); const st=parseTempoPeca(tp);

@@ -406,12 +406,16 @@ table.mtable td.tot,table.mtable tfoot td{color:var(--nc)}
 /* Meta Diária — colunas Robô/Meta/Cód/Pts (robôs nas linhas) */
 table.meta-t td.rlab,table.meta-t th.rlab{position:sticky;left:0;z-index:2;background:#0a0f1e;color:var(--ok);font-family:'Orbitron',sans-serif!important;font-weight:700;min-width:64px;font-size:18px}
 table.meta-t th.rlab{background:#0b1120}
+table.meta-t th.cfunc,table.meta-t td.cfunc{color:var(--nc);min-width:150px;font-family:'Share Tech Mono',monospace}
 table.meta-t th.cmeta,table.meta-t td.cmeta{color:var(--blue);min-width:68px;font-family:'Share Tech Mono',monospace}
 table.meta-t th.ccod,table.meta-t td.ccod{color:var(--warn);min-width:106px;font-family:'Share Tech Mono',monospace}
 table.meta-t th.cpts,table.meta-t td.cpts{color:var(--ny);min-width:104px;font-family:'Share Tech Mono',monospace}
 table.meta-t input.minp{width:66px;color:var(--blue)}
 table.meta-t input.cinp{width:98px;color:var(--warn);text-align:center}
 table.meta-t input.pinp{width:96px;color:var(--ny);text-align:center}
+table.meta-t select.finp{width:142px;padding:9px 8px;text-align:left;border-radius:6px;border:1px solid rgba(0,240,255,.24);background:rgba(0,240,255,.05);color:var(--nc);font-size:14px;font-family:'Share Tech Mono',monospace;outline:none;cursor:pointer}
+table.meta-t select.finp:focus{border-color:var(--nc);box-shadow:0 0 0 2px rgba(0,240,255,.18)}
+table.meta-t select.finp option{background:#0b1120;color:var(--txt)}
 /* grade de dias / barras */
 .daycell{border-radius:6px}
 .daycell.has{border-color:rgba(0,240,255,.3);box-shadow:inset 0 0 0 1px rgba(0,240,255,.14)}
@@ -960,6 +964,7 @@ const IC = {
   ger:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L14.5 2h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6a7 7 0 0 0 .1-1z"/>',
   robot:'<rect x="5" y="8" width="14" height="11" rx="2.5"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1.2"/><circle cx="9.2" cy="13" r="1"/><circle cx="14.8" cy="13" r="1"/><path d="M9 17h6"/>',
   painel:'<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="5" rx="1"/><rect x="13" y="10" width="8" height="11" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/>',
+  func:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
 };
 const PAINEIS = [
   {id:"painel",    nome:"Painel",           sub:"Visão geral",           ico:IC.painel,  built:true},
@@ -971,6 +976,7 @@ const PAINEIS = [
   {id:"anual",     nome:"Relatório Anual",  sub:"Ano fechado",           ico:IC.anual,   built:true},
   {id:"catpeca",   nome:"Catálogo de Peças",sub:"Peças com foto",        ico:IC.catpeca, built:true},
   {id:"manut",     nome:"Manutenção",       sub:"Chamados e histórico",  ico:IC.manut,   built:true},
+  {id:"func",      nome:"Funcionários",     sub:"Desempenho da equipe",  ico:IC.func,    built:true},
   {id:"relat",     nome:"Relatórios",       sub:"Período e exportação",   ico:IC.relat,   built:true},
   {id:"ger",       nome:"Gerenciar",        sub:"Configurações do host", ico:IC.ger,     built:true, host:true},
 ];
@@ -1023,6 +1029,7 @@ let _relModo="mes", _relDia=_hojeStr(), _relSemana=_hojeStr(), _relIni=_hojeStr(
 
 function robos(){ return (dados&&dados.robos)||{}; }
 function prod(){ if(!dados.producao) dados.producao={metas_dias:{}}; if(!dados.producao.metas_dias) dados.producao.metas_dias={}; return dados.producao; }
+function funcionarios(){ if(!dados.funcionarios||!Array.isArray(dados.funcionarios)) dados.funcionarios=[]; return dados.funcionarios; }
 function chaveData(a,m,d){ return a+"_"+m+"_"+d; }
 
 /* ============================================================
@@ -1037,6 +1044,7 @@ function migrar(c){
   if(c && c.robos){
     c.producao=c.producao||{metas_dias:{}}; c.producao.metas_dias=c.producao.metas_dias||{};
     c.pecas=c.pecas||{}; c.mapa=c.mapa||{}; c.manutencao=c.manutencao||{chamados:[]}; c.config=c.config||{};
+    if(!Array.isArray(c.funcionarios)) c.funcionarios=[];
     return c;
   }
   return null;
@@ -1135,7 +1143,7 @@ function renderMain(){
   const box=document.getElementById("main"); if(!box) return;
   let sig=nav.sec+":"+nav.id+"|"+isHost+"|";
   if(nav.sec==="robo") sig+=JSON.stringify(robos()[nav.id]||{});
-  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+_ppmModo+_ppmMes+_ppmAno+_ppmDataDia+_ppmDataSemana+_ppmDataIni+_ppmDataFim+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{})+"|R"+_relModo+_relDia+_relSemana+_relIni+_relFim+"|D"+(divisaoAtiva()?1:0);
+  else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+_ppmModo+_ppmMes+_ppmAno+_ppmDataDia+_ppmDataSemana+_ppmDataIni+_ppmDataFim+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{})+"|R"+_relModo+_relDia+_relSemana+_relIni+_relFim+"|D"+(divisaoAtiva()?1:0)+"|F"+JSON.stringify(funcionarios());
   if(sig===_mainSig) return; _mainSig=sig;
 
   if(nav.sec==="robo"){ box.innerHTML=viewRobot(nav.id); return; }
@@ -1151,6 +1159,7 @@ function renderMain(){
   else if(p.id==="catpeca") box.innerHTML=viewCatalogoPecas();
   else if(p.id==="ger") box.innerHTML=viewGerenciar();
   else if(p.id==="manut") box.innerHTML=viewManutencao();
+  else if(p.id==="func") box.innerHTML=viewFuncionarios();
   else if(p.id==="relat") box.innerHTML=viewRelatorios();
   else box.innerHTML=viewPlaceholder(p);
 }
@@ -1592,10 +1601,16 @@ function viewMeta(){
   else head+=`<div class="legend"><span><b style="color:var(--ok)">■</b> atingiu a meta/hora</span><span><b style="color:var(--danger)">■</b> abaixo da meta</span><span><b style="color:var(--blue)">■</b> ajuste técnico (digite <b>#</b> no fim)</span><span style="color:var(--ny)"><b>☕ 09:00</b> — meta reduzida (parada do café)</span>${divisaoAtiva()?`<span style="color:var(--ny)">➗ divisão ON — digite o total de pontos; dividimos pela coluna PTS</span>`:''}</div>`;
 
   return head
-    + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">☀</span><span class="tg" style="color:var(--ok)">Turno Dia — 08:00 às 17:00</span></div>${metaTable(chave,md,HORAS_DIA)}</div>`
-    + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">🌙</span><span class="tg" style="color:var(--purple)">Turno Noite — 18:00 às 22:00</span></div>${metaTable(chave,md,HORAS_NOITE)}</div>`
+    + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">☀</span><span class="tg" style="color:var(--ok)">Turno Dia — 08:00 às 17:00</span></div>${metaTable(chave,md,HORAS_DIA,'dia')}</div>`
+    + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">🌙</span><span class="tg" style="color:var(--purple)">Turno Noite — 18:00 às 22:00</span></div>${metaTable(chave,md,HORAS_NOITE,'noite')}</div>`
     + `<datalist id="pecaCods">${Object.keys(pecasObj()).map(c=>`<option value="${esc(c)}">${esc(nomePeca(c))}</option>`).join("")}</datalist>`;
 }
+function funcOptions(sel){ return `<option value="">— funcionário —</option>`+funcionarios().map(n=>`<option value="${esc(n)}" ${n===sel?'selected':''}>${esc(n)}</option>`).join(""); }
+function setFunc(chave,robo,turno,nome){ if(!isHost) return;
+  const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
+  const campo = turno==='noite' ? 'func_noite' : 'func_dia';
+  if(!nome) delete p.metas_dias[chave][robo][campo]; else p.metas_dias[chave][robo][campo]=nome;
+  _mainSig=""; saveDebounced(); }
 function setCod(chave,robo,v){ if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
   const rd=p.metas_dias[chave][robo];
@@ -1605,16 +1620,20 @@ function setCod(chave,robo,v){ if(!isHost) return;
     if(pn>0 && !(parseInt(rd.pontos)>0)) rd.pontos=pn; }  // puxa os pontos da peça cadastrada
   _mainSig=""; saveDebounced(); renderMainSoon();
 }
-function metaTable(chave,md,horas){
+function metaTable(chave,md,horas,turno){
   const rb=robos();
-  // cabeçalho: ROBÔ | META | CÓD | PTS | horas... | TOTAL   (robôs nas linhas — igual ao Células)
+  const campoFunc = turno==='noite' ? 'func_noite' : 'func_dia';
+  // cabeçalho: ROBÔ | FUNC | META | CÓD | PTS | horas... | TOTAL   (robôs nas linhas — igual ao Células)
   let h=`<div class="mtable-wrap"><table class="mtable meta-t"><thead><tr>`
-    + `<th class="rlab">Robô</th><th class="cmeta">Meta</th><th class="ccod">Cód</th><th class="cpts">Pts</th>`
+    + `<th class="rlab">Robô</th><th class="cfunc">Funcionário</th><th class="cmeta">Meta</th><th class="ccod">Cód</th><th class="cpts">Pts</th>`
     + horas.map(hr=>`<th class="hora${ehCafe(hr)?" cafe":""}">${hr}${ehCafe(hr)?" ☕":""}</th>`).join("")
     + `<th>Total</th></tr></thead><tbody>`;
   ROBOS.forEach(r=>{ const rd=md[String(r)]||{}; const meta=parseInt(rb[String(r)]&&rb[String(r)].meta_hora)||0;
-    const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; let linTot=0;
+    const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; const func=rd[campoFunc]||""; let linTot=0;
     h+=`<tr><td class="rlab">${esc(String(r))}</td>`;
+    // FUNCIONÁRIO
+    h+= isHost ? `<td class="cfunc"><select class="finp" onchange="setFunc('${chave}','${r}','${turno}',this.value)">${funcOptions(func)}</select></td>`
+               : `<td class="cfunc" style="color:var(--nc)">${func?esc(func):'—'}</td>`;
     // META
     h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(rb[String(r)]?rb[String(r)].meta_hora:'')}" onchange="setField('${r}','meta_hora',this.value)"></td>`
                : `<td class="cmeta" style="color:var(--blue)">${meta||'—'}</td>`;
@@ -1634,7 +1653,7 @@ function metaTable(chave,md,horas){
     h+=`<td class="tot">${linTot.toLocaleString("pt-BR")}</td></tr>`;
   });
   // rodapé: total por hora + total geral do turno
-  h+=`</tbody><tfoot><tr><td class="rlab">Total</td><td class="cmeta"></td><td class="ccod"></td><td class="cpts"></td>`;
+  h+=`</tbody><tfoot><tr><td class="rlab">Total</td><td class="cfunc"></td><td class="cmeta"></td><td class="ccod"></td><td class="cpts"></td>`;
   horas.forEach(hr=>{ const t=ROBOS.reduce((s,r)=>s+parseCelVal((md[String(r)]||{})[campoH(hr)]).num,0); h+=`<td>${t.toLocaleString("pt-BR")}</td>`; });
   const gt=ROBOS.reduce((s,r)=>{const rd=md[String(r)]||{};return s+horas.reduce((a,hr)=>a+parseCelVal(rd[campoH(hr)]).num,0);},0);
   h+=`<td class="tot" style="color:var(--cyan)">${gt.toLocaleString("pt-BR")}</td></tr></tfoot></table></div>`;
@@ -2385,6 +2404,177 @@ function savePeca(){ if(!isHost) return;
 function deletePeca(cod){ if(!isHost) return;
   if(!confirm('Excluir a peça '+cod+'?')) return;
   delete pecasObj()[cod]; closeModal("modalPeca"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Peça excluída",false,true));
+}
+
+/* ============================================================
+   FUNCIONÁRIOS — desempenho da equipe
+   ============================================================ */
+let _funcMesTodos = false; // filtro: mês selecionado ou ano inteiro
+function addFuncionario(){ if(!isHost) return;
+  const nome=prompt("Nome do funcionário:",""); if(nome===null) return;
+  const n=nome.trim(); if(!n){ showToast("Informe um nome",true); return; }
+  const lista=funcionarios();
+  if(lista.some(x=>x.toLowerCase()===n.toLowerCase())){ showToast("Esse funcionário já existe",true); return; }
+  lista.push(n); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Funcionário adicionado ✓",false,true));
+}
+function renomearFuncionario(nomeAntigo){ if(!isHost) return;
+  const novo=prompt("Novo nome:",nomeAntigo); if(novo===null) return;
+  const n=novo.trim(); if(!n) return;
+  const lista=funcionarios(); const i=lista.indexOf(nomeAntigo); if(i<0) return;
+  if(lista.some((x,j)=>j!==i && x.toLowerCase()===n.toLowerCase())){ showToast("Já existe um funcionário com esse nome",true); return; }
+  lista[i]=n;
+  // atualiza referências nas metas
+  const md=prod().metas_dias||{};
+  Object.values(md).forEach(dia=>Object.values(dia).forEach(rd=>{
+    if(rd && typeof rd==='object'){ if(rd.func_dia===nomeAntigo) rd.func_dia=n; if(rd.func_noite===nomeAntigo) rd.func_noite=n; }
+  }));
+  _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Nome atualizado ✓",false,true));
+}
+function removerFuncionario(nome){ if(!isHost) return;
+  if(!confirm('Remover "'+nome+'"? Os apontamentos já feitos mantêm o nome no histórico.')) return;
+  const lista=funcionarios(); const i=lista.indexOf(nome); if(i>=0) lista.splice(i,1);
+  _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Funcionário removido",false,true));
+}
+// Agrega desempenho por funcionário no período (ano, mes; mes=null => ano inteiro)
+function desempenhoFunc(ano,mes){
+  const res={};
+  const garante=n=>{ if(!res[n]) res[n]={nome:n,pecas:0,horas:0,metasOk:0,horasMeta:0,dias:new Set(),diaPecas:{},robos:new Set()}; return res[n]; };
+  funcionarios().forEach(n=>garante(n));
+  const md=prod().metas_dias||{};
+  Object.entries(md).forEach(([chave,dia])=>{
+    const p=chave.split('_').map(Number); if(p.length!==3) return;
+    if(p[0]!==ano) return; if(mes!=null && p[1]!==mes) return;
+    ROBOS.forEach(r=>{ const rk=String(r); const rd=dia[rk]; if(!rd) return;
+      const meta=parseInt(robos()[rk]?.meta_hora)||0;
+      const credita=(nome,horasList)=>{ if(!nome) return; const o=garante(nome);
+        horasList.forEach(hr=>{ const val=parseCelVal(rd[campoH(hr)]||'').num; if(val<=0) return;
+          o.pecas+=val; o.horas+=1; o.dias.add(chave); o.robos.add(rk);
+          o.diaPecas[chave]=(o.diaPecas[chave]||0)+val;
+          if(meta>0){ o.horasMeta+=1; if(val>=meta) o.metasOk+=1; }
+        });
+      };
+      credita(rd.func_dia,HORAS_DIA);
+      credita(rd.func_noite,HORAS_NOITE);
+    });
+  });
+  return Object.values(res).map(o=>{
+    const media = o.horas>0 ? Math.round(o.pecas/o.horas) : 0;
+    const taxa = o.horasMeta>0 ? Math.round((o.metasOk/o.horasMeta)*100) : 0;
+    let melhorDia=null, melhorPecas=0;
+    Object.entries(o.diaPecas).forEach(([ch,v])=>{ if(v>melhorPecas){ melhorPecas=v; melhorDia=ch; } });
+    return {...o, dias:o.dias.size, robos:o.robos.size, media, taxa, melhorDia, melhorPecas};
+  });
+}
+function _funcStatus(f){
+  if(!f.horas) return {txt:'Sem dados',cor:'var(--faint)',rgb:'138,150,168'};
+  if(f.horasMeta===0) return {txt:'Sem meta definida',cor:'var(--nc)',rgb:'0,240,255'};
+  if(f.taxa>=85) return {txt:'Excelente',cor:'var(--ok)',rgb:'0,255,174'};
+  if(f.taxa>=65) return {txt:'Muito bom',cor:'var(--nc)',rgb:'0,240,255'};
+  if(f.taxa>=45) return {txt:'Regular',cor:'var(--ny)',rgb:'249,248,113'};
+  return {txt:'Precisa melhorar',cor:'var(--danger)',rgb:'255,43,94'};
+}
+function viewFuncionarios(){
+  const lista=funcionarios();
+  const mesFiltro = _funcMesTodos ? null : selMes;
+  const dados_=desempenhoFunc(selAno,mesFiltro);
+  const comDados=dados_.filter(f=>f.horas>0).sort((a,b)=>b.pecas-a.pecas);
+  const periodoTxt = _funcMesTodos ? (selAno+' (ano todo)') : (MESES[selMes]+' / '+selAno);
+
+  // KPIs da equipe
+  const totalPecas=comDados.reduce((s,f)=>s+f.pecas,0);
+  const totalHoras=comDados.reduce((s,f)=>s+f.horas,0);
+  const mediaEquipe=totalHoras>0?Math.round(totalPecas/totalHoras):0;
+  const lider=comDados[0];
+
+  let head=pageHead(IC.func,"Funcionários","Desempenho da equipe — "+periodoTxt, isHost?`<button type="button" class="btn primary tiny" onclick="addFuncionario()">+ Adicionar funcionário</button>`:'')
+    + `<div class="selrow card glass">
+        <div class="sel"><label>Período</label><select onchange="_funcMesTodos=(this.value==='ano');_mainSig='';renderMain()">
+          <option value="mes" ${!_funcMesTodos?'selected':''}>Mês selecionado</option>
+          <option value="ano" ${_funcMesTodos?'selected':''}>Ano inteiro</option></select></div>
+        <div class="sel" ${_funcMesTodos?'style="opacity:.4;pointer-events:none"':''}><label>Mês</label><select onchange="setPeriodo('mes',+this.value)">${MESES.map((m,i)=>`<option value="${i}" ${i===selMes?'selected':''}>${m}</option>`).join("")}</select></div>
+        <div class="sel"><label>Ano</label><select onchange="setPeriodo('ano',+this.value)">${anosOpts()}</select></div>
+      </div>`;
+
+  if(!lista.length){
+    return head + `<div class="card glass empty"><svg viewBox="0 0 24 24">${IC.func}</svg>
+      <div class="soon">Nenhum funcionário cadastrado</div>
+      ${isHost?`<button type="button" class="btn primary tiny" onclick="addFuncionario()">+ Adicionar funcionário</button>
+      <div style="font-size:12px;color:var(--faint);margin-top:12px;max-width:420px;line-height:1.5">Depois de cadastrar, escolha o funcionário de cada robô na aba <b style="color:var(--nc)">Meta Diária</b> — o desempenho aparece aqui automaticamente.</div>`:'<div style="font-size:12.5px;color:var(--faint)">Entre como HOST para cadastrar funcionários.</div>'}</div>`;
+  }
+
+  // KPIs da equipe
+  head += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px">
+    <div class="card glass" style="padding:14px 16px"><div class="lbl">Funcionários</div><div style="font-size:26px;font-weight:900;color:var(--nc);font-family:Orbitron,sans-serif">${lista.length}</div><div style="font-size:11px;color:var(--faint);margin-top:3px">${comDados.length} com produção</div></div>
+    <div class="card glass" style="padding:14px 16px"><div class="lbl">Peças no período</div><div style="font-size:26px;font-weight:900;color:var(--ok);font-family:Orbitron,sans-serif">${totalPecas.toLocaleString("pt-BR")}</div><div style="font-size:11px;color:var(--faint);margin-top:3px">creditadas à equipe</div></div>
+    <div class="card glass" style="padding:14px 16px"><div class="lbl">Média/hora da equipe</div><div style="font-size:26px;font-weight:900;color:var(--purple,#a78bfa);font-family:Orbitron,sans-serif">${mediaEquipe.toLocaleString("pt-BR")}</div><div style="font-size:11px;color:var(--faint);margin-top:3px">peças por hora</div></div>
+    <div class="card glass" style="padding:14px 16px"><div class="lbl">🏆 Destaque</div><div style="font-size:20px;font-weight:900;color:var(--ny);font-family:Orbitron,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${lider?esc(lider.nome):'—'}</div><div style="font-size:11px;color:var(--faint);margin-top:3px">${lider?lider.pecas.toLocaleString("pt-BR")+' peças':'sem dados'}</div></div>
+  </div>`;
+
+  // Cards de desempenho (ranking)
+  const maxPecas=comDados.length?comDados[0].pecas:1;
+  let cards='';
+  if(comDados.length){
+    cards=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-bottom:16px">`+comDados.map((f,i)=>{
+      const st=_funcStatus(f);
+      const medalha=['🥇','🥈','🥉'][i]||`${i+1}º`;
+      const barPct=Math.round(f.pecas/maxPecas*100);
+      return `<div class="card glass" style="padding:18px;border:1px solid rgba(${st.rgb},.3);box-shadow:0 0 18px rgba(${st.rgb},.06)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span style="font-size:20px;min-width:30px;text-align:center">${medalha}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:18px;font-weight:800;color:#fff;font-family:Orbitron,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(f.nome)}</div>
+            <div style="font-size:11px;color:${st.cor};font-weight:800;letter-spacing:.1em;font-family:'Share Tech Mono',monospace;text-transform:uppercase;margin-top:2px">${st.txt}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:28px;font-weight:900;color:${st.cor};font-family:Orbitron,sans-serif;line-height:1;text-shadow:0 0 12px rgba(${st.rgb},.5)">${f.pecas.toLocaleString("pt-BR")}</div>
+            <div style="font-size:10px;color:var(--faint);letter-spacing:.1em;font-family:'Share Tech Mono',monospace">PEÇAS</div>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,.06);border-radius:99px;height:6px;overflow:hidden;margin-bottom:14px">
+          <div style="height:100%;width:${barPct}%;background:${st.cor};box-shadow:0 0 6px ${st.cor};border-radius:99px"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          ${_funcStat('Média/hora',f.media.toLocaleString("pt-BR"),'var(--nc)')}
+          ${_funcStat('Metas batidas',f.horasMeta>0?`${f.metasOk}/${f.horasMeta} · ${f.taxa}%`:'—','var(--ok)')}
+          ${_funcStat('Horas trabalhadas',f.horas.toLocaleString("pt-BR"),'var(--purple,#a78bfa)')}
+          ${_funcStat('Dias / Robôs',`${f.dias} / ${f.robos}`,'var(--ny)')}
+          ${_funcStat('Melhor dia',f.melhorDia?`${f.melhorPecas} pç`:'—','var(--ok)')}
+          ${_funcStat('% da meta',f.horasMeta>0?f.taxa+'%':'—',st.cor)}
+        </div>
+      </div>`;
+    }).join('')+`</div>`;
+  }
+
+  // Funcionários sem produção no período
+  const semDados=dados_.filter(f=>f.horas===0);
+  let semBloco='';
+  if(semDados.length){
+    semBloco=`<div class="card glass" style="margin-bottom:16px"><h3><svg viewBox="0 0 24 24">${IC.func}</svg>Sem produção no período</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${semDados.map(f=>`<span style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 12px;font-size:12.5px;color:var(--faint);font-family:'Share Tech Mono',monospace">${esc(f.nome)}</span>`).join('')}</div></div>`;
+  }
+
+  // Gestão de funcionários
+  let gestao='';
+  if(isHost){
+    gestao=`<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.func}</svg>Gerenciar funcionários (${lista.length})<button type="button" class="btn primary tiny" onclick="addFuncionario()" style="margin-left:auto">+ Adicionar</button></h3>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${lista.slice().sort((a,b)=>a.localeCompare(b)).map(n=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,240,255,.04);border:1px solid rgba(0,240,255,.15);border-radius:8px">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--nc)" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>
+            <span style="flex:1;font-size:14px;color:var(--txt);font-family:'Share Tech Mono',monospace">${esc(n)}</span>
+            <button type="button" class="btn ghost tiny" onclick="renomearFuncionario('${esc(n).replace(/'/g,"\\'")}')" title="Renomear">✏</button>
+            <button type="button" onclick="removerFuncionario('${esc(n).replace(/'/g,"\\'")}')" style="background:none;border:1px solid rgba(255,43,94,.35);color:var(--danger);border-radius:5px;width:28px;height:28px;cursor:pointer;font-size:12px">✕</button>
+          </div>`).join('')}
+      </div></div>`;
+  }
+
+  return head + cards + semBloco + gestao;
+}
+function _funcStat(label,valor,cor){
+  return `<div style="background:rgba(0,0,0,.25);border-radius:8px;padding:9px 11px">
+    <div style="font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-family:'Share Tech Mono',monospace;margin-bottom:3px">${label}</div>
+    <div style="font-size:16px;font-weight:800;color:${cor};font-family:Orbitron,sans-serif">${valor}</div>
+  </div>`;
 }
 
 /* ============================================================

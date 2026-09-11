@@ -406,16 +406,20 @@ table.mtable td.tot,table.mtable tfoot td{color:var(--nc)}
 /* Meta Diária — colunas Robô/Meta/Cód/Pts (robôs nas linhas) */
 table.meta-t td.rlab,table.meta-t th.rlab{position:sticky;left:0;z-index:2;background:#0a0f1e;color:var(--ok);font-family:'Orbitron',sans-serif!important;font-weight:700;min-width:64px;font-size:18px}
 table.meta-t th.rlab{background:#0b1120}
-table.meta-t th.cfunc,table.meta-t td.cfunc{color:var(--nc);min-width:150px;font-family:'Share Tech Mono',monospace}
 table.meta-t th.cmeta,table.meta-t td.cmeta{color:var(--blue);min-width:68px;font-family:'Share Tech Mono',monospace}
 table.meta-t th.ccod,table.meta-t td.ccod{color:var(--warn);min-width:106px;font-family:'Share Tech Mono',monospace}
 table.meta-t th.cpts,table.meta-t td.cpts{color:var(--ny);min-width:104px;font-family:'Share Tech Mono',monospace}
 table.meta-t input.minp{width:66px;color:var(--blue)}
 table.meta-t input.cinp{width:98px;color:var(--warn);text-align:center}
 table.meta-t input.pinp{width:96px;color:var(--ny);text-align:center}
-table.meta-t select.finp{width:142px;padding:9px 8px;text-align:left;border-radius:6px;border:1px solid rgba(0,240,255,.24);background:rgba(0,240,255,.05);color:var(--nc);font-size:14px;font-family:'Share Tech Mono',monospace;outline:none;cursor:pointer}
-table.meta-t select.finp:focus{border-color:var(--nc);box-shadow:0 0 0 2px rgba(0,240,255,.18)}
-table.meta-t select.finp option{background:#0b1120;color:var(--txt)}
+/* célula da hora com seletor de funcionário abaixo do valor */
+table.meta-t td.hcell{vertical-align:top}
+table.meta-t td.hcell>input{display:block;margin:0 auto}
+table.meta-t select.fhinp{display:block;width:96px;margin:6px auto 0;padding:5px 6px;text-align:left;border-radius:6px;border:1px dashed rgba(0,240,255,.35);background:rgba(0,240,255,.05);color:var(--faint);font-size:11px;font-family:'Share Tech Mono',monospace;outline:none;cursor:pointer}
+table.meta-t select.fhinp.has{border-style:solid;color:var(--nc);border-color:rgba(0,240,255,.5);box-shadow:0 0 8px -3px var(--nc)}
+table.meta-t select.fhinp:focus{border-color:var(--nc);box-shadow:0 0 0 2px rgba(0,240,255,.18)}
+table.meta-t select.fhinp option{background:#0b1120;color:var(--txt)}
+table.meta-t td.hcell .fhtag{font-size:10px;font-weight:600;color:var(--nc);font-family:'Share Tech Mono',monospace;margin-top:4px;opacity:.85;white-space:nowrap}
 /* grade de dias / barras */
 .daycell{border-radius:6px}
 .daycell.has{border-color:rgba(0,240,255,.3);box-shadow:inset 0 0 0 1px rgba(0,240,255,.14)}
@@ -1601,15 +1605,15 @@ function viewMeta(){
   else head+=`<div class="legend"><span><b style="color:var(--ok)">■</b> atingiu a meta/hora</span><span><b style="color:var(--danger)">■</b> abaixo da meta</span><span><b style="color:var(--blue)">■</b> ajuste técnico (digite <b>#</b> no fim)</span><span style="color:var(--ny)"><b>☕ 09:00</b> — meta reduzida (parada do café)</span>${divisaoAtiva()?`<span style="color:var(--ny)">➗ divisão ON — digite o total de pontos; dividimos pela coluna PTS</span>`:''}</div>`;
 
   return head
-    + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">☀</span><span class="tg" style="color:var(--ok)">Turno Dia — 08:00 às 17:00</span></div>${metaTable(chave,md,HORAS_DIA,'dia')}</div>`
-    + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">🌙</span><span class="tg" style="color:var(--purple)">Turno Noite — 18:00 às 22:00</span></div>${metaTable(chave,md,HORAS_NOITE,'noite')}</div>`
+    + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">☀</span><span class="tg" style="color:var(--ok)">Turno Dia — 08:00 às 17:00</span></div>${metaTable(chave,md,HORAS_DIA)}</div>`
+    + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">🌙</span><span class="tg" style="color:var(--purple)">Turno Noite — 18:00 às 22:00</span></div>${metaTable(chave,md,HORAS_NOITE)}</div>`
     + `<datalist id="pecaCods">${Object.keys(pecasObj()).map(c=>`<option value="${esc(c)}">${esc(nomePeca(c))}</option>`).join("")}</datalist>`;
 }
-function funcOptions(sel){ return `<option value="">— funcionário —</option>`+funcionarios().map(n=>`<option value="${esc(n)}" ${n===sel?'selected':''}>${esc(n)}</option>`).join(""); }
-function setFunc(chave,robo,turno,nome){ if(!isHost) return;
+function funcOptions(sel){ return `<option value="">— quem fez? —</option>`+funcionarios().map(n=>`<option value="${esc(n)}" ${n===sel?'selected':''}>${esc(n)}</option>`).join(""); }
+function setFuncHora(chave,robo,campo,nome){ if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
-  const campo = turno==='noite' ? 'func_noite' : 'func_dia';
-  if(!nome) delete p.metas_dias[chave][robo][campo]; else p.metas_dias[chave][robo][campo]=nome;
+  const key="func_"+campo;
+  if(!nome) delete p.metas_dias[chave][robo][key]; else p.metas_dias[chave][robo][key]=nome;
   _mainSig=""; saveDebounced(); }
 function setCod(chave,robo,v){ if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
@@ -1620,20 +1624,17 @@ function setCod(chave,robo,v){ if(!isHost) return;
     if(pn>0 && !(parseInt(rd.pontos)>0)) rd.pontos=pn; }  // puxa os pontos da peça cadastrada
   _mainSig=""; saveDebounced(); renderMainSoon();
 }
-function metaTable(chave,md,horas,turno){
+function metaTable(chave,md,horas){
   const rb=robos();
-  const campoFunc = turno==='noite' ? 'func_noite' : 'func_dia';
-  // cabeçalho: ROBÔ | FUNC | META | CÓD | PTS | horas... | TOTAL   (robôs nas linhas — igual ao Células)
+  const temFunc=funcionarios().length>0;
+  // cabeçalho: ROBÔ | META | CÓD | PTS | horas... | TOTAL   (robôs nas linhas — igual ao Células)
   let h=`<div class="mtable-wrap"><table class="mtable meta-t"><thead><tr>`
-    + `<th class="rlab">Robô</th><th class="cfunc">Funcionário</th><th class="cmeta">Meta</th><th class="ccod">Cód</th><th class="cpts">Pts</th>`
+    + `<th class="rlab">Robô</th><th class="cmeta">Meta</th><th class="ccod">Cód</th><th class="cpts">Pts</th>`
     + horas.map(hr=>`<th class="hora${ehCafe(hr)?" cafe":""}">${hr}${ehCafe(hr)?" ☕":""}</th>`).join("")
     + `<th>Total</th></tr></thead><tbody>`;
   ROBOS.forEach(r=>{ const rd=md[String(r)]||{}; const meta=parseInt(rb[String(r)]&&rb[String(r)].meta_hora)||0;
-    const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; const func=rd[campoFunc]||""; let linTot=0;
+    const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; let linTot=0;
     h+=`<tr><td class="rlab">${esc(String(r))}</td>`;
-    // FUNCIONÁRIO
-    h+= isHost ? `<td class="cfunc"><select class="finp" onchange="setFunc('${chave}','${r}','${turno}',this.value)">${funcOptions(func)}</select></td>`
-               : `<td class="cfunc" style="color:var(--nc)">${func?esc(func):'—'}</td>`;
     // META
     h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(rb[String(r)]?rb[String(r)].meta_hora:'')}" onchange="setField('${r}','meta_hora',this.value)"></td>`
                : `<td class="cmeta" style="color:var(--blue)">${meta||'—'}</td>`;
@@ -1643,17 +1644,22 @@ function metaTable(chave,md,horas,turno){
     // PTS
     h+= isHost ? `<td class="cpts"><input class="pinp" type="number" min="0" value="${esc(pts)}" placeholder="pts" title="Pontos de solda — divide o valor digitado" onchange="setPontos('${chave}','${r}',this.value)"></td>`
                : `<td class="cpts" style="color:var(--ny)">${pts!==''?esc(String(pts)):'—'}</td>`;
-    // horas
-    horas.forEach(hr=>{ const raw=rd[campoH(hr)]||""; const pv=parseCelVal(raw); linTot+=pv.num;
-      const cafe=ehCafe(hr);
+    // horas — quando a hora tem valor, mostra também o seletor de funcionário
+    horas.forEach(hr=>{ const campo=campoH(hr); const raw=rd[campo]||""; const pv=parseCelVal(raw); linTot+=pv.num;
+      const cafe=ehCafe(hr); const func=rd["func_"+campo]||"";
       let cls=cafe?"cafe":""; if(raw!==""&&!cafe){ cls= pv.adj?"adj":(meta>0?(pv.num>=meta?"ok":"low"):""); } else if(raw!==""&&cafe&&pv.adj){ cls="cafe adj"; }
-      if(isHost) h+=`<td class="${cafe?'cafe-td':''}"><input class="${cls}" value="${esc(raw)}" onchange="setMeta('${chave}','${r}','${campoH(hr)}',this.value,this)"></td>`;
-      else h+=`<td class="${cls}${cafe?' cafe-td':''}" style="font-weight:600;color:${cafe?'var(--ny)':(pv.adj?'var(--blue)':(raw===''?'var(--faint)':(meta>0?(pv.num>=meta?'var(--ok)':'var(--danger)'):'var(--txt)')))}">${raw===''?'·':esc(String(pv.num))}</td>`;
+      if(isHost){
+        h+=`<td class="hcell${cafe?' cafe-td':''}"><input class="${cls}" value="${esc(raw)}" onchange="setMeta('${chave}','${r}','${campo}',this.value,this)">`
+          + (raw!==""&&temFunc ? `<select class="fhinp${func?' has':''}" onchange="setFuncHora('${chave}','${r}','${campo}',this.value)">${funcOptions(func)}</select>` : "")
+          + `</td>`;
+      } else {
+        h+=`<td class="hcell ${cls}${cafe?' cafe-td':''}" style="font-weight:600;color:${cafe?'var(--ny)':(pv.adj?'var(--blue)':(raw===''?'var(--faint)':(meta>0?(pv.num>=meta?'var(--ok)':'var(--danger)'):'var(--txt)')))}">${raw===''?'·':esc(String(pv.num))}${raw!==""&&func?`<div class="fhtag">${esc(func)}</div>`:""}</td>`;
+      }
     });
     h+=`<td class="tot">${linTot.toLocaleString("pt-BR")}</td></tr>`;
   });
   // rodapé: total por hora + total geral do turno
-  h+=`</tbody><tfoot><tr><td class="rlab">Total</td><td class="cfunc"></td><td class="cmeta"></td><td class="ccod"></td><td class="cpts"></td>`;
+  h+=`</tbody><tfoot><tr><td class="rlab">Total</td><td class="cmeta"></td><td class="ccod"></td><td class="cpts"></td>`;
   horas.forEach(hr=>{ const t=ROBOS.reduce((s,r)=>s+parseCelVal((md[String(r)]||{})[campoH(hr)]).num,0); h+=`<td>${t.toLocaleString("pt-BR")}</td>`; });
   const gt=ROBOS.reduce((s,r)=>{const rd=md[String(r)]||{};return s+horas.reduce((a,hr)=>a+parseCelVal(rd[campoH(hr)]).num,0);},0);
   h+=`<td class="tot" style="color:var(--cyan)">${gt.toLocaleString("pt-BR")}</td></tr></tfoot></table></div>`;
@@ -2423,10 +2429,10 @@ function renomearFuncionario(nomeAntigo){ if(!isHost) return;
   const lista=funcionarios(); const i=lista.indexOf(nomeAntigo); if(i<0) return;
   if(lista.some((x,j)=>j!==i && x.toLowerCase()===n.toLowerCase())){ showToast("Já existe um funcionário com esse nome",true); return; }
   lista[i]=n;
-  // atualiza referências nas metas
+  // atualiza referências nas metas (chaves func_h0800, func_h1800, ...)
   const md=prod().metas_dias||{};
   Object.values(md).forEach(dia=>Object.values(dia).forEach(rd=>{
-    if(rd && typeof rd==='object'){ if(rd.func_dia===nomeAntigo) rd.func_dia=n; if(rd.func_noite===nomeAntigo) rd.func_noite=n; }
+    if(rd && typeof rd==='object') Object.keys(rd).forEach(k=>{ if(k.startsWith('func_') && rd[k]===nomeAntigo) rd[k]=n; });
   }));
   _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Nome atualizado ✓",false,true));
 }
@@ -2446,15 +2452,14 @@ function desempenhoFunc(ano,mes){
     if(p[0]!==ano) return; if(mes!=null && p[1]!==mes) return;
     ROBOS.forEach(r=>{ const rk=String(r); const rd=dia[rk]; if(!rd) return;
       const meta=parseInt(robos()[rk]?.meta_hora)||0;
-      const credita=(nome,horasList)=>{ if(!nome) return; const o=garante(nome);
-        horasList.forEach(hr=>{ const val=parseCelVal(rd[campoH(hr)]||'').num; if(val<=0) return;
-          o.pecas+=val; o.horas+=1; o.dias.add(chave); o.robos.add(rk);
-          o.diaPecas[chave]=(o.diaPecas[chave]||0)+val;
-          if(meta>0){ o.horasMeta+=1; if(val>=meta) o.metasOk+=1; }
-        });
-      };
-      credita(rd.func_dia,HORAS_DIA);
-      credita(rd.func_noite,HORAS_NOITE);
+      [...HORAS_DIA,...HORAS_NOITE].forEach(hr=>{ const campo=campoH(hr);
+        const val=parseCelVal(rd[campo]||'').num; if(val<=0) return;
+        const nome=rd["func_"+campo]; if(!nome) return;
+        const o=garante(nome);
+        o.pecas+=val; o.horas+=1; o.dias.add(chave); o.robos.add(rk);
+        o.diaPecas[chave]=(o.diaPecas[chave]||0)+val;
+        if(meta>0){ o.horasMeta+=1; if(val>=meta) o.metasOk+=1; }
+      });
     });
   });
   return Object.values(res).map(o=>{

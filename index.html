@@ -1622,11 +1622,15 @@ function viewMeta(){
     + `<datalist id="pecaCods">${Object.keys(pecasObj()).map(c=>`<option value="${esc(c)}">${esc(nomePeca(c))}</option>`).join("")}</datalist>`
     + `<datalist id="funcDatalist">${funcionarios().map(n=>`<option value="${esc(n)}"></option>`).join("")}</datalist>`;
 }
-function setFuncHora(chave,robo,campo,nome){ if(!isHost) return;
+function setFuncHora(chave,robo,campo,nome,el){ if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
-  const key="func_"+campo; nome=String(nome||"").trim();
-  if(!nome) delete p.metas_dias[chave][robo][key]; else p.metas_dias[chave][robo][key]=nome;
-  _mainSig=""; saveDebounced(); }
+  const rd=p.metas_dias[chave][robo]; const key="func_"+campo; nome=String(nome||"").trim();
+  if(!nome){ delete rd[key]; if(el) el.classList.remove('has'); saveDebounced(); return; }
+  // só aceita funcionário já cadastrado (busca ignora maiúsc/minúsc e normaliza pro nome oficial)
+  const match=funcionarios().find(n=>n.toLowerCase()===nome.toLowerCase());
+  if(!match){ showToast('"'+nome+'" não é um funcionário cadastrado — adicione na aba Funcionários',true);
+    delete rd[key]; if(el){ el.value=""; el.classList.remove('has'); } saveDebounced(); return; }
+  rd[key]=match; if(el){ el.value=match; el.classList.add('has'); } saveDebounced(); }
 // mostra/esconde o campo de funcionário na hora conforme há valor digitado (instantâneo, sem re-render)
 function onMetaInput(el){ const f=el.parentElement.querySelector('.fhinp'); if(f) f.hidden = el.value.trim()===""; }
 function setCod(chave,robo,v){ if(!isHost) return;
@@ -1664,7 +1668,7 @@ function metaTable(chave,md,horas){
       let cls=cafe?"cafe":""; if(raw!==""&&!cafe){ cls= pv.adj?"adj":(meta>0?(pv.num>=meta?"ok":"low"):""); } else if(raw!==""&&cafe&&pv.adj){ cls="cafe adj"; }
       if(isHost){
         h+=`<td class="hcell${cafe?' cafe-td':''}"><input class="${cls}" value="${esc(raw)}" oninput="onMetaInput(this)" onchange="setMeta('${chave}','${r}','${campo}',this.value,this)">`
-          + (temFunc ? `<input class="fhinp${func?' has':''}" list="funcDatalist" value="${esc(func)}" placeholder="quem fez?" onchange="setFuncHora('${chave}','${r}','${campo}',this.value)" ${raw===""?'hidden':''}>` : "")
+          + (temFunc ? `<input class="fhinp${func?' has':''}" list="funcDatalist" value="${esc(func)}" placeholder="quem fez?" onchange="setFuncHora('${chave}','${r}','${campo}',this.value,this)" ${raw===""?'hidden':''}>` : "")
           + `</td>`;
       } else {
         h+=`<td class="hcell ${cls}${cafe?' cafe-td':''}" style="font-weight:600;color:${cafe?'var(--ny)':(pv.adj?'var(--blue)':(raw===''?'var(--faint)':(meta>0?(pv.num>=meta?'var(--ok)':'var(--danger)'):'var(--txt)')))}">${raw===''?'·':esc(String(pv.num))}${raw!==""&&func?`<div class="fhtag">${esc(func)}</div>`:""}</td>`;

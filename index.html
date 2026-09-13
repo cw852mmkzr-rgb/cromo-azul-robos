@@ -2485,7 +2485,8 @@ function viewFuncionarios(){
   const lista=funcionarios();
   const mesFiltro = _funcMesTodos ? null : selMes;
   const dados_=desempenhoFunc(selAno,mesFiltro);
-  const comDados=dados_.filter(f=>f.horas>0).sort((a,b)=>b.pecas-a.pecas);
+  // ranking por desempenho: quem mais atinge a meta (taxa), depois nº de metas batidas, depois peças
+  const comDados=dados_.filter(f=>f.horas>0).sort((a,b)=> b.taxa-a.taxa || b.metasOk-a.metasOk || b.pecas-a.pecas);
   const periodoTxt = _funcMesTodos ? (selAno+' (ano todo)') : (MESES[selMes]+' / '+selAno);
 
   // KPIs da equipe
@@ -2515,17 +2516,16 @@ function viewFuncionarios(){
     <div class="card glass" style="padding:14px 16px"><div class="lbl">Funcionários</div><div style="font-size:26px;font-weight:900;color:var(--nc);font-family:Orbitron,sans-serif">${lista.length}</div><div style="font-size:11px;color:var(--faint);margin-top:3px">${comDados.length} com produção</div></div>
     <div class="card glass" style="padding:14px 16px"><div class="lbl">Peças no período</div><div style="font-size:26px;font-weight:900;color:var(--ok);font-family:Orbitron,sans-serif">${totalPecas.toLocaleString("pt-BR")}</div><div style="font-size:11px;color:var(--faint);margin-top:3px">creditadas à equipe</div></div>
     <div class="card glass" style="padding:14px 16px"><div class="lbl">Média/hora da equipe</div><div style="font-size:26px;font-weight:900;color:var(--purple,#a78bfa);font-family:Orbitron,sans-serif">${mediaEquipe.toLocaleString("pt-BR")}</div><div style="font-size:11px;color:var(--faint);margin-top:3px">peças por hora</div></div>
-    <div class="card glass" style="padding:14px 16px"><div class="lbl">🏆 Destaque</div><div style="font-size:20px;font-weight:900;color:var(--ny);font-family:Orbitron,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${lider?esc(lider.nome):'—'}</div><div style="font-size:11px;color:var(--faint);margin-top:3px">${lider?lider.pecas.toLocaleString("pt-BR")+' peças':'sem dados'}</div></div>
+    <div class="card glass" style="padding:14px 16px"><div class="lbl">🏆 Destaque</div><div style="font-size:20px;font-weight:900;color:var(--ny);font-family:Orbitron,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${lider?esc(lider.nome):'—'}</div><div style="font-size:11px;color:var(--faint);margin-top:3px">${lider?(lider.horasMeta>0?lider.taxa+'% das metas ('+lider.metasOk+'/'+lider.horasMeta+')':lider.pecas.toLocaleString("pt-BR")+' peças'):'sem dados'}</div></div>
   </div>`;
 
-  // Cards de desempenho (ranking)
-  const maxPecas=comDados.length?comDados[0].pecas:1;
+  // Cards de desempenho (ranking por metas atingidas)
   let cards='';
   if(comDados.length){
     cards=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-bottom:16px">`+comDados.map((f,i)=>{
       const st=_funcStatus(f);
       const medalha=['🥇','🥈','🥉'][i]||`${i+1}º`;
-      const barPct=Math.round(f.pecas/maxPecas*100);
+      const barPct=f.horasMeta>0?Math.min(100,f.taxa):0;
       return `<div class="card glass" style="padding:18px;border:1px solid rgba(${st.rgb},.3);box-shadow:0 0 18px rgba(${st.rgb},.06)">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
           <span style="font-size:20px;min-width:30px;text-align:center">${medalha}</span>

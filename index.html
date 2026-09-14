@@ -923,7 +923,7 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 
 <!-- MODAL: Detalhe do funcionário -->
 <div class="modal-bg" id="modalFunc" onclick="if(event.target===this)closeModal('modalFunc')">
-  <div class="modal glass" id="modalFuncBody" style="max-width:660px"></div>
+  <div class="modal glass" id="modalFuncBody" style="max-width:840px;width:96%"></div>
 </div>
 
 <div id="toastWrap"></div>
@@ -2593,10 +2593,11 @@ function viewFuncionarios(){
 
   return head + cards + semBloco + gestao;
 }
-function _funcStat(label,valor,cor){
-  return `<div style="background:rgba(0,0,0,.25);border-radius:8px;padding:9px 11px">
-    <div style="font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-family:'Share Tech Mono',monospace;margin-bottom:3px">${label}</div>
-    <div style="font-size:16px;font-weight:800;color:${cor};font-family:Orbitron,sans-serif">${valor}</div>
+function _funcStat(label,valor,cor,big){
+  const ls=big?12:9.5, vs=big?24:16, pad=big?'13px 15px':'9px 11px', mb=big?5:3;
+  return `<div style="background:rgba(0,0,0,.25);border-radius:8px;padding:${pad}">
+    <div style="font-size:${ls}px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-family:'Share Tech Mono',monospace;margin-bottom:${mb}px">${label}</div>
+    <div style="font-size:${vs}px;font-weight:800;color:${cor};font-family:Orbitron,sans-serif">${valor}</div>
   </div>`;
 }
 // Detalhe agregado de um funcionário no período (por robô e por dia)
@@ -2635,66 +2636,66 @@ function abrirFuncDetalhe(nomeEnc){
   const d=desempenhoFuncDetalhe(nome,selAno,mesFiltro);
   const st=_funcStatus({horas:d.horas,horasMeta:d.horasMeta,taxa:d.taxa});
   const periodoTxt=_funcMesTodos?(selAno+' (ano todo)'):(MESES[selMes]+' / '+selAno);
-  let html=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:4px">
-      <div style="width:52px;height:52px;border-radius:12px;background:rgba(${st.rgb},.12);border:1px solid rgba(${st.rgb},.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 14px -4px rgba(${st.rgb},.6)">
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="${st.cor}" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>
+  let html=`<div style="display:flex;align-items:center;gap:16px;margin-bottom:4px">
+      <div style="width:64px;height:64px;border-radius:14px;background:rgba(${st.rgb},.12);border:1px solid rgba(${st.rgb},.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 14px -4px rgba(${st.rgb},.6)">
+        <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="${st.cor}" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:22px;font-weight:900;color:#fff;font-family:Orbitron,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(nome)}</div>
-        <div style="font-size:11px;color:${st.cor};font-weight:800;letter-spacing:.12em;font-family:'Share Tech Mono',monospace;text-transform:uppercase;margin-top:2px">${st.txt} · ${periodoTxt}</div>
+        <div style="font-size:30px;font-weight:900;color:#fff;font-family:Orbitron,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(nome)}</div>
+        <div style="font-size:13.5px;color:${st.cor};font-weight:800;letter-spacing:.12em;font-family:'Share Tech Mono',monospace;text-transform:uppercase;margin-top:3px">${st.txt} · ${periodoTxt}</div>
       </div>
-      <button type="button" class="btn ghost tiny" onclick="closeModal('modalFunc')" style="flex-shrink:0">✕</button>
+      <button type="button" class="btn ghost" onclick="closeModal('modalFunc')" style="flex-shrink:0;font-size:16px;padding:8px 14px">✕</button>
     </div>`;
   if(d.horas===0){
-    html+=`<div style="padding:30px 10px;text-align:center;color:var(--faint);font-size:13px">Sem produção registrada para ${esc(nome)} neste período.</div>`;
+    html+=`<div style="padding:40px 10px;text-align:center;color:var(--faint);font-size:15px">Sem produção registrada para ${esc(nome)} neste período.</div>`;
     document.getElementById('modalFuncBody').innerHTML=html; openModal('modalFunc'); return;
   }
-  // KPIs
-  html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0">
-    ${_funcStat('Peças',d.pecas.toLocaleString("pt-BR"),'var(--ok)')}
-    ${_funcStat('Média/hora',d.media.toLocaleString("pt-BR"),'var(--nc)')}
-    ${_funcStat('% da meta',d.horasMeta>0?d.taxa+'%':'—',st.cor)}
-    ${_funcStat('Metas batidas',d.horasMeta>0?`${d.metasOk}/${d.horasMeta}`:'—','var(--ok)')}
-    ${_funcStat('Horas',d.horas.toLocaleString("pt-BR"),'var(--purple,#a78bfa)')}
-    ${_funcStat('Dias / Robôs',`${d.dias} / ${d.robos}`,'var(--ny)')}
+  // KPIs (variante grande)
+  html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0">
+    ${_funcStat('Peças',d.pecas.toLocaleString("pt-BR"),'var(--ok)',true)}
+    ${_funcStat('Média/hora',d.media.toLocaleString("pt-BR"),'var(--nc)',true)}
+    ${_funcStat('% da meta',d.horasMeta>0?d.taxa+'%':'—',st.cor,true)}
+    ${_funcStat('Metas batidas',d.horasMeta>0?`${d.metasOk}/${d.horasMeta}`:'—','var(--ok)',true)}
+    ${_funcStat('Horas',d.horas.toLocaleString("pt-BR"),'var(--purple,#a78bfa)',true)}
+    ${_funcStat('Dias / Robôs',`${d.dias} / ${d.robos}`,'var(--ny)',true)}
   </div>`;
   if(d.melhorDia){
     const md=d.melhorDia; const dataFmt=`${String(md.dia).padStart(2,'0')}/${String(md.mes+1).padStart(2,'0')}/${md.ano}`;
-    html+=`<div style="background:rgba(0,255,174,.05);border:1px solid rgba(0,255,174,.3);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
-      <span style="font-size:18px">⭐</span><span style="font-size:13px;color:var(--txt)"><b style="color:var(--ok)">Melhor dia:</b> ${dataFmt} — ${md.pecas.toLocaleString("pt-BR")} peças</span></div>`;
+    html+=`<div style="background:rgba(0,255,174,.05);border:1px solid rgba(0,255,174,.3);border-radius:8px;padding:13px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:22px">⭐</span><span style="font-size:16px;color:var(--txt)"><b style="color:var(--ok)">Melhor dia:</b> ${dataFmt} — ${md.pecas.toLocaleString("pt-BR")} peças</span></div>`;
   }
   // Produção por robô
   const maxR=d.robosList.length?d.robosList[0].pecas:1;
-  html+=`<div style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace;margin-bottom:10px">Produção por robô</div>`;
+  html+=`<div style="font-size:13px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace;margin-bottom:12px">Produção por robô</div>`;
   html+=d.robosList.map(r=>{ const pct=Math.round(r.pecas/maxR*100); const tx=r.horasMeta>0?Math.round(r.metasOk/r.horasMeta*100):null;
-    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <span style="font-size:12px;color:var(--nc);font-weight:800;min-width:42px;font-family:Orbitron,sans-serif">${esc(r.robo)}</span>
-      <div style="flex:1;background:rgba(255,255,255,.06);border-radius:99px;height:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--nc);box-shadow:0 0 6px var(--nc);border-radius:99px"></div></div>
-      <span style="font-size:12px;font-weight:800;color:var(--txt);min-width:60px;text-align:right;font-family:Orbitron,sans-serif">${r.pecas.toLocaleString("pt-BR")}</span>
-      <span style="font-size:10px;color:var(--faint);min-width:66px;text-align:right">${r.horas}h${tx!=null?` · ${tx}%`:''}</span>
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="font-size:15px;color:var(--nc);font-weight:800;min-width:50px;font-family:Orbitron,sans-serif">${esc(r.robo)}</span>
+      <div style="flex:1;background:rgba(255,255,255,.06);border-radius:99px;height:9px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--nc);box-shadow:0 0 6px var(--nc);border-radius:99px"></div></div>
+      <span style="font-size:15px;font-weight:800;color:var(--txt);min-width:72px;text-align:right;font-family:Orbitron,sans-serif">${r.pecas.toLocaleString("pt-BR")}</span>
+      <span style="font-size:12px;color:var(--faint);min-width:78px;text-align:right">${r.horas}h${tx!=null?` · ${tx}%`:''}</span>
     </div>`; }).join('');
   // Histórico por dia
-  html+=`<div style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace;margin:18px 0 10px">Histórico por dia (${d.diasList.length})</div>
-    <div style="overflow-x:auto;border:1px solid rgba(255,255,255,.06);border-radius:10px;max-height:260px;overflow-y:auto">
-      <table style="border-collapse:collapse;width:100%;min-width:360px;font-family:'Share Tech Mono',monospace">
+  html+=`<div style="font-size:13px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace;margin:22px 0 12px">Histórico por dia (${d.diasList.length})</div>
+    <div style="overflow-x:auto;border:1px solid rgba(255,255,255,.06);border-radius:10px;max-height:340px;overflow-y:auto">
+      <table style="border-collapse:collapse;width:100%;min-width:400px;font-family:'Share Tech Mono',monospace">
         <thead><tr style="background:rgba(0,0,0,.35);position:sticky;top:0">
-          <th style="padding:8px 10px;font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;text-align:left">Data</th>
-          <th style="padding:8px 10px;font-size:10.5px;color:var(--ok);text-transform:uppercase;letter-spacing:.1em;text-align:center">Peças</th>
-          <th style="padding:8px 10px;font-size:10.5px;color:var(--purple,#a78bfa);text-transform:uppercase;letter-spacing:.1em;text-align:center">Horas</th>
-          <th style="padding:8px 10px;font-size:10.5px;color:var(--ny);text-transform:uppercase;letter-spacing:.1em;text-align:center">Metas</th>
+          <th style="padding:11px 12px;font-size:12.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;text-align:left">Data</th>
+          <th style="padding:11px 12px;font-size:12.5px;color:var(--ok);text-transform:uppercase;letter-spacing:.1em;text-align:center">Peças</th>
+          <th style="padding:11px 12px;font-size:12.5px;color:var(--purple,#a78bfa);text-transform:uppercase;letter-spacing:.1em;text-align:center">Horas</th>
+          <th style="padding:11px 12px;font-size:12.5px;color:var(--ny);text-transform:uppercase;letter-spacing:.1em;text-align:center">Metas</th>
         </tr></thead><tbody>
         ${d.diasList.map(x=>{ const dataFmt=`${String(x.dia).padStart(2,'0')}/${String(x.mes+1).padStart(2,'0')}/${x.ano}`; const tx=x.horasMeta>0?Math.round(x.metasOk/x.horasMeta*100):null;
           const corTx=tx==null?'var(--faint)':(tx>=85?'var(--ok)':tx>=45?'var(--ny)':'var(--danger)');
           return `<tr style="border-bottom:1px solid rgba(255,255,255,.05)">
-            <td style="padding:8px 10px;font-size:12px;color:var(--txt)">${dataFmt}</td>
-            <td style="padding:8px 10px;font-size:13px;color:var(--ok);text-align:center;font-family:Orbitron,sans-serif;font-weight:700">${x.pecas.toLocaleString("pt-BR")}</td>
-            <td style="padding:8px 10px;font-size:12px;color:var(--faint);text-align:center">${x.horas}</td>
-            <td style="padding:8px 10px;font-size:12px;color:${corTx};text-align:center;font-weight:700">${x.horasMeta>0?`${x.metasOk}/${x.horasMeta} · ${tx}%`:'—'}</td>
+            <td style="padding:11px 12px;font-size:14px;color:var(--txt)">${dataFmt}</td>
+            <td style="padding:11px 12px;font-size:16px;color:var(--ok);text-align:center;font-family:Orbitron,sans-serif;font-weight:700">${x.pecas.toLocaleString("pt-BR")}</td>
+            <td style="padding:11px 12px;font-size:14px;color:var(--faint);text-align:center">${x.horas}</td>
+            <td style="padding:11px 12px;font-size:14px;color:${corTx};text-align:center;font-weight:700">${x.horasMeta>0?`${x.metasOk}/${x.horasMeta} · ${tx}%`:'—'}</td>
           </tr>`; }).join('')}
         </tbody>
       </table>
     </div>
-    <div class="modal-actions" style="margin-top:16px"><button type="button" class="btn primary" onclick="closeModal('modalFunc')">Fechar</button></div>`;
+    <div class="modal-actions" style="margin-top:18px"><button type="button" class="btn primary" onclick="closeModal('modalFunc')" style="font-size:15px;padding:12px">Fechar</button></div>`;
   document.getElementById('modalFuncBody').innerHTML=html;
   openModal('modalFunc');
 }

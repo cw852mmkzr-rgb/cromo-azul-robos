@@ -945,7 +945,14 @@ const HORAS_DIA   = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15
 const HORAS_NOITE = ["18:00","19:00","20:00","21:00","22:00"];
 function campoH(h){ return 'h'+h.replace(':',''); }
 const HORAS_CAFE = ["09:00"]; // horários com meta reduzida (parada de café)
+const CAFE_PARADA_MIN = 25;   // minutos de parada na hora do café (produz só 60-25=35 min)
 function ehCafe(h){ return HORAS_CAFE.includes(h); }
+function ehCafeCampo(campo){ return HORAS_CAFE.some(h=>campoH(h)===campo); }
+// meta efetiva da hora: na parada do café a meta cai proporcional ao tempo produtivo
+function metaHora(meta,h){ meta=parseInt(meta)||0; if(meta<=0) return 0; return ehCafe(h) ? Math.max(1,Math.round(meta*(60-CAFE_PARADA_MIN)/60)) : meta; }
+function metaHoraCampo(meta,campo){ meta=parseInt(meta)||0; if(meta<=0) return 0; return ehCafeCampo(campo) ? Math.max(1,Math.round(meta*(60-CAFE_PARADA_MIN)/60)) : meta; }
+// peças descontadas da meta do dia de um robô por causa da(s) parada(s) do café
+function cafeDescontoRobo(meta){ meta=parseInt(meta)||0; if(meta<=0) return 0; return HORAS_CAFE.reduce((s,h)=>s+(meta-metaHora(meta,h)),0); }
 const DASH_CAFE = "#ffcf5c";
 
 function parseCelVal(raw){ const s=String(raw||'').trim(); if(!s) return {num:0,adj:false}; const adj=s.endsWith('#'); return {num:parseInt(s.replace('#',''))||0, adj}; }
@@ -984,7 +991,6 @@ const IC = {
 };
 const PAINEIS = [
   {id:"painel",    nome:"Painel",           sub:"Visão geral",           ico:IC.painel,  built:true},
-  {id:"mapa",      nome:"Mapa dos Robôs",   sub:"Chão de fábrica",       ico:IC.mapa,    built:true},
   {id:"mensal",    nome:"Produção Mensal",  sub:"Total por dia do mês",  ico:IC.mensal,  built:true},
   {id:"meta",      nome:"Meta Diária",      sub:"Apontar produção",      ico:IC.meta,    built:true},
   {id:"relmes",    nome:"Relatório Mensal", sub:"Resumo do mês",         ico:IC.relmes,  built:true},
@@ -1163,8 +1169,7 @@ function renderMain(){
   if(sig===_mainSig) return; _mainSig=sig;
 
   if(nav.sec==="robo"){ box.innerHTML=viewRobot(nav.id); return; }
-  const p=PAINEIS.find(x=>x.id===nav.id)||PAINEIS[1];
-  if(p.id==="mapa"){ box.innerHTML=viewMapa(); return; }
+  const p=PAINEIS.find(x=>x.id===nav.id)||PAINEIS[0];
   if(p.id==="painel") box.innerHTML=viewPainel();
   else if(p.id==="mensal") box.innerHTML=viewMensal();
   else if(p.id==="meta") box.innerHTML=viewMeta();
@@ -1363,7 +1368,7 @@ function renderHistoricoRobo(k){
   const acum=registros.reduce((s,r)=>s+r.totalGeral,0);
   const media=Math.round(acum/registros.length);
   const melhor=registros.reduce((b,r)=>r.totalGeral>b.totalGeral?r:b,registros[0]);
-  const meta=parseInt(robos()[k]?.meta_hora)||0; const metaDia=meta*(HORAS_DIA.length+HORAS_NOITE.length);
+  const meta=parseInt(robos()[k]?.meta_hora)||0; const metaDia=Math.max(0,meta*(HORAS_DIA.length+HORAS_NOITE.length)-cafeDescontoRobo(meta));
   const linhas=registros.map(r=>{
     const pct=Math.round(r.totalGeral/maxTot*100);
     const atingiu=metaDia>0 && r.totalGeral>=metaDia;
@@ -1539,8 +1544,8 @@ function viewPainel(){
   // sparkline (últimos até 14 dias)
   const jan=serie.slice(Math.max(0,serie.length-14)); const maxv=Math.max(1,...jan);
   const pts=jan.length>1?jan.map((v,i)=>`${(i/(jan.length-1)*320).toFixed(0)},${(40-(v/maxv)*34).toFixed(1)}`).join(' '):`0,38 320,38`;
-  // meta do dia: soma das metas/hora dos robôs × 10h dia
-  const metaDia=ROBOS.reduce((s,r)=>s+(parseInt(robos()[String(r)]?.meta_hora)||0),0)*10;
+  // meta do dia: soma das metas/hora dos robôs × 10h dia, descontando a parada do café
+  const metaDia=ROBOS.reduce((s,r)=>{ const m=parseInt(robos()[String(r)]?.meta_hora)||0; return s+Math.max(0,m*10-cafeDescontoRobo(m)); },0);
   const pct=metaDia?Math.min(100,Math.round(hojeT/metaDia*100)):0;
   const dash=232, off=dash-(dash*pct/100);
   // alertas
@@ -1614,7 +1619,7 @@ function viewMeta(){
           <div class="metric"><div class="k">∑ Total</div><div class="v" style="color:var(--cyan)">${totalGeral.toLocaleString("pt-BR")}</div></div>
         </div></div>`;
   if(!isHost) head+=`<div class="legend" style="padding-left:6px">Somente leitura — entre como HOST para apontar produção.</div>`;
-  else head+=`<div class="legend"><span><b style="color:var(--ok)">■</b> atingiu a meta/hora</span><span><b style="color:var(--danger)">■</b> abaixo da meta</span><span><b style="color:var(--blue)">■</b> ajuste técnico (digite <b>#</b> no fim)</span><span style="color:var(--ny)"><b>☕ 09:00</b> — meta reduzida (parada do café)</span>${divisaoAtiva()?`<span style="color:var(--ny)">➗ divisão ON — digite o total de pontos; dividimos pela coluna PTS</span>`:''}</div>`;
+  else head+=`<div class="legend"><span><b style="color:var(--ok)">■</b> atingiu a meta/hora</span><span><b style="color:var(--danger)">■</b> abaixo da meta</span><span><b style="color:var(--blue)">■</b> ajuste técnico (digite <b>#</b> no fim)</span><span style="color:var(--ny)"><b>☕ 09:00</b> — meta reduzida (parada de ${CAFE_PARADA_MIN} min do café)</span>${divisaoAtiva()?`<span style="color:var(--ny)">➗ divisão ON — digite o total de pontos; dividimos pela coluna PTS</span>`:''}</div>`;
 
   return head
     + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">☀</span><span class="tg" style="color:var(--ok)">Turno Dia — 08:00 às 17:00</span></div>${metaTable(chave,md,HORAS_DIA)}</div>`
@@ -1664,14 +1669,15 @@ function metaTable(chave,md,horas){
                : `<td class="cpts" style="color:var(--ny)">${pts!==''?esc(String(pts)):'—'}</td>`;
     // horas — quando a hora tem valor, mostra também o seletor de funcionário
     horas.forEach(hr=>{ const campo=campoH(hr); const raw=rd[campo]||""; const pv=parseCelVal(raw); linTot+=pv.num;
-      const cafe=ehCafe(hr); const func=rd["func_"+campo]||"";
-      let cls=cafe?"cafe":""; if(raw!==""&&!cafe){ cls= pv.adj?"adj":(meta>0?(pv.num>=meta?"ok":"low"):""); } else if(raw!==""&&cafe&&pv.adj){ cls="cafe adj"; }
+      const cafe=ehCafe(hr); const func=rd["func_"+campo]||""; const metaEf=metaHora(meta,hr);
+      let cls=""; if(raw!==""){ cls= pv.adj?"adj":(metaEf>0?(pv.num>=metaEf?"ok":"low"):""); }
+      const cafeTit = (cafe&&meta>0) ? ` title="☕ Meta reduzida do café: ${metaEf} peças (parada de ${CAFE_PARADA_MIN} min)"` : "";
       if(isHost){
-        h+=`<td class="hcell${cafe?' cafe-td':''}"><input class="${cls}" value="${esc(raw)}" oninput="onMetaInput(this)" onchange="setMeta('${chave}','${r}','${campo}',this.value,this)">`
+        h+=`<td class="hcell${cafe?' cafe-td':''}"${cafeTit}><input class="${cls}" value="${esc(raw)}" oninput="onMetaInput(this)" onchange="setMeta('${chave}','${r}','${campo}',this.value,this)">`
           + (temFunc ? `<input class="fhinp${func?' has':''}" list="funcDatalist" value="${esc(func)}" placeholder="quem fez?" onchange="setFuncHora('${chave}','${r}','${campo}',this.value,this)" ${raw===""?'hidden':''}>` : "")
           + `</td>`;
       } else {
-        h+=`<td class="hcell ${cls}${cafe?' cafe-td':''}" style="font-weight:600;color:${cafe?'var(--ny)':(pv.adj?'var(--blue)':(raw===''?'var(--faint)':(meta>0?(pv.num>=meta?'var(--ok)':'var(--danger)'):'var(--txt)')))}">${raw===''?'·':esc(String(pv.num))}${raw!==""&&func?`<div class="fhtag">${esc(func)}</div>`:""}</td>`;
+        h+=`<td class="hcell ${cls}${cafe?' cafe-td':''}"${cafeTit} style="font-weight:600;color:${pv.adj?'var(--blue)':(raw===''?'var(--faint)':(metaEf>0?(pv.num>=metaEf?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}${raw!==""&&func?`<div class="fhtag">${esc(func)}</div>`:""}</td>`;
       }
     });
     h+=`<td class="tot">${linTot.toLocaleString("pt-BR")}</td></tr>`;
@@ -1698,7 +1704,7 @@ function setMeta(chave,robo,campo,v,el){
     }
   }
   if(v==="") delete rd[campo]; else rd[campo]=v;
-  if(el){ const meta=parseInt(robos()[robo]&&robos()[robo].meta_hora)||0, pv=parseCelVal(v);
+  if(el){ const meta=metaHoraCampo(robos()[robo]&&robos()[robo].meta_hora, campo), pv=parseCelVal(v);
     el.className = v===''?'':(pv.adj?'adj':(meta>0?(pv.num>=meta?'ok':'low'):'')); }
   _mainSig=""; saveDebounced(); renderMainSoon();
 }
@@ -1925,8 +1931,8 @@ function viewRelMensal(){
       const rd=diasDoMes[d].robos[robo]?.dia||{};
       if(rd.cod && rd.cod!=='—') cod=rd.cod;
       if(meta<=0) return;
-      HORAS.forEach(h=>{ if(ehCafe(h)) return; const v=parseCelVal(rd[campoH(h)]||'').num; if(v<=0) return;
-        if(v>=meta) atingiu++; else naoAtingiu++;
+      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v<=0) return; const metaEf=metaHora(meta,h);
+        if(v>=metaEf) atingiu++; else naoAtingiu++;
       });
     });
     if(atingiu===0 && naoAtingiu===0) return null;
@@ -2476,7 +2482,8 @@ function desempenhoFunc(ano,mes){
         const o=garante(nome);
         o.pecas+=val; o.horas+=1; o.dias.add(chave); o.robos.add(rk);
         o.diaPecas[chave]=(o.diaPecas[chave]||0)+val;
-        if(meta>0){ o.horasMeta+=1; if(val>=meta) o.metasOk+=1; }
+        const metaEf=metaHora(meta,hr);
+        if(metaEf>0){ o.horasMeta+=1; if(val>=metaEf) o.metasOk+=1; }
       });
     });
   });
@@ -2618,8 +2625,9 @@ function desempenhoFuncDetalhe(nome,ano,mes){
         porRobo[rk].pecas+=val; porRobo[rk].horas+=1;
         if(!porDia[chave]) porDia[chave]={pecas:0,horas:0,metasOk:0,horasMeta:0};
         porDia[chave].pecas+=val; porDia[chave].horas+=1;
-        if(meta>0){ horasMeta+=1; porRobo[rk].horasMeta+=1; porDia[chave].horasMeta+=1;
-          if(val>=meta){ metasOk+=1; porRobo[rk].metasOk+=1; porDia[chave].metasOk+=1; } }
+        const metaEf=metaHora(meta,hr);
+        if(metaEf>0){ horasMeta+=1; porRobo[rk].horasMeta+=1; porDia[chave].horasMeta+=1;
+          if(val>=metaEf){ metasOk+=1; porRobo[rk].metasOk+=1; porDia[chave].metasOk+=1; } }
       });
     });
   });
@@ -3335,8 +3343,9 @@ function dashRoboSVG(cor){ const m=dashModelo(); if(m===2) return dashRoboSVG2(c
 function dashRenderRobo(k){ const main=document.getElementById("dashMain"); const c=robos()[k]; if(!main||!c) return;
   const rd=dashDados()[k]||{}, hora=dashHoraAtual();
   const meta=parseInt(c.meta_hora)||0, prodH=parseCelVal(rd[campoH(hora)]).num;
-  const pct=meta>0?Math.round(prodH/meta*100):0, bateu=meta>0&&prodH>=meta, faltam=meta>0?Math.max(meta-prodH,0):0;
-  const cafe=ehCafe(hora); const cor=cafe?DASH_CAFE:((prodH===0&&meta===0)?DASH_NONE:bateu?DASH_OK:DASH_FAIL);
+  const cafe=ehCafe(hora); const metaEf=metaHora(meta,hora);
+  const pct=metaEf>0?Math.round(prodH/metaEf*100):0, bateu=metaEf>0&&prodH>=metaEf, faltam=metaEf>0?Math.max(metaEf-prodH,0):0;
+  const cor=cafe?DASH_CAFE:((prodH===0&&meta===0)?DASH_NONE:bateu?DASH_OK:DASH_FAIL);
   const sig=`R|${k}|${hora}|${prodH}|${meta}|${rd.cod||''}|${_dashIdx}|${_dashSeq.length}|M${dashModelo()}|C${cafe?1:0}`; if(sig===_dashSigMain) return; _dashSigMain=sig;
   const dots=_dashSeq.map((_,i)=>`<i class="${i===_dashIdx?'on':''}"></i>`).join('')+`<i class="g"></i>`;
   main.innerHTML=`<div class="dash-robo" data-modelo="${dashModelo()}" style="--cor:${cor}"><div class="dash-sweep"></div>
@@ -3344,9 +3353,9 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
     <div class="dash-info">
       <div><div class="dash-rn">ROBÔ ${esc(k)}</div><div class="dash-nome">${esc(c.nome||'')}</div><div class="dash-cod">⚙ ${esc(rd.cod||c.codigo_peca||'—')}</div></div>
       <div class="dash-box"><div class="dash-prod-h">PRODUÇÃO ${hora}</div><div class="dash-prod-n">${prodH>0?prodH:'—'}</div>
-        ${meta>0?`<div class="dash-meta-txt">META: <b>${meta}</b> PEÇAS/HORA</div>`:''}
-        ${meta>0&&prodH>0&&!bateu&&faltam>0&&!cafe?`<div class="dash-meta-txt fail">FALTOU ${faltam} PEÇA${faltam===1?'':'S'}</div>`:''}
-        ${cafe?`<div class="dash-meta-txt" style="color:var(--ny);font-weight:700">☕ META REDUZIDA — HORÁRIO DO CAFÉ</div>`:''}</div>
+        ${meta>0?`<div class="dash-meta-txt">META${cafe?' (CAFÉ)':''}: <b>${metaEf}</b> PEÇAS/HORA</div>`:''}
+        ${meta>0&&prodH>0&&!bateu&&faltam>0?`<div class="dash-meta-txt fail">FALTOU ${faltam} PEÇA${faltam===1?'':'S'}</div>`:''}
+        ${cafe?`<div class="dash-meta-txt" style="color:var(--ny);font-weight:700">☕ META REDUZIDA — PARADA DE ${CAFE_PARADA_MIN} MIN</div>`:''}</div>
       ${meta>0&&prodH>0?`<div class="dash-eff"><div class="dash-pct-wrap"><svg class="hud-ring" viewBox="0 0 200 120" preserveAspectRatio="none"><ellipse class="r1" cx="100" cy="60" rx="96" ry="54"/><ellipse class="r2" cx="100" cy="60" rx="86" ry="46"/></svg><div class="dash-pct">${pct}%</div></div><div class="dash-eff-l">EFICIÊNCIA DA HORA</div>
         <div class="dash-bar"><i style="transform:scaleX(${Math.min(pct,100)/100})"></i></div></div>`:''}
       <div class="dash-dots">${dots}</div>
@@ -3357,10 +3366,10 @@ function dashRenderGeral(){ const main=document.getElementById("dashMain"); if(!
   const sig="G|"+hora+"|"+JSON.stringify(dd)+"|"+rb.map(k=>robos()[k].meta_hora).join(','); if(sig===_dashSigMain) return; _dashSigMain=sig;
   let totalGeral=0;
   const linhas=rb.map(k=>{ const rd=dd[k]||{}, meta=parseInt(robos()[k].meta_hora)||0;
-    const pa=parseCelVal(rd[campoH(hora)]).num, corAtual=(meta===0||pa===0)?DASH_NONE:(pa>=meta?DASH_OK:DASH_RED);
+    const pa=parseCelVal(rd[campoH(hora)]).num, metaAt=metaHora(meta,hora), corAtual=(meta===0||pa===0)?DASH_NONE:(pa>=metaAt?DASH_OK:DASH_RED);
     const tr=horas.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]).num,0); totalGeral+=tr;
-    const cells=horas.map(h=>{ const v=parseCelVal(rd[campoH(h)]).num, at=h===hora, cafe=ehCafe(h);
-      const ok=meta>0&&v>=meta, fail=meta>0&&v>0&&v<meta; let cor=at?corAtual:ok?DASH_OK:fail?DASH_RED:DASH_NONE; if(cafe) cor=DASH_CAFE;
+    const cells=horas.map(h=>{ const v=parseCelVal(rd[campoH(h)]).num, at=h===hora, cafe=ehCafe(h), metaEf=metaHora(meta,h);
+      const ok=metaEf>0&&v>=metaEf, fail=metaEf>0&&v>0&&v<metaEf; let cor=at?corAtual:ok?DASH_OK:fail?DASH_RED:DASH_NONE; if(cafe) cor=DASH_CAFE;
       return `<td class="${at?'at':''}" style="color:${cor};${at?'background:'+cor+'18':''}">${v>0?v:'—'}</td>`; }).join('');
     return `<tr><td class="rn">${esc(k)}</td><td class="cd">${esc(rd.cod||'—')}</td><td class="mt">${meta||'—'}</td>${cells}<td class="tt">${tr>0?tr.toLocaleString("pt-BR"):'—'}</td></tr>`; }).join('');
   const heads=horas.map(h=>`<th class="${h===hora?'at':''}${ehCafe(h)?' cafe':''}">${h}${ehCafe(h)?' ☕':''}</th>`).join('');

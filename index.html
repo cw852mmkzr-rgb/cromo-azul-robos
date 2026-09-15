@@ -1238,7 +1238,7 @@ function viewRobot(k){
         <div class="field"><label>Cliente</label>${(()=>{const vv=valCampoRobo(c,pcReg,'cliente');return isHost?`<input value="${esc(vv)}" onchange="setField('${k}','cliente',this.value)">`:`<div class="val">${vv!==""?esc(vv):"—"}</div>`;})()}</div>
         <div class="field"><label>Código da peça</label>${
           prodCod
-            ? `<div class="val" style="display:flex;flex-direction:column;gap:2px"><span style="color:var(--warn);font-weight:700;font-size:16px">${esc(prodCod.cod)}</span><span style="font-size:10px;color:var(--faint);font-family:'Share Tech Mono',monospace">↳ da Meta Diária · ${esc(prodCodData)}</span></div>`
+            ? `<div class="val" style="display:flex;flex-direction:column;gap:2px;padding:4px 0"><span style="color:var(--warn);font-weight:900;font-size:34px;line-height:1;font-family:Orbitron,sans-serif;text-shadow:0 0 10px rgba(249,248,113,.4)">${esc(prodCod.cod)}</span><span style="font-size:11px;color:var(--faint);font-family:'Share Tech Mono',monospace;margin-top:4px">↳ da Meta Diária · ${esc(prodCodData)}</span></div>`
             : (isHost?`<input list="pecaCods" value="${esc(c.codigo_peca||"")}" onchange="setField('${k}','codigo_peca',this.value)">`:`<div class="val">${c.codigo_peca?esc(c.codigo_peca):"—"}</div>`)
         }</div>
         <div class="field"><label>Tempo/peça</label>${(()=>{const vv=valCampoRobo(c,pcReg,'tempo_peca');return isHost?`<input value="${esc(vv)}" onchange="setField('${k}','tempo_peca',this.value)">`:`<div class="val">${vv!==""?esc(vv):"—"}</div>`;})()}</div>
@@ -1539,6 +1539,15 @@ function removeImgPeca(k){
   _mainSig=""; renderMain(); saveToAPI();
 }
 function setField(k,campo,v){ if(!isHost||!robos()[k]) return; if(campo==="meta_hora") v=String(v).replace(",","."); robos()[k][campo]=v; _mainSig=""; if(campo==="status"||campo==="nome") renderNav(); if(campo==="codigo_peca") renderMainSoon(); saveDebounced(); }
+// Meta editada na Meta Diária: atualiza a meta do robô e propaga p/ a peça informada (Catálogo) e p/ a tela do robô
+function setMetaHoraRobo(chave,robo,v){ if(!isHost) return;
+  v=String(v).replace(",",".");
+  if(robos()[robo]) robos()[robo].meta_hora=v;
+  const rd=(prod().metas_dias[chave]||{})[String(robo)];
+  const cod=rd&&rd.cod?String(rd.cod).trim():"";
+  if(cod && pecasObj()[cod]) pecasObj()[cod].meta_hora=v;   // reflete no Catálogo de Peças
+  _mainSig=""; renderMainSoon(); saveDebounced();
+}
 function registrarTroca(k){ if(!isHost) return; const c=robos()[k];
   const agora=new Date().toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
   c.ultima_troca=agora; if(!Array.isArray(c.historico_eletrodo)) c.historico_eletrodo=[];
@@ -1676,7 +1685,7 @@ function metaTable(chave,md,horas){
     const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; let linTot=0;
     h+=`<tr><td class="rlab">${esc(String(r))}</td>`;
     // META
-    h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(rb[String(r)]?rb[String(r)].meta_hora:'')}" onchange="setField('${r}','meta_hora',this.value)"></td>`
+    h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(rb[String(r)]?rb[String(r)].meta_hora:'')}" onchange="setMetaHoraRobo('${chave}','${r}',this.value)"></td>`
                : `<td class="cmeta" style="color:var(--blue)">${meta||'—'}</td>`;
     // CÓD
     h+= isHost ? `<td class="ccod"><input class="cinp" list="pecaCods" value="${esc(cod)}" placeholder="—" onchange="setCod('${chave}','${r}',this.value)"></td>`

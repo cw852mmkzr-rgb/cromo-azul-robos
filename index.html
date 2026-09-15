@@ -624,6 +624,20 @@ table.meta-t td.cafe-td{background:rgba(249,248,113,.06)}
 table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .dash-hc.cafe{background:rgba(249,248,113,.10);border-color:rgba(249,248,113,.5)}
 
+/* ===== Faixa de status na célula do robô (Meta Diária) ===== */
+.mtable td.robocell{padding:5px 6px;vertical-align:middle}
+.robocell .stband{display:block;width:100%;box-sizing:border-box;text-align:center;font-size:8.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:2px 3px;border-radius:5px;border:1px solid var(--sc);color:#05060d;background:var(--sc);font-family:'Share Tech Mono',monospace;margin-bottom:5px;cursor:pointer;line-height:1.25;box-shadow:0 0 8px color-mix(in srgb,var(--sc) 45%,transparent)}
+.robocell select.stband{appearance:none;-webkit-appearance:none;text-align-last:center}
+.robocell .stband.ro{cursor:default}
+.robocell .rnum{text-align:center;font-weight:800;font-family:Orbitron,sans-serif}
+/* linha do robô pisca na cor do status a cada 20s (horizontal, linha inteira) */
+tr.strow td{position:relative}
+tr.strow td::after{content:'';position:absolute;inset:0;pointer-events:none;background:var(--stcor);opacity:0;animation:stBlink 20s ease-in-out infinite}
+@keyframes stBlink{0%,84%,100%{opacity:0}88%,96%{opacity:.30}92%{opacity:0}}
+tr.strow td.robocell{z-index:5;overflow:visible}
+.robocell .stphrase{position:absolute;left:112%;top:50%;transform:translateY(-50%);white-space:nowrap;font-family:'Share Tech Mono',monospace;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--stcor);font-size:16px;opacity:0;pointer-events:none;text-shadow:0 0 12px var(--stcor);animation:stPhrase 20s ease-in-out infinite}
+@keyframes stPhrase{0%,84%,100%{opacity:0}88%,96%{opacity:.95}92%{opacity:0}}
+
 /* ===== Produção por Peça (Neon City) ===== */
 .ppeca-sub{font-family:'Share Tech Mono',monospace;font-size:12.5px;letter-spacing:.05em;color:var(--mut);margin-bottom:14px}
 .ppeca-modos{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
@@ -940,8 +954,8 @@ const ADMIN_PW     = "cromo3102";
 const HEADERS_SB = { "apikey":SUPABASE_KEY, "Authorization":"Bearer "+SUPABASE_KEY, "Content-Type":"application/json", "Prefer":"return=minimal" };
 
 const ROBOS = [800,801,802,803,804,805];
-const STATUS_LIST = ["Produzindo","Setup","Aguardando","Manutenção","Parado"];
-const STATUS_COR = {"Produzindo":"var(--ok)","Setup":"var(--blue)","Aguardando":"var(--purple)","Manutenção":"var(--warn)","Parado":"var(--danger)"};
+const STATUS_LIST = ["Produzindo","Setup","Aguardando","Manutenção","Sem mão de obra","Parado"];
+const STATUS_COR = {"Produzindo":"var(--ok)","Setup":"var(--blue)","Aguardando":"var(--purple)","Manutenção":"var(--warn)","Sem mão de obra":"#a855f7","Parado":"var(--danger)"};
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const HORAS_DIA   = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
 const HORAS_NOITE = ["18:00","19:00","20:00","21:00","22:00"];
@@ -1539,6 +1553,22 @@ function removeImgPeca(k){
   _mainSig=""; renderMain(); saveToAPI();
 }
 function setField(k,campo,v){ if(!isHost||!robos()[k]) return; if(campo==="meta_hora") v=String(v).replace(",","."); robos()[k][campo]=v; _mainSig=""; if(campo==="status"||campo==="nome") renderNav(); if(campo==="codigo_peca") renderMainSoon(); saveDebounced(); }
+// Célula do robô na Meta Diária: faixa de status (clicável p/ HOST) em cima do número
+function statusCellRobo(r){
+  const c=robos()[String(r)]||{}; const st=c.status||''; const cor=STATUS_COR[st]||'var(--faint)';
+  const band = isHost
+    ? `<select class="stband" style="--sc:${cor}" title="Trocar status do robô" onclick="event.stopPropagation()" onchange="setStatusRobo('${r}',this.value,this)">${STATUS_LIST.map(s=>`<option ${s===st?'selected':''}>${s}</option>`).join('')}</select>`
+    : `<div class="stband ro" style="--sc:${cor}">${esc(st||'—')}</div>`;
+  const phrase = st ? `<div class="stphrase">${esc(st)}</div>` : "";
+  return `<td class="rlab robocell">${phrase}${band}<div class="rnum">${esc(String(r))}</div></td>`;
+}
+// Troca o status do robô a partir da Meta Diária — reflete em todas as abas
+function setStatusRobo(k,v,el){ if(!isHost||!robos()[k]) return;
+  robos()[k].status=v;
+  if(el){ el.style.setProperty('--sc', STATUS_COR[v]||'var(--faint)');
+    const tr=el.closest('tr'); if(tr){ tr.classList.add('strow'); tr.style.setProperty('--stcor', STATUS_COR[v]||'var(--faint)'); const ph=tr.querySelector('.stphrase'); if(ph) ph.textContent=v; } }
+  _mainSig=""; renderNav(); renderMainSoon(); saveDebounced();
+}
 // Meta editada na Meta Diária: atualiza a meta do robô e propaga p/ a peça informada (Catálogo) e p/ a tela do robô
 function setMetaHoraRobo(chave,robo,v){ if(!isHost) return;
   v=String(v).replace(",",".");
@@ -1683,7 +1713,8 @@ function metaTable(chave,md,horas){
     + `<th>Total</th></tr></thead><tbody>`;
   ROBOS.forEach(r=>{ const rd=md[String(r)]||{}; const meta=parseInt(rb[String(r)]&&rb[String(r)].meta_hora)||0;
     const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; let linTot=0;
-    h+=`<tr><td class="rlab">${esc(String(r))}</td>`;
+    const _st=(rb[String(r)]||{}).status||""; const _stCor=STATUS_COR[_st]||"var(--faint)";
+    h+=`<tr${_st?` class="strow" style="--stcor:${_stCor}"`:""}>${statusCellRobo(r)}`;
     // META
     h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(rb[String(r)]?rb[String(r)].meta_hora:'')}" onchange="setMetaHoraRobo('${chave}','${r}',this.value)"></td>`
                : `<td class="cmeta" style="color:var(--blue)">${meta||'—'}</td>`;

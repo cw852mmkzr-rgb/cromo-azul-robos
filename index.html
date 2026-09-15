@@ -874,11 +874,13 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
       <div class="field"><label>Corrente</label><input id="pkCorrente" placeholder="Ex: 3,40Ka"></div>
       <div class="field"><label>Pré-pressão</label><input id="pkPrePressao" placeholder="Ex: 120"></div>
       <div class="field"><label>Pontos de solda</label><input id="pkPontos" placeholder="Ex: 13"></div>
+      <div class="field"><label>Eletrodo</label><input id="pkEletrodo" placeholder="Ex: RETO"></div>
       <div class="field"><label>Tipo de eletrodo</label><input id="pkTipoEletrodo" placeholder="Ex: F1"></div>
       <div class="field"><label>Tempo de solda</label><input id="pkTempoSolda" placeholder="Ex: 140"></div>
       <div class="field"><label>Turno</label><input id="pkTurno" placeholder="Ex: 07:00 às 22:00"></div>
       <div class="field"><label>Pares de gabarito</label><input id="pkGabarito" placeholder="Ex: 4"></div>
       <div class="field"><label>Responsável técnico</label><input id="pkResp" placeholder="Nome"></div>
+      <div class="field"><label>Programador</label><input id="pkProgramador" placeholder="Nome"></div>
     </div>
     <div class="field"><label>Descrição</label><textarea id="pkDesc" placeholder="Observações"></textarea></div>
     <div class="modal-actions">
@@ -960,7 +962,8 @@ function parseCelVal(raw){ const s=String(raw||'').trim(); if(!s) return {num:0,
 /* Campos da célula robótica */
 const GRUPOS = [
   { titulo:"Identificação", ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/>', campos:[
-    {k:"modelo",l:"Modelo FANUC"},{k:"celula",l:"Nº da Célula"} ]},
+    {k:"modelo",l:"Modelo FANUC"},{k:"celula",l:"Nº da Célula"},
+    {k:"responsavel_tec",l:"Responsável Téc."},{k:"programador",l:"Programador"} ]},
   { titulo:"Operação", ico:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>', campos:[
     {k:"operador",l:"Operador"},{k:"turno",l:"Turno"},{k:"meta_hora",l:"Meta/hora",tipo:"number"} ]},
   { titulo:"Parâmetros de Solda", ico:'<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>', campos:[
@@ -1204,10 +1207,17 @@ function viewRobot(k){
     ${isHost?`<button type="button" class="btn danger tiny" onclick="removeCell('${k}')">Excluir</button>`:""}
   </div>`;
 
+  // Peça em produção (código lançado na Meta Diária) — usado p/ auto-preencher os campos
+  const prodCod=codProducaoRobo(k);
+  let prodCodData="";
+  if(prodCod){ const _pp=prodCod.chave.split('_').map(Number); prodCodData=`${String(_pp[2]).padStart(2,'0')}/${String(_pp[1]+1).padStart(2,'0')}/${_pp[0]}`; }
+  const codRef=(prodCod&&prodCod.cod)||c.codigo_peca||"";
+  const pcReg=pecasObj()[codRef]||null;
+
   // ── Identificação (primeiro do GRUPOS) ──
   const gIdent = GRUPOS[0];
   html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24">${gIdent.ico}</svg>${gIdent.titulo}</h3><div class="grid">`;
-  gIdent.campos.forEach(f=>{ const v=c[f.k]!=null?c[f.k]:"";
+  gIdent.campos.forEach(f=>{ const v=valCampoRobo(c,pcReg,f.k);
     html+=`<div class="field"><label>${f.l}</label>`;
     if(isHost) html+=`<input value="${esc(v)}" onchange="setField('${k}','${f.k}',this.value)">`;
     else html+=`<div class="val">${v!==""?esc(v):"—"}</div>`;
@@ -1216,11 +1226,6 @@ function viewRobot(k){
 
   // ── Peça em Produção ──
   _selRobo=k;
-  const prodCod=codProducaoRobo(k);                 // código em produção (vindo da Meta Diária)
-  let prodCodData="";
-  if(prodCod){ const _pp=prodCod.chave.split('_').map(Number); prodCodData=`${String(_pp[2]).padStart(2,'0')}/${String(_pp[1]+1).padStart(2,'0')}/${_pp[0]}`; }
-  const codRef=(prodCod&&prodCod.cod)||c.codigo_peca||"";
-  const pcReg=pecasObj()[codRef]||null;             // peça cadastrada correspondente ao código em produção
   const imgOwn=c.img_peca||"";
   const imgSrc=imgOwn||(pcReg&&pcReg.foto)||"";
   const imgFromPeca=!imgOwn&&!!(pcReg&&pcReg.foto);
@@ -1251,7 +1256,7 @@ function viewRobot(k){
   </div>`;
 
   // ── Eletrodo (avançado) ──
-  const eletrodo=c.eletrodo||"", tipoEle=valCampoRobo(c,pcReg,'tipo_eletrodo');
+  const eletrodo=valCampoRobo(c,pcReg,'eletrodo'), tipoEle=valCampoRobo(c,pcReg,'tipo_eletrodo');
   const desgaste=calcDesgaste(k);
   const limAviso=parseInt(c.limite_eletrodo_aviso)||300, limCrit=parseInt(c.limite_eletrodo)||500;
   const corDesg = desgaste>=limCrit?'var(--danger)':desgaste>=limAviso?'var(--ny)':'var(--ok)';
@@ -2369,7 +2374,7 @@ function funcProducaoRobo(k){
 function valCampoRobo(c, pcReg, campo){
   const own=c[campo];
   if(own!=null && String(own).trim()!=="") return own;
-  const map={ cliente:'cliente', tempo_peca:'tempo_peca', tipo_eletrodo:'tipo_eletrodo', turno:'turno', meta_hora:'meta_hora', corrente:'corrente', tempo_solda:'tempo_solda', pre_pressao:'pre_pressao', pontos_solda:'pontos' };
+  const map={ cliente:'cliente', tempo_peca:'tempo_peca', eletrodo:'eletrodo', tipo_eletrodo:'tipo_eletrodo', turno:'turno', meta_hora:'meta_hora', corrente:'corrente', tempo_solda:'tempo_solda', pre_pressao:'pre_pressao', pontos_solda:'pontos', responsavel_tec:'responsavel', programador:'programador' };
   const pk=map[campo];
   if(pcReg && pk && pcReg[pk]!=null && String(pcReg[pk]).trim()!=="") return pcReg[pk];
   return "";
@@ -2415,7 +2420,7 @@ function viewCatalogoPecas(){
 
 /* modal add/edit peça */
 let _pecaEdit=null, _pecaFoto="";
-const _PECA_CAMPOS=["pkCod","pkNome","pkCliente","pkTempoPeca","pkMetaHora","pkCorrente","pkPrePressao","pkPontos","pkTipoEletrodo","pkTempoSolda","pkTurno","pkGabarito","pkResp","pkDesc"];
+const _PECA_CAMPOS=["pkCod","pkNome","pkCliente","pkTempoPeca","pkMetaHora","pkCorrente","pkPrePressao","pkPontos","pkEletrodo","pkTipoEletrodo","pkTempoSolda","pkTurno","pkGabarito","pkResp","pkProgramador","pkDesc"];
 function openPeca(cod){
   _pecaEdit=cod||null; const p=cod?pecasObj()[cod]:null; _pecaFoto=(p&&p.foto)||"";
   document.getElementById("pkCod").value=cod||"";
@@ -2426,11 +2431,13 @@ function openPeca(cod){
   document.getElementById("pkCorrente").value=(p&&p.corrente)||"";
   document.getElementById("pkPrePressao").value=(p&&p.pre_pressao)||"";
   document.getElementById("pkPontos").value=(p&&p.pontos)||"";
+  document.getElementById("pkEletrodo").value=(p&&p.eletrodo)||"";
   document.getElementById("pkTipoEletrodo").value=(p&&p.tipo_eletrodo)||"";
   document.getElementById("pkTempoSolda").value=(p&&p.tempo_solda)||"";
   document.getElementById("pkTurno").value=(p&&p.turno)||"";
   document.getElementById("pkGabarito").value=(p&&p.gabarito)||"";
   document.getElementById("pkResp").value=(p&&p.responsavel)||"";
+  document.getElementById("pkProgramador").value=(p&&p.programador)||"";
   document.getElementById("pkDesc").value=(p&&p.descricao)||"";
   document.getElementById("pkTitulo").textContent=cod?("Peça "+cod):"Nova Peça";
   const canEdit=isHost;
@@ -2461,9 +2468,9 @@ function savePeca(){ if(!isHost) return;
     nome:g("pkNome"), cliente:g("pkCliente"),
     tempo_peca:g("pkTempoPeca"), meta_hora:g("pkMetaHora"),
     corrente:g("pkCorrente"), pre_pressao:g("pkPrePressao"),
-    pontos:g("pkPontos"), tipo_eletrodo:g("pkTipoEletrodo"),
+    pontos:g("pkPontos"), eletrodo:g("pkEletrodo"), tipo_eletrodo:g("pkTipoEletrodo"),
     tempo_solda:g("pkTempoSolda"), turno:g("pkTurno"),
-    gabarito:g("pkGabarito"), responsavel:g("pkResp"),
+    gabarito:g("pkGabarito"), responsavel:g("pkResp"), programador:g("pkProgramador"),
     descricao:g("pkDesc"), foto:_pecaFoto||""
   };
   closeModal("modalPeca"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Peça salva",false,true));

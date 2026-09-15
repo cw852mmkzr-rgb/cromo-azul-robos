@@ -1218,9 +1218,12 @@ function viewRobot(k){
 
   // ── Peça em Produção ──
   _selRobo=k;
-  const imgSrc=c.img_peca||"";
+  const pcReg=pecasObj()[c.codigo_peca]||null;      // peça cadastrada correspondente ao código
+  const imgOwn=c.img_peca||"";
+  const imgSrc=imgOwn||(pcReg&&pcReg.foto)||"";
+  const imgFromPeca=!imgOwn&&!!(pcReg&&pcReg.foto);
   const imgBlock=imgSrc
-    ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;display:block">${isHost?`<button type="button" onclick="event.stopPropagation();removeImgPeca('${k}')" title="Remover imagem" style="position:absolute;top:4px;right:4px;background:rgba(255,43,94,.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:900">✕</button>`:""}`
+    ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;display:block">${imgFromPeca?`<span style="position:absolute;bottom:4px;left:4px;background:rgba(0,240,255,.85);color:#04121a;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800;font-family:'Share Tech Mono',monospace">📋 CADASTRO</span>`:""}${(isHost&&imgOwn)?`<button type="button" onclick="event.stopPropagation();removeImgPeca('${k}')" title="Remover imagem" style="position:absolute;top:4px;right:4px;background:rgba(255,43,94,.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:900">✕</button>`:""}`
     : `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--faint);font-size:11px;font-family:'Share Tech Mono',monospace;letter-spacing:.08em"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>SEM FOTO</span></div>`;
   html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14L4 7m8 4v10M4 7v10l8 4"/></svg>Peça em Produção</h3>
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
@@ -1238,6 +1241,7 @@ function viewRobot(k){
         </div>`:''}
       </div>
     </div>
+    ${fichaPecaHTML(c.codigo_peca)}
     <datalist id="pecaCods">${Object.keys(pecasObj()).map(cod=>`<option value="${esc(cod)}">${esc(nomePeca(cod))}</option>`).join("")}</datalist>
   </div>`;
 
@@ -1521,7 +1525,7 @@ function removeImgPeca(k){
   delete robos()[k].img_peca;
   _mainSig=""; renderMain(); saveToAPI();
 }
-function setField(k,campo,v){ if(!isHost||!robos()[k]) return; if(campo==="meta_hora") v=String(v).replace(",","."); robos()[k][campo]=v; _mainSig=""; if(campo==="status"||campo==="nome") renderNav(); saveDebounced(); }
+function setField(k,campo,v){ if(!isHost||!robos()[k]) return; if(campo==="meta_hora") v=String(v).replace(",","."); robos()[k][campo]=v; _mainSig=""; if(campo==="status"||campo==="nome") renderNav(); if(campo==="codigo_peca") renderMainSoon(); saveDebounced(); }
 function registrarTroca(k){ if(!isHost) return; const c=robos()[k];
   const agora=new Date().toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
   c.ultima_troca=agora; if(!Array.isArray(c.historico_eletrodo)) c.historico_eletrodo=[];
@@ -2337,6 +2341,25 @@ function _ppecaFecharDetalhe(){ const ov=document.getElementById('ppdOv'); if(ov
    ============================================================ */
 function pecasObj(){ if(!dados.pecas) dados.pecas={}; return dados.pecas; }
 function nomePeca(cod){ const p=pecasObj()[cod]; return p&&p.nome?p.nome:""; }
+// Ficha técnica da peça cadastrada — mostrada na tela do robô ao escolher o código
+function fichaPecaHTML(cod){
+  const p=pecasObj()[cod]; if(!p) return "";
+  const linhas=[
+    ["Cliente",p.cliente],["Tempo/peça",p.tempo_peca],["Meta/hora",p.meta_hora],
+    ["Corrente",p.corrente],["Pré-pressão",p.pre_pressao],["Pontos de solda",p.pontos],
+    ["Tipo de eletrodo",p.tipo_eletrodo],["Tempo de solda",p.tempo_solda],
+    ["Turno",p.turno],["Gabarito",p.gabarito]
+  ].filter(x=>x[1]!=null && String(x[1]).trim()!=="");
+  const desc=(p.descricao||"").trim();
+  const nm=(p.nome||"").trim();
+  if(!linhas.length && !desc && !nm) return "";
+  let h=`<div style="margin-top:14px;border-top:1px solid rgba(0,240,255,.18);padding-top:12px">
+    <div style="font-size:11px;color:var(--nc);text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace;margin-bottom:10px">📋 Dados cadastrados da peça ${esc(cod)}${nm&&nm!==cod?` · ${esc(nm)}`:""}</div>`;
+  if(linhas.length) h+=`<div class="grid">`+linhas.map(([l,v])=>`<div class="field"><label>${l}</label><div class="val">${esc(String(v))}</div></div>`).join("")+`</div>`;
+  if(desc) h+=`<div class="field full" style="margin-top:8px"><label>Descrição</label><div class="val">${esc(desc)}</div></div>`;
+  h+=`</div>`;
+  return h;
+}
 function pecasFiltradas(){ const o=pecasObj(); const t=pecaBusca.trim().toUpperCase();
   let lista=Object.keys(o).map(cod=>({cod,...o[cod]}));
   if(t) lista=lista.filter(p=>p.cod.includes(t)||(p.nome||"").toUpperCase().includes(t)||(p.cliente||"").toUpperCase().includes(t));

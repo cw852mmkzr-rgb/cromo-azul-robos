@@ -1218,7 +1218,11 @@ function viewRobot(k){
 
   // ── Peça em Produção ──
   _selRobo=k;
-  const pcReg=pecasObj()[c.codigo_peca]||null;      // peça cadastrada correspondente ao código
+  const prodCod=codProducaoRobo(k);                 // código em produção (vindo da Meta Diária)
+  let prodCodData="";
+  if(prodCod){ const _pp=prodCod.chave.split('_').map(Number); prodCodData=`${String(_pp[2]).padStart(2,'0')}/${String(_pp[1]+1).padStart(2,'0')}/${_pp[0]}`; }
+  const codRef=(prodCod&&prodCod.cod)||c.codigo_peca||"";
+  const pcReg=pecasObj()[codRef]||null;             // peça cadastrada correspondente ao código em produção
   const imgOwn=c.img_peca||"";
   const imgSrc=imgOwn||(pcReg&&pcReg.foto)||"";
   const imgFromPeca=!imgOwn&&!!(pcReg&&pcReg.foto);
@@ -1229,7 +1233,11 @@ function viewRobot(k){
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
       <div style="flex:1;min-width:220px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="field"><label>Cliente</label>${isHost?`<input value="${esc(c.cliente||"")}" onchange="setField('${k}','cliente',this.value)">`:`<div class="val">${c.cliente?esc(c.cliente):"—"}</div>`}</div>
-        <div class="field"><label>Código da peça</label>${isHost?`<input list="pecaCods" value="${esc(c.codigo_peca||"")}" onchange="setField('${k}','codigo_peca',this.value)">`:`<div class="val">${c.codigo_peca?esc(c.codigo_peca):"—"}</div>`}</div>
+        <div class="field"><label>Código da peça</label>${
+          prodCod
+            ? `<div class="val" style="display:flex;flex-direction:column;gap:2px"><span style="color:var(--warn);font-weight:700;font-size:16px">${esc(prodCod.cod)}</span><span style="font-size:10px;color:var(--faint);font-family:'Share Tech Mono',monospace">↳ da Meta Diária · ${esc(prodCodData)}</span></div>`
+            : (isHost?`<input list="pecaCods" value="${esc(c.codigo_peca||"")}" onchange="setField('${k}','codigo_peca',this.value)">`:`<div class="val">${c.codigo_peca?esc(c.codigo_peca):"—"}</div>`)
+        }</div>
         <div class="field"><label>Tempo/peça</label>${isHost?`<input value="${esc(c.tempo_peca||"")}" onchange="setField('${k}','tempo_peca',this.value)">`:`<div class="val">${c.tempo_peca?esc(c.tempo_peca):"—"}</div>`}</div>
       </div>
       <div style="flex-shrink:0;width:150px">
@@ -1241,7 +1249,7 @@ function viewRobot(k){
         </div>`:''}
       </div>
     </div>
-    ${fichaPecaHTML(c.codigo_peca)}
+    ${fichaPecaHTML(codRef)}
     <datalist id="pecaCods">${Object.keys(pecasObj()).map(cod=>`<option value="${esc(cod)}">${esc(nomePeca(cod))}</option>`).join("")}</datalist>
   </div>`;
 
@@ -2341,6 +2349,13 @@ function _ppecaFecharDetalhe(){ const ov=document.getElementById('ppdOv'); if(ov
    ============================================================ */
 function pecasObj(){ if(!dados.pecas) dados.pecas={}; return dados.pecas; }
 function nomePeca(cod){ const p=pecasObj()[cod]; return p&&p.nome?p.nome:""; }
+// Código da peça atualmente em produção = cod mais recente lançado na Meta Diária p/ esse robô
+function codProducaoRobo(k){
+  const md=prod().metas_dias||{};
+  const chaves=Object.keys(md).sort((a,b)=>{ const [aa,am,ad]=a.split('_').map(Number); const [ba,bm,bd]=b.split('_').map(Number); return (ba-aa)||(bm-am)||(bd-ad); });
+  for(const ch of chaves){ const rd=md[ch]&&md[ch][String(k)]; const cod=rd&&rd.cod?String(rd.cod).trim():""; if(cod) return {cod,chave:ch}; }
+  return null;
+}
 // Ficha técnica da peça cadastrada — mostrada na tela do robô ao escolher o código
 function fichaPecaHTML(cod){
   const p=pecasObj()[cod]; if(!p) return "";

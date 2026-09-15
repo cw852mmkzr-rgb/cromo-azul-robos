@@ -1232,13 +1232,13 @@ function viewRobot(k){
   html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14L4 7m8 4v10M4 7v10l8 4"/></svg>Peça em Produção</h3>
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
       <div style="flex:1;min-width:220px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="field"><label>Cliente</label>${isHost?`<input value="${esc(c.cliente||"")}" onchange="setField('${k}','cliente',this.value)">`:`<div class="val">${c.cliente?esc(c.cliente):"—"}</div>`}</div>
+        <div class="field"><label>Cliente</label>${(()=>{const vv=valCampoRobo(c,pcReg,'cliente');return isHost?`<input value="${esc(vv)}" onchange="setField('${k}','cliente',this.value)">`:`<div class="val">${vv!==""?esc(vv):"—"}</div>`;})()}</div>
         <div class="field"><label>Código da peça</label>${
           prodCod
             ? `<div class="val" style="display:flex;flex-direction:column;gap:2px"><span style="color:var(--warn);font-weight:700;font-size:16px">${esc(prodCod.cod)}</span><span style="font-size:10px;color:var(--faint);font-family:'Share Tech Mono',monospace">↳ da Meta Diária · ${esc(prodCodData)}</span></div>`
             : (isHost?`<input list="pecaCods" value="${esc(c.codigo_peca||"")}" onchange="setField('${k}','codigo_peca',this.value)">`:`<div class="val">${c.codigo_peca?esc(c.codigo_peca):"—"}</div>`)
         }</div>
-        <div class="field"><label>Tempo/peça</label>${isHost?`<input value="${esc(c.tempo_peca||"")}" onchange="setField('${k}','tempo_peca',this.value)">`:`<div class="val">${c.tempo_peca?esc(c.tempo_peca):"—"}</div>`}</div>
+        <div class="field"><label>Tempo/peça</label>${(()=>{const vv=valCampoRobo(c,pcReg,'tempo_peca');return isHost?`<input value="${esc(vv)}" onchange="setField('${k}','tempo_peca',this.value)">`:`<div class="val">${vv!==""?esc(vv):"—"}</div>`;})()}</div>
       </div>
       <div style="flex-shrink:0;width:150px">
         <div style="font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;font-family:'Share Tech Mono',monospace">Imagem da peça</div>
@@ -1249,12 +1249,11 @@ function viewRobot(k){
         </div>`:''}
       </div>
     </div>
-    ${fichaPecaHTML(codRef)}
     <datalist id="pecaCods">${Object.keys(pecasObj()).map(cod=>`<option value="${esc(cod)}">${esc(nomePeca(cod))}</option>`).join("")}</datalist>
   </div>`;
 
   // ── Eletrodo (avançado) ──
-  const eletrodo=c.eletrodo||"", tipoEle=c.tipo_eletrodo||"";
+  const eletrodo=c.eletrodo||"", tipoEle=valCampoRobo(c,pcReg,'tipo_eletrodo');
   const desgaste=calcDesgaste(k);
   const limAviso=parseInt(c.limite_eletrodo_aviso)||300, limCrit=parseInt(c.limite_eletrodo)||500;
   const corDesg = desgaste>=limCrit?'var(--danger)':desgaste>=limAviso?'var(--ny)':'var(--ok)';
@@ -1321,7 +1320,7 @@ function viewRobot(k){
   // ── Restante do GRUPOS (Operação, Parâmetros de Solda, Equipe, Observações) ──
   GRUPOS.slice(1).forEach(g=>{
     html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24">${g.ico}</svg>${g.titulo}</h3><div class="grid">`;
-    g.campos.forEach(f=>{ const v=c[f.k]!=null?c[f.k]:"";
+    g.campos.forEach(f=>{ const v=valCampoRobo(c,pcReg,f.k);
       html+=`<div class="field ${f.full?'full':''}"><label>${f.l}</label>`;
       if(isHost){ html+= f.tipo==="textarea"?`<textarea onchange="setField('${k}','${f.k}',this.value)">${esc(v)}</textarea>`
         :`<input type="${f.tipo==='number'?'number':'text'}" value="${esc(v)}" onchange="setField('${k}','${f.k}',this.value)">`; }
@@ -2356,24 +2355,14 @@ function codProducaoRobo(k){
   for(const ch of chaves){ const rd=md[ch]&&md[ch][String(k)]; const cod=rd&&rd.cod?String(rd.cod).trim():""; if(cod) return {cod,chave:ch}; }
   return null;
 }
-// Ficha técnica da peça cadastrada — mostrada na tela do robô ao escolher o código
-function fichaPecaHTML(cod){
-  const p=pecasObj()[cod]; if(!p) return "";
-  const linhas=[
-    ["Cliente",p.cliente],["Tempo/peça",p.tempo_peca],["Meta/hora",p.meta_hora],
-    ["Corrente",p.corrente],["Pré-pressão",p.pre_pressao],["Pontos de solda",p.pontos],
-    ["Tipo de eletrodo",p.tipo_eletrodo],["Tempo de solda",p.tempo_solda],
-    ["Turno",p.turno],["Gabarito",p.gabarito]
-  ].filter(x=>x[1]!=null && String(x[1]).trim()!=="");
-  const desc=(p.descricao||"").trim();
-  const nm=(p.nome||"").trim();
-  if(!linhas.length && !desc && !nm) return "";
-  let h=`<div style="margin-top:14px;border-top:1px solid rgba(0,240,255,.18);padding-top:12px">
-    <div style="font-size:11px;color:var(--nc);text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace;margin-bottom:10px">📋 Dados cadastrados da peça ${esc(cod)}${nm&&nm!==cod?` · ${esc(nm)}`:""}</div>`;
-  if(linhas.length) h+=`<div class="grid">`+linhas.map(([l,v])=>`<div class="field"><label>${l}</label><div class="val">${esc(String(v))}</div></div>`).join("")+`</div>`;
-  if(desc) h+=`<div class="field full" style="margin-top:8px"><label>Descrição</label><div class="val">${esc(desc)}</div></div>`;
-  h+=`</div>`;
-  return h;
+// Valor efetivo de um campo do robô: usa o valor próprio; se vazio, puxa da peça em produção
+function valCampoRobo(c, pcReg, campo){
+  const own=c[campo];
+  if(own!=null && String(own).trim()!=="") return own;
+  const map={ cliente:'cliente', tempo_peca:'tempo_peca', tipo_eletrodo:'tipo_eletrodo', turno:'turno', meta_hora:'meta_hora', corrente:'corrente', tempo_solda:'tempo_solda', pre_pressao:'pre_pressao', pontos_solda:'pontos' };
+  const pk=map[campo];
+  if(pcReg && pk && pcReg[pk]!=null && String(pcReg[pk]).trim()!=="") return pcReg[pk];
+  return "";
 }
 function pecasFiltradas(){ const o=pecasObj(); const t=pecaBusca.trim().toUpperCase();
   let lista=Object.keys(o).map(cod=>({cod,...o[cod]}));

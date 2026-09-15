@@ -966,8 +966,6 @@ const GRUPOS = [
   { titulo:"Parâmetros de Solda", ico:'<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>', campos:[
     {k:"corrente",l:"Corrente"},{k:"tempo_solda",l:"Tempo de solda"},
     {k:"pre_pressao",l:"Pré-pressão"},{k:"pontos_solda",l:"Pontos de solda"} ]},
-  { titulo:"Equipe & Turno", ico:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>', campos:[
-    {k:"membro1",l:"Membro 1"},{k:"membro2",l:"Membro 2"},{k:"membro3",l:"Membro 3"} ]},
   { titulo:"Observações", ico:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>', campos:[
     {k:"obs",l:"Anotações",tipo:"textarea",full:true} ]},
 ];
@@ -1317,10 +1315,13 @@ function viewRobot(k){
     </div>
   </div>`;
 
-  // ── Restante do GRUPOS (Operação, Parâmetros de Solda, Equipe, Observações) ──
+  // ── Restante do GRUPOS (Operação, Parâmetros de Solda, Observações) ──
+  const operadorAuto=funcProducaoRobo(k);   // funcionário mais recente da Meta Diária
   GRUPOS.slice(1).forEach(g=>{
     html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24">${g.ico}</svg>${g.titulo}</h3><div class="grid">`;
-    g.campos.forEach(f=>{ const v=valCampoRobo(c,pcReg,f.k);
+    g.campos.forEach(f=>{ const v = f.k==="operador"
+        ? ((c.operador!=null&&String(c.operador).trim()!=="")?c.operador:(operadorAuto?operadorAuto.nome:""))
+        : valCampoRobo(c,pcReg,f.k);
       html+=`<div class="field ${f.full?'full':''}"><label>${f.l}</label>`;
       if(isHost){ html+= f.tipo==="textarea"?`<textarea onchange="setField('${k}','${f.k}',this.value)">${esc(v)}</textarea>`
         :`<input type="${f.tipo==='number'?'number':'text'}" value="${esc(v)}" onchange="setField('${k}','${f.k}',this.value)">`; }
@@ -2353,6 +2354,15 @@ function codProducaoRobo(k){
   const md=prod().metas_dias||{};
   const chaves=Object.keys(md).sort((a,b)=>{ const [aa,am,ad]=a.split('_').map(Number); const [ba,bm,bd]=b.split('_').map(Number); return (ba-aa)||(bm-am)||(bd-ad); });
   for(const ch of chaves){ const rd=md[ch]&&md[ch][String(k)]; const cod=rd&&rd.cod?String(rd.cod).trim():""; if(cod) return {cod,chave:ch}; }
+  return null;
+}
+// Funcionário mais recente lançado na Meta Diária p/ esse robô (dia mais recente, última hora com nome)
+function funcProducaoRobo(k){
+  const md=prod().metas_dias||{};
+  const chaves=Object.keys(md).sort((a,b)=>{ const [aa,am,ad]=a.split('_').map(Number); const [ba,bm,bd]=b.split('_').map(Number); return (ba-aa)||(bm-am)||(bd-ad); });
+  const HH=[...HORAS_DIA,...HORAS_NOITE];
+  for(const ch of chaves){ const rd=md[ch]&&md[ch][String(k)]; if(!rd) continue;
+    for(let i=HH.length-1;i>=0;i--){ const nome=rd["func_"+campoH(HH[i])]; if(nome&&String(nome).trim()) return {nome:String(nome).trim(),chave:ch,hora:HH[i]}; } }
   return null;
 }
 // Valor efetivo de um campo do robô: usa o valor próprio; se vazio, puxa da peça em produção

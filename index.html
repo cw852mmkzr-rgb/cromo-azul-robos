@@ -899,7 +899,6 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
     <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="handleImgUpload(this.files[0]);this.value=''">
     <input type="file" id="imgCameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImgUpload(this.files[0]);this.value=''">
     <div class="field"><label>Código</label><input id="pkCod" placeholder="Ex: 50698"></div>
-    <div class="field"><label>Nome</label><input id="pkNome" placeholder="Nome da peça"></div>
     <div class="field"><label>Cliente</label><input id="pkCliente" placeholder="Cliente"></div>
     <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
       <div class="field"><label>Tempo/peça</label><input id="pkTempoPeca" placeholder="Ex: 45s"></div>
@@ -2476,11 +2475,10 @@ function viewCatalogoPecas(){
 
 /* modal add/edit peça */
 let _pecaEdit=null, _pecaFoto="", _pkLoadTimer=null;
-const _PECA_CAMPOS=["pkCod","pkNome","pkCliente","pkTempoPeca","pkMetaHora","pkCorrente","pkPrePressao","pkPontos","pkEletrodo","pkTipoEletrodo","pkTempoSolda","pkTurno","pkGabarito","pkResp","pkProgramador","pkDesc"];
+const _PECA_CAMPOS=["pkCod","pkCliente","pkTempoPeca","pkMetaHora","pkCorrente","pkPrePressao","pkPontos","pkEletrodo","pkTipoEletrodo","pkTempoSolda","pkTurno","pkGabarito","pkResp","pkProgramador","pkDesc"];
 function openPeca(cod){
   _pecaEdit=cod||null; const p=cod?pecasObj()[cod]:null; _pecaFoto=(p&&p.foto)||"";
   document.getElementById("pkCod").value=cod||"";
-  document.getElementById("pkNome").value=(p&&p.nome)||"";
   document.getElementById("pkCliente").value=(p&&p.cliente)||"";
   document.getElementById("pkTempoPeca").value=(p&&p.tempo_peca)||"";
   document.getElementById("pkMetaHora").value=(p&&p.meta_hora)||"";
@@ -2531,7 +2529,7 @@ function savePeca(){ if(!isHost) return;
   if(!_pecaEdit && pecasObj()[cod]){ showToast("Já existe uma peça com esse código",true); return; }
   const g=id=>document.getElementById(id).value.trim();
   pecasObj()[cod]={
-    nome:g("pkNome"), cliente:g("pkCliente"),
+    nome:(pecasObj()[cod]&&pecasObj()[cod].nome)||"", cliente:g("pkCliente"),
     tempo_peca:g("pkTempoPeca"), meta_hora:g("pkMetaHora"),
     corrente:g("pkCorrente"), pre_pressao:g("pkPrePressao"),
     pontos:g("pkPontos"), eletrodo:g("pkEletrodo"), tipo_eletrodo:g("pkTipoEletrodo"),

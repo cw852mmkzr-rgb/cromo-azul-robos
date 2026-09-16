@@ -460,6 +460,29 @@ table.meta-t td.hcell .fhtag{font-size:10px;font-weight:600;color:var(--nc);font
 @media(max-width:820px){.bento{grid-template-columns:1fr}.pn-robos{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:520px){.pn-robos{grid-template-columns:repeat(2,1fr)}}
 
+/* ===== Catálogo de Peças — modal cyberpunk ===== */
+#modalPeca .modal{position:relative;border:1px solid rgba(0,240,255,.32);box-shadow:0 0 0 1px rgba(0,240,255,.08),0 26px 70px -22px rgba(0,240,255,.4),0 0 70px -34px rgba(255,43,214,.55)}
+#pkTitulo{font-family:'Orbitron',sans-serif!important;text-transform:uppercase;letter-spacing:.16em;color:var(--nc);text-shadow:0 0 16px rgba(0,240,255,.55);font-size:18px}
+#pkTitulo::before{content:"▸ ";color:var(--nm)}
+#modalPeca .field label{color:var(--nc)!important;opacity:.82;letter-spacing:.2em;font-size:9.5px}
+#modalPeca .field input,#modalPeca .field textarea{font-family:'Share Tech Mono',monospace;color:var(--nc);font-size:15px;letter-spacing:.04em;text-shadow:0 0 8px rgba(0,240,255,.28)}
+#modalPeca .field input:disabled,#modalPeca .field textarea:disabled{color:var(--nc);opacity:.9;-webkit-text-fill-color:var(--nc)}
+#modalPeca .field input::placeholder,#modalPeca .field textarea::placeholder{color:rgba(120,150,210,.5);text-shadow:none}
+#modalPeca .pkfoto{border-color:rgba(0,240,255,.28);box-shadow:inset 0 0 34px -12px rgba(0,240,255,.4)}
+/* Loader cyberpunk ao abrir uma peça */
+.pkLoader{position:absolute;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:rgba(5,6,13,.94);border-radius:inherit;overflow:hidden}
+.modal.pkloading .pkLoader{display:flex}
+.pkLoader::after{content:"";position:absolute;left:0;right:0;height:2px;top:0;background:linear-gradient(90deg,transparent,var(--nc),transparent);box-shadow:0 0 18px var(--nc);animation:pkscan 1.05s linear infinite}
+@keyframes pkscan{0%{top:-2px}100%{top:100%}}
+.pkl-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,240,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,.06) 1px,transparent 1px);background-size:26px 26px;opacity:.55}
+.pkl-ico{width:54px;height:54px;border:2px solid rgba(0,240,255,.28);border-top-color:var(--nc);border-right-color:var(--nm);border-radius:9px;animation:sp .85s linear infinite;box-shadow:0 0 22px -4px var(--nc);position:relative}
+.pkl-txt{font-family:'Share Tech Mono',monospace;letter-spacing:.34em;color:var(--nc);font-size:13px;text-transform:uppercase;text-shadow:0 0 12px rgba(0,240,255,.6);animation:pkglitch 1.5s infinite;position:relative}
+.pkl-txt b{color:var(--nm)}
+@keyframes pkglitch{0%,88%,100%{opacity:1;transform:translateX(0)}90%{opacity:.5;transform:translateX(-2px)}93%{transform:translateX(2px)}96%{transform:translateX(-1px)}}
+.pkl-bar{width:180px;height:4px;border-radius:3px;background:rgba(0,240,255,.14);overflow:hidden;position:relative}
+.pkl-bar i{display:block;height:100%;width:42%;background:linear-gradient(90deg,var(--nc),var(--nm));box-shadow:0 0 12px var(--nc);animation:pkfill 1s ease-in-out infinite}
+@keyframes pkfill{0%{margin-left:-42%}100%{margin-left:100%}}
+
 /* ===== Dashboard TV — carrossel (estilo Tremps, visual Neon City) ===== */
 #dashScreen{padding:0;overflow:hidden}
 .dash-head{padding:12px 22px;margin:0;border-bottom:1px solid rgba(0,240,255,.18);background:rgba(8,10,20,.75);flex-shrink:0}
@@ -868,6 +891,7 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 <!-- MODAL: Peça (add/edit/detalhe) -->
 <div class="modal-bg" id="modalPeca">
   <div class="modal glass">
+    <div class="pkLoader" aria-hidden="true"><div class="pkl-grid"></div><div class="pkl-ico"></div><div class="pkl-txt">Carregando <b>peça</b></div><div class="pkl-bar"><i></i></div></div>
     <h2 id="pkTitulo">Peça</h2>
     <div class="pkfoto" id="pkFotoPrev"></div>
     <button type="button" class="btn ghost tiny" id="pkFotoBtn" style="width:100%;margin-bottom:14px" onclick="document.getElementById('pkFotoFile').click()"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Foto da peça</button>
@@ -2451,7 +2475,7 @@ function viewCatalogoPecas(){
 }
 
 /* modal add/edit peça */
-let _pecaEdit=null, _pecaFoto="";
+let _pecaEdit=null, _pecaFoto="", _pkLoadTimer=null;
 const _PECA_CAMPOS=["pkCod","pkNome","pkCliente","pkTempoPeca","pkMetaHora","pkCorrente","pkPrePressao","pkPontos","pkEletrodo","pkTipoEletrodo","pkTempoSolda","pkTurno","pkGabarito","pkResp","pkProgramador","pkDesc"];
 function openPeca(cod){
   _pecaEdit=cod||null; const p=cod?pecasObj()[cod]:null; _pecaFoto=(p&&p.foto)||"";
@@ -2479,6 +2503,16 @@ function openPeca(cod){
   document.getElementById("pkExcluir").style.display=(canEdit&&cod)?"":"none";
   renderPecaFoto();
   openModal("modalPeca");
+  // Animação cyberpunk de carregamento ao abrir uma peça existente
+  const modalEl=document.querySelector('#modalPeca .modal');
+  clearTimeout(_pkLoadTimer);
+  if(cod && modalEl){
+    modalEl.classList.add('pkloading');
+    modalEl.scrollTop=0;
+    _pkLoadTimer=setTimeout(()=>modalEl.classList.remove('pkloading'),780);
+  } else if(modalEl){
+    modalEl.classList.remove('pkloading');
+  }
 }
 function renderPecaFoto(){ const box=document.getElementById("pkFotoPrev");
   box.innerHTML=_pecaFoto?`<img src="${_pecaFoto}" alt="foto">${isHost?`<button type="button" class="icon-btn" style="position:absolute;top:8px;right:8px" onclick="_pecaFoto='';renderPecaFoto()" title="Remover foto"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`:''}`

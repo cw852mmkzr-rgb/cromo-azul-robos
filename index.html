@@ -833,12 +833,13 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
   repeating-linear-gradient(90deg,transparent 0 46px,rgba(0,240,255,.065) 46px 47px);
   animation:bootGrid 7s linear infinite}
 @keyframes bootGrid{from{background-position:0 0,0 0,0 0,0 0}to{background-position:0 0,0 0,0 47px,47px 0}}
-.boot-floor{position:absolute;left:-30%;right:-30%;bottom:-8%;height:48%;opacity:.5;
-  background:repeating-linear-gradient(90deg,transparent 0 58px,rgba(0,240,255,.55) 58px 60px),
-             repeating-linear-gradient(0deg,transparent 0 40px,rgba(255,43,214,.45) 40px 42px);
+.boot-floor{position:absolute;left:-35%;right:-35%;bottom:-10%;height:52%;opacity:.9;
+  background:repeating-linear-gradient(90deg,transparent 0 54px,rgba(0,240,255,.85) 54px 57px),
+             repeating-linear-gradient(0deg,transparent 0 38px,rgba(255,43,214,.7) 38px 41px);
   transform:perspective(300px) rotateX(71deg);transform-origin:50% 100%;
-  -webkit-mask-image:linear-gradient(to top,#000,transparent 88%);mask-image:linear-gradient(to top,#000,transparent 88%);
+  -webkit-mask-image:linear-gradient(to top,#000 0,rgba(0,0,0,.65) 40%,transparent 92%);mask-image:linear-gradient(to top,#000 0,rgba(0,0,0,.65) 40%,transparent 92%);
   animation:bootFloor 3s linear infinite}
+.boot-horizon{position:absolute;left:0;right:0;bottom:41%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,240,255,.85),rgba(255,43,214,.7),transparent);box-shadow:0 0 26px 5px rgba(0,240,255,.3);opacity:.9}
 @keyframes bootFloor{from{background-position:0 0,0 0}to{background-position:0 0,0 42px}}
 .boot-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 44%,rgba(0,0,0,.74) 100%)}
 .boot-sweep{position:absolute;left:0;right:0;height:170px;z-index:3;pointer-events:none;
@@ -891,6 +892,7 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 <div id="bootScreen">
   <div class="boot-grid"></div>
   <div class="boot-floor"></div>
+  <div class="boot-horizon"></div>
   <div class="boot-vig"></div>
   <div class="boot-sweep"></div>
   <div class="boot-inner">

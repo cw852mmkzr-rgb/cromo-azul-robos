@@ -824,7 +824,7 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
    BOOT — tela de carregamento cyberpunk (antes do login)
    ============================================================ */
 #bootScreen{position:fixed;inset:0;z-index:60;background:#04050c;display:flex;align-items:center;justify-content:center;overflow:hidden;--bc:#00f0ff;--bm:#ff2bd6}
-#bootScreen.boot-out{animation:bootOut .78s cubic-bezier(.7,0,.3,1) forwards}
+#bootScreen.boot-out{animation:bootOut .5s cubic-bezier(.7,0,.3,1) forwards}
 @keyframes bootOut{to{opacity:0;transform:scale(1.07);filter:blur(7px)}}
 .boot-grid{position:absolute;inset:-2px;background:
   radial-gradient(ellipse 62% 46% at 50% 40%,rgba(0,240,255,.14),transparent 70%),
@@ -879,7 +879,13 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .boot-skip{position:absolute;bottom:24px;left:0;right:0;z-index:4;text-align:center;font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:.2em;color:rgba(255,255,255,.32);text-transform:uppercase;animation:bootBlink 2.1s ease-in-out infinite}
 @keyframes bootBlink{0%,100%{opacity:.25}50%{opacity:.75}}
 @media(max-width:600px){.boot-logo{width:86px;height:86px;margin-bottom:18px}.boot-logo svg{width:34px;height:34px}.boot-log{font-size:11px;min-height:126px;margin-top:20px}.boot-sub{letter-spacing:.28em;padding-left:.28em;font-size:10.5px}}
-@media(prefers-reduced-motion:reduce){#bootScreen,#bootScreen *{animation:none!important}.boot-line{opacity:1}}
+/* saida: mesmo glitch de TV da troca de slide do Dashboard */
+.boot-inner.boot-glitching{animation:dashShake .3s steps(5)}
+.boot-inner.boot-glitching .boot-logo,.boot-inner.boot-glitching .boot-title,.boot-inner.boot-glitching .boot-log,.boot-inner.boot-glitching .boot-barwrap{animation:dashSplit .3s steps(4)}
+#bootStatic{position:fixed;inset:0;z-index:70}
+#bootStatic.on{animation:dashStatic .5s steps(8)}
+#bootStatic.on::before{animation-duration:.5s}
+@media(prefers-reduced-motion:reduce){#bootScreen,#bootScreen *{animation:none!important}.boot-line{opacity:1}#bootStatic.on,#bootStatic.on::before{animation:none!important;opacity:0}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -4163,17 +4169,28 @@ document.addEventListener('input', e=>{
     if(stEl) stEl.textContent = i>=PASSOS.length ? "Finalizando" : "Carregando";
     timers.push(setTimeout(passo, reduz?110:(300+Math.random()*240)));
   }
+  function glitchTV(){
+    try{
+      const inner=scr.querySelector(".boot-inner");
+      if(inner){ inner.classList.remove("boot-glitching"); void inner.offsetWidth; inner.classList.add("boot-glitching"); }
+      let ov=document.getElementById("bootStatic");
+      if(!ov){ ov=document.createElement("div"); ov.id="bootStatic"; ov.className="dash-static"; document.body.appendChild(ov); }
+      ov.classList.remove("on"); void ov.offsetWidth; ov.classList.add("on");
+      setTimeout(function(){ ov.classList.remove("on"); }, 560);
+    }catch(_){}
+  }
   function fim(){
     if(encerrado) return; encerrado=true;
     timers.forEach(clearTimeout);
-    scr.classList.add("boot-out");
+    if(!reduz) glitchTV();
+    setTimeout(function(){ scr.classList.add("boot-out"); }, reduz?0:150);
     setTimeout(function(){
       scr.style.display="none";
       try{
         const pw=document.getElementById("pwInput");
         if(pw && window.matchMedia && window.matchMedia("(pointer:fine)").matches) pw.focus({preventScroll:true});
       }catch(_){}
-    }, reduz?0:790);
+    }, reduz?0:660);
   }
   scr.addEventListener("click", fim);
   function teclaPular(){ fim(); document.removeEventListener("keydown", teclaPular); }

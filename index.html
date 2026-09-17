@@ -4151,20 +4151,20 @@ document.addEventListener('input', e=>{
   const logEl=document.getElementById('bootLog'), barEl=document.getElementById('bootBar'),
         pctEl=document.getElementById('bootPct'), stEl=document.getElementById('bootState');
   const PASSOS=[
+    ["Sistema desenvolvido por","EDUARDO FAVARO","cred"],
     ["BIOS CROMO v3.1 · núcleo NEON CITY","OK"],
     ["Estabelecendo link seguro · Supabase","OK"],
     ["Varredura de células FANUC 800—805","6 ONLINE"],
     ["Meta diária · produção · catálogo de peças","OK"],
     ["Módulo de relatórios executivos","OK"],
-    ["Protocolo de autenticação","AGUARDANDO","wait"],
-    ["Sistema desenvolvido por","EDUARDO FAVARO","cred"]
+    ["Protocolo de autenticação","AGUARDANDO","wait"]
   ];
   const reduz = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches);
   let i=0, encerrado=false; const timers=[];
   function setPct(v){ const p=Math.max(0,Math.min(100,Math.round(v))); if(barEl) barEl.style.width=p+"%"; if(pctEl) pctEl.textContent=String(p).padStart(3,"0"); }
   function passo(){
     if(encerrado) return;
-    if(i>=PASSOS.length){ setPct(100); if(stEl) stEl.textContent="Sistema pronto"; timers.push(setTimeout(fim, reduz?150:1400)); return; }
+    if(i>=PASSOS.length){ setPct(100); if(stEl) stEl.textContent="Sistema pronto"; timers.push(setTimeout(fim, reduz?150:1000)); return; }
     const par=PASSOS[i], txt=par[0], st=par[1], cls=par[2]||"ok";
     const div=document.createElement("div"); div.className="boot-line";
     div.innerHTML='<span class="bl-ar">&#9656;</span><span class="bl-tx"></span><span class="bl-st '+cls+'">['+st+']</span>';
@@ -4172,7 +4172,7 @@ document.addEventListener('input', e=>{
     if(logEl) logEl.appendChild(div);
     i++; setPct(i/PASSOS.length*100);
     if(stEl) stEl.textContent = i>=PASSOS.length ? "Finalizando" : "Carregando";
-    timers.push(setTimeout(passo, reduz?110:(700+Math.random()*300)));
+    timers.push(setTimeout(passo, reduz?110:(550+Math.random()*200)));
   }
   function glitchTV(){
     try{
@@ -4200,7 +4200,7 @@ document.addEventListener('input', e=>{
   scr.addEventListener("click", fim);
   function teclaPular(){ fim(); document.removeEventListener("keydown", teclaPular); }
   document.addEventListener("keydown", teclaPular);
-  timers.push(setTimeout(passo, reduz?60:700));
+  timers.push(setTimeout(passo, reduz?60:500));
 })();
 
 precarregarConfig();

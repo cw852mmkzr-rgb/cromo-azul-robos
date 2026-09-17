@@ -870,12 +870,15 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .boot-line .bl-st{font-weight:700;letter-spacing:.06em;white-space:nowrap}
 .boot-line .bl-st.ok{color:#00ffae;text-shadow:0 0 8px rgba(0,255,174,.55)}
 .boot-line .bl-st.wait{color:#f9f871;text-shadow:0 0 8px rgba(249,248,113,.45)}
+.boot-line .bl-st.cred{color:#ff2bd6;text-shadow:0 0 10px rgba(255,43,214,.7)}
 .boot-barwrap{position:relative;width:100%;height:8px;margin-top:22px;border-radius:99px;overflow:hidden;background:rgba(0,240,255,.07);border:1px solid rgba(0,240,255,.22)}
 .boot-bar{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#00f0ff,#ff2bd6);box-shadow:0 0 16px rgba(0,240,255,.65);transition:width .3s cubic-bezier(.4,0,.2,1)}
 .boot-barwrap::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-100%);animation:bootShine 1.7s ease-in-out infinite}
 @keyframes bootShine{to{transform:translateX(100%)}}
 .boot-meta{width:100%;display:flex;justify-content:space-between;align-items:center;margin-top:11px;font-family:'Share Tech Mono',monospace;font-size:11.5px;letter-spacing:.16em;color:rgba(0,240,255,.62);text-transform:uppercase}
 .boot-pct{font-family:'Orbitron',sans-serif;font-weight:800;font-size:15px;color:#eaf6ff;letter-spacing:.04em}
+.boot-cred{position:absolute;bottom:50px;left:0;right:0;z-index:4;text-align:center;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(0,240,255,.5)}
+.boot-cred b{font-family:'Orbitron',sans-serif;font-weight:800;letter-spacing:.14em;color:#eaf6ff;text-shadow:0 0 12px rgba(255,43,214,.75),0 0 26px rgba(0,240,255,.35)}
 .boot-skip{position:absolute;bottom:24px;left:0;right:0;z-index:4;text-align:center;font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:.2em;color:rgba(255,255,255,.32);text-transform:uppercase;animation:bootBlink 2.1s ease-in-out infinite}
 @keyframes bootBlink{0%,100%{opacity:.25}50%{opacity:.75}}
 @media(max-width:600px){.boot-logo{width:86px;height:86px;margin-bottom:18px}.boot-logo svg{width:34px;height:34px}.boot-log{font-size:11px;min-height:126px;margin-top:20px}.boot-sub{letter-spacing:.28em;padding-left:.28em;font-size:10.5px}}
@@ -914,6 +917,7 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
     <div class="boot-barwrap"><div class="boot-bar" id="bootBar"></div></div>
     <div class="boot-meta"><span id="bootState">Iniciando</span><span class="boot-pct"><span id="bootPct">000</span>%</span></div>
   </div>
+  <div class="boot-cred">criado por <b>Eduardo Favaro</b></div>
   <div class="boot-skip">clique ou aperte uma tecla para pular</div>
 </div>
 
@@ -4152,7 +4156,8 @@ document.addEventListener('input', e=>{
     ["Varredura de células FANUC 800—805","6 ONLINE"],
     ["Meta diária · produção · catálogo de peças","OK"],
     ["Módulo de relatórios executivos","OK"],
-    ["Protocolo de autenticação","AGUARDANDO"]
+    ["Protocolo de autenticação","AGUARDANDO","wait"],
+    ["Sistema desenvolvido por","EDUARDO FAVARO","cred"]
   ];
   const reduz = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches);
   let i=0, encerrado=false; const timers=[];
@@ -4160,9 +4165,9 @@ document.addEventListener('input', e=>{
   function passo(){
     if(encerrado) return;
     if(i>=PASSOS.length){ setPct(100); if(stEl) stEl.textContent="Sistema pronto"; timers.push(setTimeout(fim, reduz?150:640)); return; }
-    const par=PASSOS[i], txt=par[0], st=par[1];
+    const par=PASSOS[i], txt=par[0], st=par[1], cls=par[2]||"ok";
     const div=document.createElement("div"); div.className="boot-line";
-    div.innerHTML='<span class="bl-ar">&#9656;</span><span class="bl-tx"></span><span class="bl-st '+(st==="AGUARDANDO"?"wait":"ok")+'">['+st+']</span>';
+    div.innerHTML='<span class="bl-ar">&#9656;</span><span class="bl-tx"></span><span class="bl-st '+cls+'">['+st+']</span>';
     div.querySelector(".bl-tx").textContent=txt;
     if(logEl) logEl.appendChild(div);
     i++; setPct(i/PASSOS.length*100);

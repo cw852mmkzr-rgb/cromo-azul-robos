@@ -391,6 +391,8 @@ body{ font-family:'Chakra Petch',system-ui,sans-serif; background:#05060d;
 .robot-view .hist-item{font-size:14px!important}
 .robot-view .hist-item span:first-child{font-size:14px!important;min-width:170px!important}
 .field input:focus,.field select:focus,.field textarea:focus,.inp:focus,.login-input:focus,table.mtable input:focus{border-color:var(--nc);box-shadow:0 0 0 2px rgba(0,240,255,.18),0 0 14px -4px rgba(0,240,255,.6);background:rgba(0,240,255,.08)}
+/* neutraliza o fundo branco do autofill do Chrome — mantém o fundo escuro padrão */
+input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus,input:-webkit-autofill:active,textarea:-webkit-autofill,select:-webkit-autofill{-webkit-text-fill-color:var(--txt)!important;caret-color:var(--txt);-webkit-box-shadow:0 0 0 1000px #0b1120 inset!important;box-shadow:0 0 0 1000px #0b1120 inset!important;transition:background-color 99999s ease-in-out 0s}
 .icon-btn{border-radius:5px} .icon-btn:hover{box-shadow:0 0 14px -6px rgba(0,240,255,.6)}
 /* números com glow */
 .kpi{background:var(--grad-soft)}

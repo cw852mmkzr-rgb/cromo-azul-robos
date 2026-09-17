@@ -552,23 +552,23 @@ table.meta-t td.hcell .fhtag{font-size:10px;font-weight:600;color:var(--nc);font
 @keyframes blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
 @media(prefers-reduced-motion:reduce){.rb-head,.rb-body,.rb-armL,.rb-armR,.rb-weld,.rb-eye{animation:none}}
 @media(max-width:760px){.dash-robo{flex-direction:column;gap:12px;padding:10px}.dash-robo-svg svg{width:120px}}
-/* ===== Dashboard no celular: rola em vez de cortar, empilha e reduz ===== */
+/* ===== Dashboard no celular: preenche a tela, empilha e reduz ===== */
 @media(max-width:600px){
-  #dashScreen{height:100dvh;overflow-y:auto;overflow-x:hidden}
+  #dashScreen{height:100dvh;overflow:hidden}
   .dash-head{flex-wrap:wrap;padding:10px 12px;gap:6px}
   .dash-head h1{font-size:17px!important}
   .dash-clock{font-size:15px!important}
   .dash-date{margin-left:8px;font-size:11px}
-  .dash-main{overflow:visible;min-height:auto;flex:0 0 auto}
-  .dash-robo{height:auto;min-height:auto;flex-direction:column;gap:14px;padding:18px 12px;justify-content:flex-start}
+  .dash-main{overflow-y:auto;overflow-x:hidden;min-height:0}
+  .dash-robo{height:auto;min-height:100%;flex-direction:column;justify-content:center;gap:clamp(14px,4vh,44px);padding:18px 12px}
   .dash-robo-svg{display:none}
-  .dash-info{max-width:100%;overflow:visible}
-  .dash-rn{font-size:30px}
-  .dash-prod-n{font-size:66px}
-  .dash-eff .dash-pct{font-size:52px}
-  .dash-box{padding:14px 22px}
+  .dash-info{max-width:100%;overflow:visible;gap:clamp(8px,2.2vh,22px)}
+  .dash-rn{font-size:clamp(26px,5.5vh,40px)}
+  .dash-prod-n{font-size:clamp(56px,15vh,120px)}
+  .dash-eff .dash-pct{font-size:clamp(44px,12vh,96px)}
+  .dash-box{padding:clamp(12px,2.5vh,26px) 22px}
   .dash-bar{width:min(420px,82vw)}
-  .dash-geral{height:auto;overflow-x:auto;overflow-y:visible;padding:12px}
+  .dash-geral{height:100%;overflow:auto;padding:12px}
   .dash-footer{padding:10px 12px}
 }
 

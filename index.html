@@ -1242,7 +1242,7 @@ function renderMain(){
   else if(p.id==="ger") box.innerHTML=isGerente?viewRelatBloqueado("ger"):viewGerenciar();
   else if(p.id==="manut") box.innerHTML=viewManutencao();
   else if(p.id==="func") box.innerHTML=viewFuncionarios();
-  else if(p.id==="relat"){ if(isGerente){ box.innerHTML=viewRelatBloqueado("relat"); } else { box.innerHTML=pageHead(IC.relat,"Relatórios","Relatório executivo por peça")+`<div id="relHostWrap" class="relhost"></div>`; renderRelatoriosApp(); } }
+  else if(p.id==="relat"){ if(isHost && !isGerente){ box.innerHTML=pageHead(IC.relat,"Relatórios","Relatório executivo por peça")+`<div id="relHostWrap" class="relhost"></div>`; renderRelatoriosApp(); } else { box.innerHTML=viewRelatBloqueado("relat"); } }
   else box.innerHTML=viewPlaceholder(p);
 }
 

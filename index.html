@@ -991,6 +991,7 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 const SUPABASE_URL = "https://zgetqjplwueeychpnshv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnZXRxanBsd3VlZXljaHBuc2h2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODg2NzcsImV4cCI6MjEwNDQ2NDY3N30.WeW_TDh5nwgjAKc2YDja0pBftzeMuP4iad79wEoUDwQ";
 const ADMIN_PW     = "cromo3102";
+const GESTOR_PW    = "eli299";   // acesso Gestor: edita tudo, sem backup/restaurar e sem aba Gerenciar
 const HEADERS_SB = { "apikey":SUPABASE_KEY, "Authorization":"Bearer "+SUPABASE_KEY, "Content-Type":"application/json", "Prefer":"return=minimal" };
 
 const ROBOS = [800,801,802,803,804,805];
@@ -1074,7 +1075,7 @@ function buildDefault(){
    ============================================================ */
 let dados = null;            // objeto conteudo completo
 let nav = {sec:"painel", id:"painel"};
-let isHost = false, pollTimer = null;
+let isHost = false, isGerente = false, pollTimer = null;
 let lastUserAction = 0, _saveTimer = null, _mainSig = "";
 /* seletores de período (Meta Diária / Produção Mensal) */
 const hoje = new Date();
@@ -1167,23 +1168,25 @@ async function precarregarConfig(){
 }
 function autoLogin(){
   const pw=document.getElementById("pwInput").value.trim(); const err=document.getElementById("loginErr");
-  if(pw===ADMIN_PW || (_senhaHost && pw===_senhaHost)){ isHost=true; enterApp(); }
+  if(pw===ADMIN_PW || (_senhaHost && pw===_senhaHost)){ isHost=true; isGerente=false; enterApp(); }
+  else if(pw===GESTOR_PW){ isHost=true; isGerente=true; enterApp(); }
   else { err.textContent="Senha incorreta"; setTimeout(()=>err.textContent="",2500); }
 }
-function startViewer(){ isHost=false; enterApp(); }
+function startViewer(){ isHost=false; isGerente=false; enterApp(); }
 function enterApp(){
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("dashScreen").style.display="none";
   document.getElementById("app").style.display="flex";
   const badge=document.getElementById("modeBadge");
-  if(isHost){ badge.textContent="⚙ HOST"; badge.classList.add("host"); document.getElementById("btnConfig").style.display=""; }
+  if(isGerente){ badge.textContent="⚙ GESTOR"; badge.classList.add("host"); document.getElementById("btnConfig").style.display="none"; }
+  else if(isHost){ badge.textContent="⚙ HOST"; badge.classList.add("host"); document.getElementById("btnConfig").style.display=""; }
   else{ badge.textContent="Visualizador"; badge.classList.remove("host"); document.getElementById("btnConfig").style.display="none"; }
-  if(nav.sec==="painel"){ const p=PAINEIS.find(x=>x.id===nav.id); if(p&&p.host&&!isHost) nav={sec:"painel",id:"mensal"}; }
+  if(nav.sec==="painel"){ const p=PAINEIS.find(x=>x.id===nav.id); if(p&&((p.host&&!isHost)||(p.id==="ger"&&isGerente))) nav={sec:"painel",id:"mensal"}; }
   loadFromAPI();
   clearInterval(pollTimer); pollTimer=setInterval(loadFromAPI,5000);
 }
 function logout(){
-  clearInterval(pollTimer); isHost=false; _mainSig="";
+  clearInterval(pollTimer); isHost=false; isGerente=false; _mainSig="";
   document.getElementById("app").style.display="none";
   document.getElementById("pwInput").value="";
   document.getElementById("loginScreen").style.display="flex";
@@ -1200,6 +1203,7 @@ function renderNav(){
   let h=`<div class="side-sec">Painéis</div>`;
   PAINEIS.forEach(p=>{
     if(p.host&&!isHost) return;
+    if(p.id==="ger"&&isGerente) return;
     const on=nav.sec==="painel"&&nav.id===p.id;
     h+=`<div class="nav-item ${on?'active':''}" onclick="goto('painel','${p.id}')">
       <div class="nav-ico"><svg viewBox="0 0 24 24">${p.ico}</svg></div>
@@ -1233,10 +1237,10 @@ function renderMain(){
   else if(p.id==="ppeca") box.innerHTML=viewProducaoPeca();
   else if(p.id==="cadpeca") box.innerHTML=viewCadastroPecas();
   else if(p.id==="catpeca") box.innerHTML=viewCatalogoPecas();
-  else if(p.id==="ger") box.innerHTML=viewGerenciar();
+  else if(p.id==="ger") box.innerHTML=isGerente?viewRelatBloqueado("ger"):viewGerenciar();
   else if(p.id==="manut") box.innerHTML=viewManutencao();
   else if(p.id==="func") box.innerHTML=viewFuncionarios();
-  else if(p.id==="relat") box.innerHTML=viewRelatorios();
+  else if(p.id==="relat") box.innerHTML=isGerente?viewRelatBloqueado("relat"):viewRelatorios();
   else box.innerHTML=viewPlaceholder(p);
 }
 
@@ -3156,6 +3160,16 @@ function relControles(){
   const inter=`<div class="sel"><label>Início</label><input class="inp" type="date" value="${_relIni}" onchange="_relIni=this.value;_mainSig='';renderMain()"></div>
     <div class="sel"><label>Fim</label><input class="inp" type="date" value="${_relFim}" onchange="_relFim=this.value;_mainSig='';renderMain()"></div>`;
   return _relModo==="dia"?dia:_relModo==="semana"?sem:_relModo==="ano"?ano:_relModo==="intervalo"?inter:mes;
+}
+/* Mensagem exibida ao Gestor ao abrir Relatórios (ou tentar acessar Gerenciar) */
+function viewRelatBloqueado(sec){
+  const isGer = sec==="ger";
+  return pageHead(isGer?IC.ger:IC.relat, isGer?"Gerenciar":"Relatórios", isGer?"Acesso restrito":"Período e exportação")
+    + `<div class="card glass empty" style="padding:42px 22px;text-align:center">
+        <svg viewBox="0 0 24 24" style="width:52px;height:52px">${isGer?IC.ger:IC.relat}</svg>
+        <div class="soon" style="font-size:16px;margin-top:10px">${isGer?"Configurações disponíveis apenas para o HOST.":"Para obter um relatório, comunique o criador"}</div>
+        ${isGer?"":`<div style="font-family:'Orbitron',sans-serif;font-size:26px;font-weight:800;letter-spacing:1.5px;color:var(--cyan);margin-top:12px;text-shadow:0 0 14px rgba(0,240,255,.55)">EDUARDO FAVARO</div>`}
+      </div>`;
 }
 function viewRelatorios(){
   const datas=datasDoPeriodo();

@@ -820,6 +820,8 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .rm-rank .pct{font-family:'Orbitron',sans-serif;font-weight:800;font-size:15px;min-width:56px;text-align:right}
 .rm-rank .sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--faint);min-width:80px;text-align:right}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -1240,7 +1242,7 @@ function renderMain(){
   else if(p.id==="ger") box.innerHTML=isGerente?viewRelatBloqueado("ger"):viewGerenciar();
   else if(p.id==="manut") box.innerHTML=viewManutencao();
   else if(p.id==="func") box.innerHTML=viewFuncionarios();
-  else if(p.id==="relat") box.innerHTML=isGerente?viewRelatBloqueado("relat"):viewRelatorios();
+  else if(p.id==="relat"){ if(isGerente){ box.innerHTML=viewRelatBloqueado("relat"); } else { box.innerHTML=pageHead(IC.relat,"Relatórios","Relatório executivo por peça")+`<div id="relHostWrap" class="relhost"></div>`; renderRelatoriosApp(); } }
   else box.innerHTML=viewPlaceholder(p);
 }
 
@@ -3171,40 +3173,524 @@ function viewRelatBloqueado(sec){
         ${isGer?"":`<div style="font-family:'Orbitron',sans-serif;font-size:26px;font-weight:800;letter-spacing:1.5px;color:var(--cyan);margin-top:12px;text-shadow:0 0 14px rgba(0,240,255,.55)">EDUARDO FAVARO</div>`}
       </div>`;
 }
-function viewRelatorios(){
-  const datas=datasDoPeriodo();
-  const total=datas.reduce((s,[a,m,d])=>s+totalDia(a,m,d),0);
-  const porRobo=aggPorRobo(datas); const robosItems=ROBOS.map(r=>({label:nomeRoboCurto(r),val:porRobo[r]})).sort((a,b)=>b.val-a.val);
-  const porPeca=aggPorPeca(datas);
-  const pecas=Object.entries(porPeca).map(([cod,o])=>({cod,total:o.total,robos:o.robos})).sort((a,b)=>b.total-a.total);
-  const dcp=datas.filter(([a,m,d])=>totalDia(a,m,d)>0).length; const media=dcp?Math.round(total/dcp):0;
-  let tabela;
-  if(!pecas.length) tabela=`<div class="hist-empty">Sem produção com peça informada neste período.</div>`;
-  else tabela=`<div class="mtable-wrap"><table class="mtable"><thead><tr><th class="hora" style="text-align:left">Peça</th>${ROBOS.map(r=>`<th>${String(r)}</th>`).join("")}<th>Total</th></tr></thead><tbody>`
-    + pecas.map(p=>`<tr><td class="hora" style="text-align:left">${esc(p.cod)}${nomePeca(p.cod)?` <span style="color:var(--faint)">· ${esc(nomePeca(p.cod))}</span>`:''}</td>${ROBOS.map(r=>`<td>${p.robos[r]?p.robos[r].toLocaleString("pt-BR"):'·'}</td>`).join("")}<td class="tot">${p.total.toLocaleString("pt-BR")}</td></tr>`).join("")
-    + `</tbody><tfoot><tr><td class="hora" style="text-align:left">Total</td>${ROBOS.map(r=>`<td>${(porRobo[r]||0).toLocaleString("pt-BR")}</td>`).join("")}<td class="tot" style="color:var(--cyan)">${total.toLocaleString("pt-BR")}</td></tr></tfoot></table></div>`;
-  return pageHead(IC.relat,"Relatórios","Produção por período", `<button type="button" class="btn ghost tiny" onclick="exportarCSV()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Exportar CSV</button>`)
-    + `<div class="selrow card glass">
-        <div class="sel"><label>Período</label><select onchange="_relModo=this.value;_mainSig='';renderMain()">
-          ${[["dia","Dia"],["semana","Semana"],["mes","Mês"],["ano","Ano"],["intervalo","Intervalo"]].map(([v,l])=>`<option value="${v}" ${_relModo===v?'selected':''}>${l}</option>`).join("")}</select></div>
-        ${relControles()}
-        <div class="metrics"><div class="metric"><div class="k">Período</div><div class="v" style="font-size:13px;color:var(--mut)">${labelPeriodo()}</div></div></div></div>`
-    + `<div class="kpi card glass"><div><div class="lbl">Total do período</div><div class="big">${total.toLocaleString("pt-BR")}</div></div>
-        <div class="side"><div class="lbl">Média/dia produtivo</div><div class="n">${media.toLocaleString("pt-BR")}</div></div></div>`
-    + `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.robot}</svg>Produção por robô</h3>${barList(robosItems)}</div>`
-    + `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.ppeca}</svg>Detalhamento por peça</h3>${tabela}</div>`;
+/* ============================================================
+   RELATÓRIO EXECUTIVO POR PEÇA (estilo Tremps, adaptado à Cromo)
+   ============================================================ */
+const _REL_IA_URL = "https://dtsrisqueekmommmoqxf.supabase.co/functions/v1/ia-fabrica";
+const _REL_IA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0c3Jpc3F1ZWVrbW9tbW1vcXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMjEwMzIsImV4cCI6MjA5Njc5NzAzMn0.Zdo1zJraLw0BanX-o9A2SreMr9tiVHvgrIyTeNqQC6g";
+(function _relInjectCSS(){
+  if(document.getElementById('rel-styles')) return;
+  const s=document.createElement('style'); s.id='rel-styles';
+  s.textContent=`
+    @keyframes relFade{from{opacity:0}to{opacity:1}}
+    @keyframes relCardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    @keyframes relSpin{to{transform:rotate(360deg)}}
+    .relhost{display:block}
+    .rel-wrap{padding:4px 2px 40px;position:relative;animation:relFade .35s ease}
+    .rel-toolbar{display:flex;gap:10px;align-items:stretch;margin-bottom:14px;flex-wrap:wrap}
+    .rel-search-wrap{position:relative;flex:1;min-width:260px}
+    .rel-search-input{width:100%;background:#0f1318;border:1px solid #1e2530;color:#d8dde6;padding:11px 14px 11px 40px;border-radius:10px;font-family:'Courier New',monospace;font-size:13px;box-sizing:border-box;outline:none;transition:border-color .18s,box-shadow .18s}
+    .rel-search-input:focus{border-color:#3d9eff;box-shadow:0 0 0 3px #3d9eff22}
+    .rel-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;color:#4a5568;pointer-events:none}
+    .rel-dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#0f1318;border:1px solid #2a3040;border-radius:10px;max-height:280px;overflow-y:auto;z-index:60;box-shadow:0 12px 36px -8px #000d;animation:relFade .18s ease}
+    .rel-dropdown-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid #161c26;transition:background .14s;display:flex;align-items:center;gap:12px}
+    .rel-dropdown-item:last-child{border-bottom:none}
+    .rel-dropdown-item:hover{background:#3d9eff12}
+    .rel-dd-cod{font-family:'Courier New',monospace;font-weight:900;color:#ffb300;font-size:13px;min-width:70px}
+    .rel-dd-info{flex:1;min-width:0}
+    .rel-dd-nome{color:#d8dde6;font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rel-dd-cli{color:#a78bfa;font-size:10.5px;font-weight:600;margin-top:2px}
+    .rel-dd-empty{padding:16px;color:#6b7788;font-size:12px;text-align:center;font-family:'Courier New',monospace}
+    .rel-gerar{background:linear-gradient(135deg,#00e87a,#00c060);border:none;color:#04120a;padding:11px 22px;border-radius:10px;font-weight:900;font-size:13px;letter-spacing:.04em;cursor:pointer;font-family:'Courier New',monospace;transition:transform .16s,box-shadow .18s,opacity .18s;flex:0 0 auto}
+    .rel-gerar:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 20px -6px #00e87a55}
+    .rel-gerar:disabled{background:#1e2530;color:#4a5568;cursor:not-allowed}
+    .rel-peca-card{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#0f1318,#0a0d12);border:1px solid #1e2530;border-left:3px solid #3d9eff;border-radius:12px;padding:14px 18px;margin-bottom:14px;animation:relCardIn .35s both}
+    .rel-peca-cod{font-family:'Courier New',monospace;font-weight:900;color:#ffb300;font-size:26px;letter-spacing:.02em;padding-right:14px;border-right:1px solid #1e2530;min-width:110px;text-align:center}
+    .rel-peca-info{flex:1;min-width:0}
+    .rel-peca-nome{font-size:15px;font-weight:800;color:#fff}
+    .rel-peca-cliente{font-size:11.5px;color:#a78bfa;font-weight:700;margin-top:3px;letter-spacing:.03em}
+    .rel-peca-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+    .rel-peca-meta-i{font-size:10.5px;color:#7a8698;font-family:'Courier New',monospace}
+    .rel-peca-meta-i b{color:#d8dde6;font-weight:900}
+    .rel-peca-remover{background:#1e2530;border:none;color:#8a95a8;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;transition:all .14s;flex:0 0 auto}
+    .rel-peca-remover:hover{background:#ff4d4d22;color:#ff4d4d}
+    .rel-periodo-wrap{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+    .rel-periodo-wrap::-webkit-scrollbar{display:none}
+    .rel-periodo-btn{flex:0 0 auto;background:#0f1318;border:1px solid #1e2530;color:#8a95a8;padding:8px 16px;border-radius:99px;font-size:12px;font-weight:800;letter-spacing:.05em;cursor:pointer;font-family:'Courier New',monospace;transition:all .18s}
+    .rel-periodo-btn:hover{border-color:#3d9eff40;color:#d8dde6}
+    .rel-periodo-btn.on{background:linear-gradient(135deg,#3d9eff,#1e6fdb);border-color:#3d9eff;color:#fff;box-shadow:0 3px 12px -2px #3d9eff66}
+    .rel-custom{display:flex;gap:10px;margin-bottom:14px;align-items:center}
+    .rel-custom label{flex:1;display:flex;align-items:center;gap:6px;font-size:10.5px;color:#8a95a8;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+    .rel-custom input{flex:1;background:#0f1318;border:1px solid #1e2530;color:#d8dde6;padding:8px 12px;border-radius:8px;font-family:'Courier New',monospace;font-size:12px;outline:none;color-scheme:dark}
+    .rel-custom input:focus{border-color:#3d9eff}
+    .rel-empty{padding:56px 24px;text-align:center;background:linear-gradient(135deg,#0f1318,#0a0d12);border:1px dashed #1e2530;border-radius:14px;color:#4a5568}
+    .rel-empty-ic{font-size:44px;margin-bottom:10px;filter:grayscale(1);opacity:.6}
+    .rel-empty-t{color:#8a95a8;font-size:14px;font-weight:700;margin-bottom:4px}
+    .rel-empty-s{font-size:11.5px;font-family:'Courier New',monospace}
+    .rel-loading{padding:70px 24px;text-align:center}
+    .rel-loading-sp{display:inline-block;width:32px;height:32px;border:3px solid #1e2530;border-top-color:#3d9eff;border-radius:50%;animation:relSpin .8s linear infinite}
+    .rel-loading-t{margin-top:14px;color:#8a95a8;font-size:12px;font-weight:700}
+    .rel-print-area{animation:relFade .35s ease}
+    .rel-ident{display:flex;flex-direction:column;gap:6px;background:linear-gradient(135deg,#0f1318,#0a0d12);border:1px solid #1e2530;border-radius:12px;padding:18px 22px;margin-bottom:16px}
+    .rel-ident-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .rel-ident-marca{display:flex;align-items:center;gap:10px}
+    .rel-ident-logo{width:34px;height:34px;background:linear-gradient(135deg,#00f0ff,#3d9eff);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#04120a;font-weight:900}
+    .rel-ident-marca-t{font-size:11px;color:#8a95a8;text-transform:uppercase;letter-spacing:.14em;font-weight:800}
+    .rel-ident-marca-b{font-size:15px;font-weight:900;color:#fff;margin-top:1px;letter-spacing:.02em}
+    .rel-ident-ts{font-size:10.5px;color:#6b7788;font-family:'Courier New',monospace;letter-spacing:.05em}
+    .rel-ident-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px 22px;margin-top:12px;padding-top:12px;border-top:1px solid #161c26}
+    .rel-ident-i{display:flex;flex-direction:column;gap:2px}
+    .rel-ident-i-l{font-size:9.5px;color:#6b7788;text-transform:uppercase;letter-spacing:.1em;font-weight:800}
+    .rel-ident-i-v{font-size:13px;color:#fff;font-weight:800;font-family:'Courier New',monospace}
+    .rel-ident-i-v.pequeno{font-size:11.5px}
+    .rel-block{background:linear-gradient(135deg,#0f1318,#0a0d12);border:1px solid #1e2530;border-radius:12px;padding:18px 20px;margin-bottom:14px;overflow:hidden;animation:relCardIn .5s both}
+    .rel-block-title{font-size:12.5px;color:#d8dde6;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .rel-block-title .rel-block-hint{margin-left:auto;font-size:10px;color:#4a5568;text-transform:none;letter-spacing:0;font-weight:600}
+    .rel-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+    .rel-kpi{background:#080b0f;border:1px solid #161c26;border-left:3px solid;border-radius:10px;padding:12px 14px;animation:relCardIn .45s both}
+    .rel-kpi-lbl{font-size:10px;color:#8a95a8;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:6px}
+    .rel-kpi-val{font-size:22px;font-weight:900;font-family:'Courier New',monospace;line-height:1}
+    .rel-kpi-sub{font-size:10.5px;color:#6b7788;margin-top:6px;font-family:'Courier New',monospace}
+    .rel-hm{display:flex;flex-direction:column;gap:6px;overflow-x:auto;max-width:100%}
+    .rel-hm-mes{display:flex;flex-direction:column;gap:10px}
+    .rel-hm-mes-t{font-size:13px;color:#d8dde6;text-transform:uppercase;letter-spacing:.1em;font-weight:900}
+    .rel-hm-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:stretch}
+    .rel-hm-cell{min-height:78px;border-radius:8px;background:#08110c;transition:transform .14s,box-shadow .14s;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;gap:2px;text-align:center;overflow:hidden}
+    .rel-hm-cell.has:hover{transform:scale(1.04);box-shadow:0 6px 16px -4px #00e87a55;z-index:2}
+    .rel-hm-cell.fora{background:transparent;box-shadow:none}
+    .rel-hm-cell-dow{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-family:'Courier New',monospace;opacity:.85;line-height:1}
+    .rel-hm-cell-num{font-size:26px;font-weight:900;font-family:'Courier New',monospace;line-height:1}
+    .rel-hm-cell-qtd{font-size:11.5px;font-weight:800;font-family:'Courier New',monospace;line-height:1;opacity:.9;margin-top:1px}
+    .rel-hm-cell-qtd span{font-size:9px;font-weight:700;opacity:.75;margin-left:1px}
+    .rel-hm-cell.dark{color:#e8f5ec}.rel-hm-cell.light{color:#04120a}.rel-hm-cell.zero{color:#3a4552}
+    .rel-hm-tip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#0f1318;border:1px solid #3d9eff40;color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .14s;font-family:'Courier New',monospace;z-index:3}
+    .rel-hm-cell:hover .rel-hm-tip{opacity:1}
+    .rel-hm-leg{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:8px;font-size:10px;color:#6b7788;font-family:'Courier New',monospace}
+    .rel-hm-leg-cells{display:flex;gap:2px}
+    .rel-hm-leg-cells span{width:12px;height:12px;border-radius:2px}
+    .rel-chart-hora{display:flex;flex-direction:column;gap:6px}
+    .rel-chart-hora-row{display:flex;align-items:center;gap:10px}
+    .rel-chart-hora-lbl{min-width:52px;font-size:11px;color:#8a95a8;font-family:'Courier New',monospace;font-weight:700}
+    .rel-chart-hora-track{flex:1;height:14px;background:#04070d;border-radius:4px;overflow:hidden}
+    .rel-chart-hora-fill{height:100%;background:linear-gradient(90deg,#3d9eff,#5ab8ff);border-radius:4px}
+    .rel-chart-hora-val{min-width:56px;text-align:right;font-size:11.5px;color:#d8dde6;font-weight:800;font-family:'Courier New',monospace}
+    .rel-robo-list{display:flex;flex-direction:column;gap:8px}
+    .rel-robo{display:flex;align-items:center;gap:12px;padding:8px 4px}
+    .rel-robo-nome{min-width:92px;font-size:13px;font-weight:900;color:#fff;font-family:'Courier New',monospace}
+    .rel-robo-track{flex:1;height:16px;background:#04070d;border-radius:5px;overflow:hidden}
+    .rel-robo-fill{height:100%;background:linear-gradient(90deg,#a78bfa,#8b5cf6);border-radius:5px}
+    .rel-robo-info{min-width:110px;text-align:right;font-family:'Courier New',monospace}
+    .rel-robo-tot{font-size:14px;font-weight:900;color:#d8dde6}
+    .rel-robo-pct{font-size:10px;color:#8a95a8;font-weight:700;margin-left:4px}
+    .rel-robo-dias{font-size:9.5px;color:#6b7788;font-weight:600;margin-top:1px}
+    .rel-block-ia{border:1px solid #3d9eff30}
+    .rel-block-ia .rel-block-title{color:#3d9eff}
+    .rel-ia-content{font-size:13px;line-height:1.65;color:#d8dde6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;white-space:pre-wrap}
+    .rel-ia-content p{margin:0 0 10px}
+    .rel-ia-loading{display:flex;align-items:center;gap:12px;color:#7a8698;font-size:12.5px;font-family:'Courier New',monospace;padding:10px 0}
+    .rel-ia-loading .rel-loading-sp{width:20px;height:20px;border-width:2.5px}
+    .rel-ia-erro{background:#ff4d4d10;border:1px solid #ff4d4d30;color:#ff4d4d;padding:10px 14px;border-radius:8px;font-size:12px;font-weight:700}
+    .rel-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;margin-bottom:20px}
+    .rel-action{background:#0f1318;border:1px solid #1e2530;color:#d8dde6;padding:10px 18px;border-radius:10px;font-weight:800;font-size:12px;letter-spacing:.04em;cursor:pointer;font-family:'Courier New',monospace;transition:all .18s;display:inline-flex;align-items:center;gap:8px}
+    .rel-action:hover:not(:disabled){border-color:#3d9eff;color:#3d9eff;transform:translateY(-1px)}
+    .rel-action:disabled{opacity:.5;cursor:not-allowed}
+    .rel-action.primary{background:linear-gradient(135deg,#3d9eff,#1e6fdb);border-color:#3d9eff;color:#fff}
+    .rel-hist{background:linear-gradient(135deg,#0f1318,#0a0d12);border:1px solid #1e2530;border-radius:12px;padding:16px 18px;margin-top:20px}
+    .rel-hist-t{font-size:11.5px;color:#8a95a8;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .rel-hist-t .rel-hist-count{background:#1e2530;color:#8a95a8;font-size:10px;padding:2px 8px;border-radius:99px;font-weight:800}
+    .rel-hist-list{display:flex;flex-direction:column;gap:6px}
+    .rel-hist-item{display:flex;align-items:center;gap:12px;padding:9px 12px;background:#080b0f;border:1px solid #161c26;border-radius:8px;cursor:pointer;transition:all .14s}
+    .rel-hist-item:hover{border-color:#3d9eff40;transform:translateX(2px)}
+    .rel-hist-cod{font-family:'Courier New',monospace;font-weight:900;color:#ffb300;font-size:13px;min-width:70px}
+    .rel-hist-info{flex:1;min-width:0}
+    .rel-hist-per{font-size:11.5px;color:#d8dde6;font-weight:700}
+    .rel-hist-ts{font-size:10px;color:#6b7788;font-family:'Courier New',monospace;margin-top:2px}
+    .rel-hist-arrow{color:#4a5568;font-weight:900;font-size:16px}
+    .rel-hist-empty{font-size:11.5px;color:#4a5568;text-align:center;padding:16px 8px;font-family:'Courier New',monospace}
+    @media (max-width:900px){
+      .rel-toolbar{flex-direction:column}.rel-search-wrap{min-width:0}.rel-gerar{width:100%}
+      .rel-peca-cod{font-size:22px;min-width:88px}.rel-kpi-val{font-size:19px}
+      .rel-hm-cell{min-height:54px;padding:4px 2px;gap:1px}.rel-hm-cell-dow{font-size:9px}
+      .rel-hm-cell-num{font-size:18px}.rel-hm-cell-qtd{font-size:9.5px}.rel-hm-cell-qtd span{display:none}.rel-hm-mes-t{font-size:12px}.rel-hm-grid{gap:4px}
+    }
+    @media print{
+      @page{margin:14mm 12mm;size:A4}
+      body{background:#fff !important}
+      body *{visibility:hidden !important}
+      #relPrintArea, #relPrintArea *{visibility:visible !important}
+      #relPrintArea{position:absolute;left:0;top:0;width:100%}
+      .rel-no-print{display:none !important}
+      .rel-ident,.rel-block,.rel-peca-card{background:#fff !important;border:1px solid #d0d5dc !important;page-break-inside:avoid;box-shadow:none !important;margin-bottom:12px !important}
+      .rel-ident *,.rel-block *,.rel-peca-card *,.rel-kpi *{color:#0a0d12 !important}
+      .rel-block-title{border-bottom:1px solid #d0d5dc;padding-bottom:6px}
+      .rel-kpi{background:#fafbfc !important;border:1px solid #d0d5dc !important;border-left:3px solid currentColor !important}
+      .rel-peca-cod{color:#c67e00 !important}.rel-peca-cliente{color:#7c3aed !important}
+      .rel-hm-cell{border:1px solid #e0e4ea !important}.rel-hm-cell.fora{border:none !important}
+      .rel-chart-hora-track,.rel-robo-track{background:#eef1f5 !important;border:1px solid #d0d5dc !important}
+    }`;
+  document.head.appendChild(s);
+})();
+
+/* estado */
+let _relPeca=null,_relPecaBusca='',_relPecaDropdownAberto=false;
+let _relPeriodo='ult30',_relDataIni='',_relDataFim='';
+let _relResultado=null,_relAnaliseIA=null,_relAnaliseErro=null,_relAnaliseCarregando=false,_relGerando=false;
+let _relHistorico=[],_relDadosCarregados=false;
+
+/* util datas */
+function _relChaveDia(d){ return `${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`; }
+function _relParseChave(k){ const [a,m,di]=k.split('_').map(Number); return new Date(a,m,di); }
+function _relFormatData(d){ if(!d) return '—'; const dt=d instanceof Date?d:(typeof d==='string'?_relParseChave(d):new Date(d)); return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`; }
+function _relFormatarNum(n){ return (n||0).toLocaleString('pt-BR'); }
+function _relHojeISO(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+/* persistência local (não grava no banco) */
+function _relCarregarDados(){ if(_relDadosCarregados) return; try{ const h=JSON.parse(localStorage.getItem('cromo_rel_hist')||'[]'); _relHistorico=Array.isArray(h)?h:[]; }catch(e){ _relHistorico=[]; } _relDadosCarregados=true; }
+function _relSalvarDados(){ try{ localStorage.setItem('cromo_rel_hist',JSON.stringify(_relHistorico)); }catch(e){} }
+
+function _relHost(){ return document.getElementById('relHostWrap'); }
+function renderRelatoriosApp(){
+  const wrap=_relHost(); if(!wrap) return;
+  if(wrap.querySelector('.rel-wrap')) return;
+  wrap.innerHTML=`<div class="rel-wrap"><div class="rel-loading"><div class="rel-loading-sp"></div><div class="rel-loading-t">Carregando dados de produção...</div></div></div>`;
+  _relCarregarDados();
+  _relRender();
 }
-function exportarCSV(){
-  const datas=datasDoPeriodo(); const porPeca=aggPorPeca(datas); const porRobo=aggPorRobo(datas);
-  const pecas=Object.entries(porPeca).map(([cod,o])=>({cod,total:o.total,robos:o.robos})).sort((a,b)=>b.total-a.total);
-  const sep=";"; const linhas=[];
-  linhas.push(["Codigo","Nome",...ROBOS.map(r=>"R"+r),"Total"].join(sep));
-  pecas.forEach(p=>{ linhas.push([p.cod, (nomePeca(p.cod)||"").replace(/;/g,","), ...ROBOS.map(r=>p.robos[r]||0), p.total].join(sep)); });
-  linhas.push(["Total","",...ROBOS.map(r=>porRobo[r]||0), datas.reduce((s,[a,m,d])=>s+totalDia(a,m,d),0)].join(sep));
-  const csv="﻿"+linhas.join("\r\n");
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}); const url=URL.createObjectURL(blob); const a=document.createElement("a");
-  a.download="relatorio_cromo_"+labelPeriodo().replace(/[^0-9A-Za-z]/g,"_")+".csv"; a.href=url; a.click(); URL.revokeObjectURL(url);
-  showToast("CSV exportado",false,true);
+
+function _relRender(){
+  const wrap=_relHost(); if(!wrap) return;
+  const pecaSel=_relPeca;
+  const podeGerar=!!pecaSel && (_relPeriodo!=='custom' || (_relDataIni && _relDataFim));
+  wrap.innerHTML=`
+    <div class="rel-wrap">
+      <div class="rel-toolbar rel-no-print">
+        <div class="rel-search-wrap">
+          <span class="rel-search-icon">🔍</span>
+          <input class="rel-search-input nocaps" id="relBuscaInput" placeholder="Buscar peça por código, nome ou cliente..." value="${esc(_relPecaBusca)}" oninput="_relOnBusca(this.value)" onfocus="_relAbrirDropdown()" onkeydown="if(event.key==='Escape'){_relFecharDropdown();this.blur();}" autocomplete="off">
+          ${_relPecaDropdownAberto?_relDropdownHTML():''}
+        </div>
+        <button type="button" class="rel-gerar" ${podeGerar?'':'disabled'} onclick="_relGerar()">${_relGerando?'⏳ Gerando...':'Gerar Relatório →'}</button>
+      </div>
+      ${pecaSel?_relPecaCardHTML(pecaSel):''}
+      <div class="rel-periodo-wrap rel-no-print">
+        ${['hoje','ult7','ult30','mes','mesAnt','custom'].map(pp=>`<button type="button" class="rel-periodo-btn ${_relPeriodo===pp?'on':''}" onclick="_relSetPeriodo('${pp}')">${_relPeriodoLabel(pp)}</button>`).join('')}
+      </div>
+      ${_relPeriodo==='custom'?`
+        <div class="rel-custom rel-no-print">
+          <label>De <input type="date" class="nocaps" value="${_relDataIni||''}" max="${_relHojeISO()}" onchange="_relSetDataIni(this.value)"></label>
+          <label>Até <input type="date" class="nocaps" value="${_relDataFim||''}" max="${_relHojeISO()}" onchange="_relSetDataFim(this.value)"></label>
+        </div>`:''}
+      <div id="relResultado">${_relResultado?_relResultadoHTML():_relEmptyHTML()}</div>
+      ${_relHistoricoHTML()}
+    </div>`;
+  if(_relPecaDropdownAberto){ setTimeout(()=>document.addEventListener('click',_relClickForaDropdown),50); }
+}
+
+/* peças da Cromo */
+function _relTodasAsPecas(){
+  const o=pecasObj()||{};
+  return Object.keys(o).map(cod=>{ const d=o[cod]||{}; return {
+    codigo:cod, nome:(d.nome||nomePeca(cod)||cod), cliente:d.cliente||'',
+    meta_hora:d.meta_hora||'', tempo_peca:d.tempo_peca||'', pontos_solda:d.pontos||'', ciclo:'', obs:d.obs||d.desc||''
+  }; });
+}
+
+/* buscador / dropdown */
+function _relDropdownHTML(){
+  const pecas=_relTodasAsPecas(); const q=(_relPecaBusca||'').toLowerCase().trim();
+  let lista=pecas.slice();
+  if(q) lista=pecas.filter(p=>(p.codigo||'').toLowerCase().includes(q)||(p.nome||'').toLowerCase().includes(q)||(p.cliente||'').toLowerCase().includes(q));
+  lista.sort((a,b)=>(a.codigo||'').localeCompare(b.codigo||'','pt',{numeric:true})); lista=lista.slice(0,40);
+  if(!lista.length) return `<div class="rel-dropdown"><div class="rel-dd-empty">${q?`Nenhuma peça encontrada para "<b>${esc(q)}</b>"`:'Nenhuma peça cadastrada. Vá até <b>Cadastro de Peças</b>.'}</div></div>`;
+  return `<div class="rel-dropdown">${lista.map(p=>`
+    <div class="rel-dropdown-item" onclick="_relSelecionarPeca('${esc(p.codigo||'')}')">
+      <div class="rel-dd-cod">${esc(p.codigo||'—')}</div>
+      <div class="rel-dd-info"><div class="rel-dd-nome">${esc(p.nome||p.codigo||'Sem nome')}</div>${p.cliente?`<div class="rel-dd-cli">🏢 ${esc(p.cliente)}</div>`:''}</div>
+    </div>`).join('')}</div>`;
+}
+function _relClickForaDropdown(ev){ const wrap=document.querySelector('.rel-search-wrap'); if(wrap&&!wrap.contains(ev.target)){ _relPecaDropdownAberto=false; document.removeEventListener('click',_relClickForaDropdown); const dd=document.querySelector('.rel-dropdown'); if(dd) dd.remove(); } }
+function _relOnBusca(v){ _relPecaBusca=v||''; _relPecaDropdownAberto=true; const wrap=document.querySelector('.rel-search-wrap'); if(!wrap) return; const ex=wrap.querySelector('.rel-dropdown'); if(ex) ex.remove(); wrap.insertAdjacentHTML('beforeend',_relDropdownHTML()); }
+function _relAbrirDropdown(){ _relPecaDropdownAberto=true; const wrap=document.querySelector('.rel-search-wrap'); if(!wrap) return; if(!wrap.querySelector('.rel-dropdown')) wrap.insertAdjacentHTML('beforeend',_relDropdownHTML()); setTimeout(()=>document.addEventListener('click',_relClickForaDropdown),50); }
+function _relFecharDropdown(){ _relPecaDropdownAberto=false; document.removeEventListener('click',_relClickForaDropdown); const dd=document.querySelector('.rel-dropdown'); if(dd) dd.remove(); }
+function _relSelecionarPeca(codigo){ const p=_relTodasAsPecas().find(x=>(x.codigo||'')===codigo); if(!p){ showToast('Peça não encontrada',true); return; } _relPeca=p; _relPecaBusca=''; _relPecaDropdownAberto=false; _relResultado=null; _relAnaliseIA=null; _relAnaliseErro=null; _relRender(); }
+function _relLimparPeca(){ _relPeca=null; _relResultado=null; _relAnaliseIA=null; _relAnaliseErro=null; _relRender(); }
+function _relPecaCardHTML(p){
+  const chips=[];
+  if(p.meta_hora) chips.push(`<span class="rel-peca-meta-i">Meta/hora: <b>${esc(p.meta_hora)}</b></span>`);
+  if(p.tempo_peca) chips.push(`<span class="rel-peca-meta-i">Tempo/peça: <b>${esc(p.tempo_peca)}</b></span>`);
+  if(p.pontos_solda) chips.push(`<span class="rel-peca-meta-i">Pontos: <b>${esc(p.pontos_solda)}</b></span>`);
+  return `<div class="rel-peca-card">
+    <div class="rel-peca-cod">${esc(p.codigo||'—')}</div>
+    <div class="rel-peca-info"><div class="rel-peca-nome">${esc(p.nome||p.codigo||'Sem nome')}</div>${p.cliente?`<div class="rel-peca-cliente">🏢 ${esc(p.cliente)}</div>`:''}${chips.length?`<div class="rel-peca-meta">${chips.join('')}</div>`:''}</div>
+    <button type="button" class="rel-peca-remover rel-no-print" title="Trocar peça" onclick="_relLimparPeca()">✕</button>
+  </div>`;
+}
+
+/* períodos */
+function _relPeriodoLabel(p){ return ({hoje:'Hoje',ult7:'Últimos 7 dias',ult30:'Últimos 30 dias',mes:'Mês atual',mesAnt:'Mês anterior',custom:'Personalizado'})[p]||p; }
+function _relSetPeriodo(p){ _relPeriodo=p; _relResultado=null; _relAnaliseIA=null; _relAnaliseErro=null; _relRender(); }
+function _relSetDataIni(v){ _relDataIni=v; _relResultado=null; _relAnaliseIA=null; _relAnaliseErro=null; _relRender(); }
+function _relSetDataFim(v){ _relDataFim=v; _relResultado=null; _relAnaliseIA=null; _relAnaliseErro=null; _relRender(); }
+function _relChavesPeriodo(p){
+  const now=new Date(); const out=[];
+  if(p==='hoje') out.push(_relChaveDia(now));
+  else if(p==='ult7'){ for(let i=6;i>=0;i--){ const d=new Date(now); d.setDate(d.getDate()-i); out.push(_relChaveDia(d)); } }
+  else if(p==='ult30'){ for(let i=29;i>=0;i--){ const d=new Date(now); d.setDate(d.getDate()-i); out.push(_relChaveDia(d)); } }
+  else if(p==='mes'){ const y=now.getFullYear(),m=now.getMonth(),n=new Date(y,m+1,0).getDate(); for(let di=1;di<=n;di++) out.push(`${y}_${m}_${di}`); }
+  else if(p==='mesAnt'){ const y=now.getMonth()===0?now.getFullYear()-1:now.getFullYear(); const m=now.getMonth()===0?11:now.getMonth()-1; const n=new Date(y,m+1,0).getDate(); for(let di=1;di<=n;di++) out.push(`${y}_${m}_${di}`); }
+  else if(p==='custom'){ if(!_relDataIni||!_relDataFim) return []; const [ai,mi,di]=_relDataIni.split('-').map(Number); const [af,mf,df]=_relDataFim.split('-').map(Number); let ini=new Date(ai,mi-1,di),fim=new Date(af,mf-1,df); if(fim<ini){ const t=ini; ini=fim; fim=t; } const cur=new Date(ini); let g=0; while(cur<=fim&&g<800){ out.push(_relChaveDia(cur)); cur.setDate(cur.getDate()+1); g++; } }
+  return out;
+}
+function _relPeriodoDescricao(p){
+  const M=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  if(p==='hoje') return _relFormatData(new Date());
+  if(p==='ult7'||p==='ult30'){ const n=p==='ult7'?6:29; const fim=new Date(); const ini=new Date(); ini.setDate(ini.getDate()-n); return `${_relFormatData(ini)} a ${_relFormatData(fim)}`; }
+  if(p==='mes'){ const now=new Date(); return `${M[now.getMonth()]}/${now.getFullYear()}`; }
+  if(p==='mesAnt'){ const now=new Date(); const y=now.getMonth()===0?now.getFullYear()-1:now.getFullYear(); const m=now.getMonth()===0?11:now.getMonth()-1; return `${M[m]}/${y}`; }
+  if(p==='custom'&&_relDataIni&&_relDataFim){ const [ai,mi,di]=_relDataIni.split('-'); const [af,mf,df]=_relDataFim.split('-'); return `${di}/${mi}/${ai} a ${df}/${mf}/${af}`; }
+  return '—';
+}
+
+/* empty */
+function _relEmptyHTML(){
+  if(!_relPeca) return `<div class="rel-empty"><div class="rel-empty-ic">📊</div><div class="rel-empty-t">Selecione uma peça para começar</div><div class="rel-empty-s">Use a busca acima para localizar por código, nome ou cliente.</div></div>`;
+  return `<div class="rel-empty"><div class="rel-empty-ic">📈</div><div class="rel-empty-t">Pronto para gerar</div><div class="rel-empty-s">Peça <b style="color:#ffb300">${esc(_relPeca.codigo)}</b> · Período: <b style="color:#3d9eff">${_relPeriodoLabel(_relPeriodo)}</b><br>Clique em <b style="color:#00e87a">Gerar Relatório →</b></div></div>`;
+}
+
+/* gerar */
+async function _relGerar(){
+  if(!_relPeca){ showToast('Selecione uma peça primeiro',true); return; }
+  const chaves=_relChavesPeriodo(_relPeriodo);
+  if(!chaves.length){ showToast('Selecione um período válido',true); return; }
+  _relGerando=true; _relRender();
+  try{
+    _relResultado=_relCalcular(_relPeca.codigo,chaves);
+    _relAnaliseIA=null; _relAnaliseErro=null;
+    _relRegistrarHistorico();
+    _relGerando=false; _relRender();
+    _relBuscarAnaliseIA();
+  }catch(e){ console.error('rel gerar',e); showToast('Erro ao gerar: '+(e.message||e),true); _relGerando=false; _relRender(); }
+}
+function _relRegistrarHistorico(){
+  try{
+    const item={ cod:_relPeca.codigo, nome:_relPeca.nome||'', cliente:_relPeca.cliente||'', periodo:_relPeriodo, dataIni:_relDataIni||'', dataFim:_relDataFim||'', total:_relResultado?_relResultado.totalPecas:0, ts:new Date().toISOString() };
+    _relHistorico=[item,..._relHistorico.filter(h=>!(h.cod===item.cod&&h.periodo===item.periodo&&h.dataIni===item.dataIni&&h.dataFim===item.dataFim))].slice(0,10);
+    _relSalvarDados();
+  }catch(e){}
+}
+function _relRegenerar(i){
+  const h=_relHistorico[i]; if(!h) return;
+  const p=_relTodasAsPecas().find(x=>(x.codigo||'')===h.cod);
+  if(!p){ showToast('Peça '+h.cod+' não existe mais no cadastro',true); return; }
+  _relPeca=p; _relPeriodo=h.periodo; _relDataIni=h.dataIni||''; _relDataFim=h.dataFim||'';
+  _relResultado=null; _relAnaliseIA=null; _relAnaliseErro=null; _relRender();
+  setTimeout(()=>_relGerar(),200);
+}
+
+/* motor de cálculo — fonte: Meta Diária da Cromo */
+function _relCalcular(codigoPeca,chaves){
+  const HORAS=[...HORAS_DIA,...HORAS_NOITE];
+  const cod=String(codigoPeca||'').trim().toUpperCase(); if(!cod) return null;
+  const md=prod().metas_dias||{};
+  let totalPecas=0; const porDia={},porHora={},porRobo={}; const diasComProd=new Set(),horasComProd=new Set();
+  const acumular=(chave,nome,valor,hora)=>{ totalPecas+=valor; porHora[hora]=(porHora[hora]||0)+valor; horasComProd.add(chave+'_'+hora); if(!porRobo[nome]) porRobo[nome]={total:0,dias:new Set()}; porRobo[nome].total+=valor; porRobo[nome].dias.add(chave); porDia[chave]=(porDia[chave]||0)+valor; diasComProd.add(chave); };
+  chaves.forEach(chave=>{
+    const dia=md[chave]; if(!dia) return;
+    Object.keys(robos()).forEach(robo=>{
+      const rd=dia[robo]; if(!rd) return;
+      const rdCod=String((rd.cod)||'').trim().toUpperCase(); if(rdCod!==cod) return;
+      const nome=nomeRoboCurto(robo);
+      HORAS.forEach(h=>{ const num=parseCelVal(rd[campoH(h)]||'').num; if(num>0) acumular(chave,nome,num,h); });
+    });
+  });
+  let melhorDia=null,piorDia=null;
+  Object.entries(porDia).forEach(([k,v])=>{ if(!melhorDia||v>melhorDia.total) melhorDia={chave:k,total:v}; if(!piorDia||v<piorDia.total) piorDia={chave:k,total:v}; });
+  const numDiasProd=diasComProd.size, diasSemProd=chaves.length-numDiasProd, horasTrabalhadas=horasComProd.size;
+  const mediaHora=horasTrabalhadas?Math.round(totalPecas/horasTrabalhadas):0;
+  const mediaMin=horasTrabalhadas?+(totalPecas/(horasTrabalhadas*60)).toFixed(2):0;
+  const mediaDia=numDiasProd?Math.round(totalPecas/numDiasProd):0;
+  const porRoboArr=Object.entries(porRobo).map(([nome,d])=>({nome,total:d.total,dias:d.dias.size,pct:totalPecas>0?Math.round(d.total/totalPecas*100):0})).sort((a,b)=>b.total-a.total);
+  return { codigo:cod, totalPecas, porDia, porHora, porRobo:porRoboArr, melhorDia, piorDia, diasSemProd, numDiasProd, mediaHora, mediaMin, mediaDia, horasTrabalhadas, totalDiasPeriodo:chaves.length, chaves };
+}
+function _relDiasCriticos(r){
+  const nomesDia=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  const mediaDiaRef=r.mediaDia||0; const limiteBaixa=mediaDiaRef>0?Math.round(mediaDiaRef*0.5):0;
+  const semProducao=[],baixaProducao=[];
+  const diasComProd=Object.keys(r.porDia||{}).filter(k=>((r.porDia[k])||0)>0);
+  if(!diasComProd.length) return {mediaDiaRef,limiteBaixa,semProducao,baixaProducao};
+  const msProd=diasComProd.map(k=>_relParseChave(k).getTime()); const primeiroMs=Math.min(...msProd),ultimoMs=Math.max(...msProd);
+  (r.chaves||[]).forEach(chave=>{
+    const dt=_relParseChave(chave); const t=dt.getTime(); if(t<primeiroMs||t>ultimoMs) return;
+    const dow=dt.getDay(); if(dow===0||dow===6) return;
+    const total=(r.porDia&&r.porDia[chave])||0;
+    if(total===0) semProducao.push({chave,data:_relFormatData(chave),dia_semana:nomesDia[dow]});
+    else if(limiteBaixa>0&&total<limiteBaixa) baixaProducao.push({chave,data:_relFormatData(chave),dia_semana:nomesDia[dow],pecas:total});
+  });
+  return {mediaDiaRef,limiteBaixa,semProducao,baixaProducao};
+}
+
+/* resultado */
+function _relResultadoHTML(){
+  const r=_relResultado,p=_relPeca; const periodoDesc=_relPeriodoDescricao(_relPeriodo);
+  const ts=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
+  const kpis=[
+    {ic:'📦',lbl:'Total no período',val:_relFormatarNum(r.totalPecas),sub:'peças produzidas',cor:'#00e87a'},
+    {ic:'⏱',lbl:'Média por hora',val:_relFormatarNum(r.mediaHora),sub:r.horasTrabalhadas+' horas efetivas',cor:'#3d9eff'},
+    {ic:'⚡',lbl:'Média por minuto',val:String(r.mediaMin).replace('.',','),sub:'peça/min médio',cor:'#a78bfa'},
+    {ic:'📅',lbl:'Média por dia',val:_relFormatarNum(r.mediaDia),sub:r.numDiasProd+' dias produtivos',cor:'#ffb300'},
+    {ic:'🏆',lbl:'Melhor dia',val:r.melhorDia?_relFormatarNum(r.melhorDia.total):'—',sub:r.melhorDia?_relFormatData(r.melhorDia.chave):'sem produção',cor:'#00e87a'},
+    {ic:'📉',lbl:'Pior dia (com prod.)',val:r.piorDia?_relFormatarNum(r.piorDia.total):'—',sub:r.piorDia?_relFormatData(r.piorDia.chave):'sem produção',cor:'#ff6b6b'},
+    {ic:'⚪',lbl:'Dias sem produção',val:String(r.diasSemProd),sub:'de '+r.totalDiasPeriodo+' dias no período',cor:'#7a8698'},
+    {ic:'🤖',lbl:'Robôs envolvidos',val:String(r.porRobo.length),sub:r.porRobo.length?r.porRobo.map(x=>x.nome).slice(0,3).join(', ')+(r.porRobo.length>3?'…':''):'nenhum',cor:'#a78bfa'}
+  ];
+  const podeExportar=r.totalPecas>0||r.totalDiasPeriodo>0;
+  return `<div class="rel-print-area" id="relPrintArea">
+    <div class="rel-ident">
+      <div class="rel-ident-head">
+        <div class="rel-ident-marca"><div class="rel-ident-logo">📊</div><div><div class="rel-ident-marca-t">Cromo Azul</div><div class="rel-ident-marca-b">Relatório de Produção por Peça</div></div></div>
+        <div class="rel-ident-ts">Gerado em ${ts}</div>
+      </div>
+      <div class="rel-ident-grid">
+        <div class="rel-ident-i"><div class="rel-ident-i-l">Código da Peça</div><div class="rel-ident-i-v" style="color:#ffb300">${esc(p.codigo||'—')}</div></div>
+        <div class="rel-ident-i"><div class="rel-ident-i-l">Descrição</div><div class="rel-ident-i-v pequeno">${esc(p.nome||p.codigo||'—')}</div></div>
+        <div class="rel-ident-i"><div class="rel-ident-i-l">Cliente</div><div class="rel-ident-i-v pequeno" style="color:#a78bfa">${esc(p.cliente||'—')}</div></div>
+        <div class="rel-ident-i"><div class="rel-ident-i-l">Período</div><div class="rel-ident-i-v pequeno" style="color:#3d9eff">${esc(periodoDesc)}</div></div>
+      </div>
+    </div>
+    <div class="rel-block">
+      <div class="rel-block-title">📊 Indicadores principais</div>
+      <div class="rel-kpi-grid">
+        ${kpis.map(k=>`<div class="rel-kpi" style="border-left-color:${k.cor};color:${k.cor}"><div class="rel-kpi-lbl">${k.ic} ${k.lbl}</div><div class="rel-kpi-val" style="color:${k.cor}">${k.val}</div>${k.sub?`<div class="rel-kpi-sub">${esc(k.sub)}</div>`:''}</div>`).join('')}
+      </div>
+    </div>
+    ${r.totalPecas>0?`
+    <div class="rel-block"><div class="rel-block-title">📅 Calendário de produção <span class="rel-block-hint">passe o mouse para detalhes</span></div>${_relHeatmapHTML(r)}</div>
+    <div class="rel-block"><div class="rel-block-title">🕐 Distribuição por hora do dia</div>${_relChartHoraHTML(r)}</div>
+    ${r.porRobo.length?`<div class="rel-block"><div class="rel-block-title">🤖 Distribuição por robô</div>${_relChartRoboHTML(r)}</div>`:''}
+    `:`
+    <div class="rel-block"><div class="rel-block-title">📅 Calendário de produção</div>
+      <div style="text-align:center;padding:30px 10px;color:#6b7788;font-size:12.5px;font-family:'Courier New',monospace">Nenhuma produção registrada para <b style="color:#ffb300">${esc(p.codigo)}</b> no período <b style="color:#3d9eff">${esc(periodoDesc)}</b>.<br><span style="font-size:11px;color:#4a5568">Verifique se o código da peça está apontado corretamente na Meta Diária.</span></div>
+    </div>`}
+    ${(()=>{ const dc=_relDiasCriticos(r); if(!dc.semProducao.length&&!dc.baixaProducao.length) return '';
+      const item=(d,extra)=>`<span style="display:inline-block;background:#b06cff18;border:1px solid #b06cff44;color:#c9a6ff;border-radius:8px;padding:4px 10px;margin:3px 4px 0 0;font-size:13px;font-weight:700;white-space:nowrap">${d.data}${extra||''}</span>`;
+      return `<div class="rel-block" style="border:1px solid #b06cff40;background:linear-gradient(135deg,#b06cff10,#b06cff03)">
+        <div class="rel-block-title" style="color:#c9a6ff">🚫 Paradas por Falta de Mão de Obra</div>
+        <div style="font-size:13px;color:#a8b3c4;margin-bottom:12px;line-height:1.5">Dias úteis (seg–sex) em que a célula ficou parada ou com produção muito abaixo da média (&lt; 50% de ${_relFormatarNum(dc.mediaDiaRef)} pç/dia) por ausência de operador para a peça ${esc(p.codigo)}.</div>
+        ${dc.semProducao.length?`<div style="margin-bottom:10px"><div style="font-size:12px;color:#7a8698;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Sem produção (${dc.semProducao.length} dia${dc.semProducao.length!==1?'s':''})</div>${dc.semProducao.map(d=>item(d)).join('')}</div>`:''}
+        ${dc.baixaProducao.length?`<div><div style="font-size:12px;color:#7a8698;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Produção baixa (${dc.baixaProducao.length} dia${dc.baixaProducao.length!==1?'s':''})</div>${dc.baixaProducao.map(d=>item(d,` · ${_relFormatarNum(d.pecas)} pç`)).join('')}</div>`:''}
+      </div>`; })()}
+    <div class="rel-block rel-block-ia">
+      <div class="rel-block-title">🧠 Análise Executiva — MR.ROBOT</div>
+      <div id="relAnaliseTexto">${_relAnaliseIA?`<div class="rel-ia-content">${_relFormatarIA(_relAnaliseIA)}</div>`:_relAnaliseErro?`<div class="rel-ia-erro">⚠ ${esc(_relAnaliseErro)}</div>`:`<div class="rel-ia-loading"><div class="rel-loading-sp"></div>Gerando análise executiva com base nos dados do período...</div>`}</div>
+    </div>
+    <div class="rel-actions rel-no-print">
+      <button type="button" class="rel-action" onclick="_relImprimir()" ${!podeExportar?'disabled':''}>🖨 Imprimir</button>
+      <button type="button" class="rel-action primary" onclick="_relBaixarPDF()" ${!podeExportar?'disabled':''}>📄 Baixar PDF</button>
+    </div>
+  </div>`;
+}
+function _relHeatmapHTML(r){
+  const chaves=r.chaves; if(!chaves.length) return '<div class="rel-hist-empty">Sem dados</div>';
+  const mesesMap={};
+  chaves.forEach(k=>{ const [a,m,d]=k.split('_').map(Number); const key=`${a}_${m}`; if(!mesesMap[key]) mesesMap[key]={ano:a,mes:m,dias:{}}; mesesMap[key].dias[d]=r.porDia[k]||0; });
+  const meses=Object.values(mesesMap).sort((a,b)=>a.ano===b.ano?a.mes-b.mes:a.ano-b.ano);
+  const maxV=Math.max(...Object.values(r.porDia),1);
+  const cor=(v)=>{ if(v<=0) return '#08110c'; const pct=v/maxV; if(pct<=.2) return '#0f3d24'; if(pct<=.4) return '#127a3c'; if(pct<=.6) return '#1abd5b'; if(pct<=.8) return '#38e77d'; return '#5cff9a'; };
+  const nomeMes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const dowNomes=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const corTextoClasse=(bg)=>{ const escuros=new Set(['#08110c','#0f3d24','#127a3c']); const claros=new Set(['#1abd5b','#38e77d','#5cff9a']); if(escuros.has(bg)) return bg==='#08110c'?'zero':'dark'; if(claros.has(bg)) return 'light'; return 'dark'; };
+  const mesesHTML=meses.map(mObj=>{
+    const {ano,mes,dias}=mObj; const numDias=new Date(ano,mes+1,0).getDate(); const primDow=new Date(ano,mes,1).getDay();
+    const cells=[]; for(let i=0;i<primDow;i++) cells.push({fora:true});
+    for(let d=1;d<=numDias;d++){ const v=dias[d]||0; const dow=new Date(ano,mes,d).getDay(); cells.push({dia:d,valor:v,cor:cor(v),fora:false,dow}); }
+    while(cells.length%7!==0) cells.push({fora:true});
+    return `<div class="rel-hm-mes"><div class="rel-hm-mes-t">${nomeMes[mes]} / ${ano}</div><div class="rel-hm-grid">${cells.map(c=>{
+      if(c.fora) return `<div class="rel-hm-cell fora"></div>`;
+      const cls=corTextoClasse(c.cor); const hasCls=c.valor>0?'has':'';
+      return `<div class="rel-hm-cell ${hasCls} ${cls}" style="background:${c.cor}"><div class="rel-hm-cell-dow">${dowNomes[c.dow]}</div><div class="rel-hm-cell-num">${c.dia}</div>${c.valor>0?`<div class="rel-hm-cell-qtd">${_relFormatarNum(c.valor)}<span>pç</span></div>`:''}${c.valor>0?`<span class="rel-hm-tip">${_relFormatData(new Date(ano,mes,c.dia))} · ${_relFormatarNum(c.valor)} peças</span>`:''}</div>`;
+    }).join('')}</div></div>`;
+  }).join('');
+  const legendaCells=['#08110c','#0f3d24','#127a3c','#1abd5b','#38e77d','#5cff9a'].map(c=>`<span style="background:${c}"></span>`).join('');
+  return `<div class="rel-hm">${mesesHTML}<div class="rel-hm-leg">menos <div class="rel-hm-leg-cells">${legendaCells}</div> mais</div></div>`;
+}
+function _relChartHoraHTML(r){
+  const HORAS=[...HORAS_DIA,...HORAS_NOITE];
+  const dados=HORAS.map(h=>({h,v:r.porHora[h]||0})).filter(d=>d.v>0);
+  if(!dados.length) return '<div class="rel-hist-empty">Sem produção horária registrada</div>';
+  const max=Math.max(...dados.map(d=>d.v),1);
+  return `<div class="rel-chart-hora">${dados.map(d=>`<div class="rel-chart-hora-row"><div class="rel-chart-hora-lbl">${d.h}</div><div class="rel-chart-hora-track"><div class="rel-chart-hora-fill" style="width:${(d.v/max*100).toFixed(1)}%"></div></div><div class="rel-chart-hora-val">${_relFormatarNum(d.v)}</div></div>`).join('')}</div>`;
+}
+function _relChartRoboHTML(r){
+  if(!r.porRobo.length) return '<div class="rel-hist-empty">Sem dados</div>';
+  const max=r.porRobo[0].total||1;
+  return `<div class="rel-robo-list">${r.porRobo.map(x=>`<div class="rel-robo"><div class="rel-robo-nome">${esc(x.nome)}</div><div class="rel-robo-track"><div class="rel-robo-fill" style="width:${(x.total/max*100).toFixed(1)}%"></div></div><div class="rel-robo-info"><div><span class="rel-robo-tot">${_relFormatarNum(x.total)}</span><span class="rel-robo-pct">${x.pct}%</span></div><div class="rel-robo-dias">${x.dias} dia${x.dias!==1?'s':''} c/ produção</div></div></div>`).join('')}</div>`;
+}
+
+/* Análise IA — reusa a Edge Function ia-fabrica (Tremps), com contexto explícito da Cromo */
+async function _relBuscarAnaliseIA(){
+  if(!_relResultado||!_relPeca) return;
+  _relAnaliseCarregando=true;
+  const r=_relResultado,p=_relPeca; const periodoDesc=_relPeriodoDescricao(_relPeriodo);
+  const contexto={
+    fabrica:'Cromo Azul — células robóticas de solda FANUC (robôs 800 a 805)',
+    peca:{ codigo:p.codigo, nome:p.nome||p.codigo, cliente:p.cliente||'—', meta_hora:p.meta_hora||null, tempo_peca:p.tempo_peca||null, pontos_solda:p.pontos_solda||null },
+    fonte_dados:'Meta Diária (Cromo Azul)',
+    periodo:{ label:_relPeriodoLabel(_relPeriodo), descricao:periodoDesc, dias_no_periodo:r.totalDiasPeriodo, dias_com_producao:r.numDiasProd, dias_sem_producao:r.diasSemProd },
+    resultado:{ total_pecas:r.totalPecas, media_por_hora:r.mediaHora, media_por_minuto:r.mediaMin, media_diaria:r.mediaDia, horas_efetivas:r.horasTrabalhadas,
+      melhor_dia:r.melhorDia?{data:_relFormatData(r.melhorDia.chave),pecas:r.melhorDia.total}:null,
+      pior_dia:r.piorDia?{data:_relFormatData(r.piorDia.chave),pecas:r.piorDia.total}:null,
+      por_robo:r.porRobo.map(x=>({robo:x.nome,pecas:x.total,percentual:x.pct,dias:x.dias})),
+      producao_por_hora:Object.fromEntries(Object.entries(r.porHora).sort((a,b)=>a[0].localeCompare(b[0]))) }
+  };
+  const _dc=_relDiasCriticos(r);
+  contexto.dias_criticos={ media_diaria_referencia:_dc.mediaDiaRef, limite_producao_baixa:_dc.limiteBaixa,
+    dias_sem_producao:_dc.semProducao.map(d=>({data:d.data,dia_semana:d.dia_semana})),
+    dias_producao_baixa:_dc.baixaProducao.map(d=>({data:d.data,dia_semana:d.dia_semana,pecas:d.pecas})),
+    observacao:'Dias úteis (segunda a sexta) sem produção ou com produção muito abaixo da média foram causados por FALTA DE MÃO DE OBRA — ausência de operador para operar a célula robótica. Sábados e domingos foram excluídos.' };
+  const pergunta = `IMPORTANTE: Esta análise é da fábrica CROMO AZUL (células robóticas FANUC 800–805). Trate exclusivamente desta fábrica; não cite nenhuma outra empresa. Escreva uma análise executiva formal em português brasileiro sobre a produção da peça ${p.codigo} (${p.nome||p.codigo}) no período ${periodoDesc}. Estruture em 4 a 6 parágrafos cobrindo: (1) performance geral do período com números-chave; (2) tendências e padrões observados (dias produtivos vs improdutivos, horários de pico, robôs mais eficientes); (3) UM PARÁGRAFO DEDICADO E EXPLÍCITO sobre os dias críticos — use os dados de "dias_criticos" do contexto para listar, com as DATAS EXATAS, os dias úteis em que a peça NÃO teve produção e os dias em que a produção ficou muito abaixo da média. Deixe CLARO que essas paradas ocorreram por FALTA DE MÃO DE OBRA (ausência de operador), pois o robô estava disponível mas não havia colaborador para operá-lo. Se as listas estiverem vazias, afirme objetivamente que não houve paradas por falta de mão de obra no período; (4) comparação entre o melhor e o pior dia produtivo; (5) sugestões concretas de otimização com base nos dados; (6) alertas caso haja queda de produção evidente. Tom estritamente corporativo — sem emojis, sem gírias. Não invente dados que não estejam no contexto. Não use listas com marcadores nem títulos de seção — apenas parágrafos corridos, citando as datas exatas dentro do texto.`;
+  try{
+    const r2=await fetch(_REL_IA_URL,{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+_REL_IA_KEY}, body:JSON.stringify({tipo:'chat',pergunta,contexto}) });
+    const d=await r2.json();
+    if(!r2.ok||d.error) throw new Error(d.error||('HTTP '+r2.status));
+    _relAnaliseIA=String(d.resposta||'').trim()||'A análise não retornou conteúdo.'; _relAnaliseErro=null;
+  }catch(e){ console.error('rel IA',e); _relAnaliseIA=null; _relAnaliseErro='Não foi possível gerar a análise no momento. Os dados do relatório permanecem disponíveis. ('+(e.message||e)+')'; }
+  finally{
+    _relAnaliseCarregando=false;
+    const el=document.getElementById('relAnaliseTexto');
+    if(el){ el.innerHTML=_relAnaliseIA?`<div class="rel-ia-content">${_relFormatarIA(_relAnaliseIA)}</div>`:`<div class="rel-ia-erro">⚠ ${esc(_relAnaliseErro||'Erro')}</div>`; }
+  }
+}
+function _relFormatarIA(txt){
+  const paragrafos=String(txt||'').split(/\n\s*\n+/).map(p=>p.trim()).filter(Boolean);
+  const inline=(s)=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/__(.+?)__/g,'<strong>$1</strong>').replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g,'$1<em>$2</em>');
+  return paragrafos.map(pp=>{ const linha=pp.trim(); if(/^-{3,}$/.test(linha)) return '<hr style="border:none;border-top:1px solid #1e2530;margin:8px 0">'; if(/^#{1,3}\s+/.test(linha)){ const texto=linha.replace(/^#+\s+/,''); return `<div style="font-size:13px;font-weight:900;color:#fff;margin:6px 0 2px">${inline(texto)}</div>`; } return `<p>${inline(linha).replace(/\n/g,'<br>')}</p>`; }).join('');
+}
+
+/* ações */
+function _relImprimir(){ window.print(); }
+async function _relBaixarPDF(){
+  if(!_relResultado){ showToast('Gere o relatório primeiro',true); return; }
+  const area=document.getElementById('relPrintArea'); if(!area){ showToast('Área do relatório não encontrada',true); return; }
+  if(typeof window.html2canvas==='undefined'||typeof window.jspdf==='undefined'){ showToast('Bibliotecas de PDF ainda carregando, tente de novo em segundos',true); return; }
+  showToast('Gerando PDF...');
+  try{
+    if(_relAnaliseCarregando){ for(let i=0;i<20&&_relAnaliseCarregando;i++){ await new Promise(r=>setTimeout(r,500)); } }
+    const canvas=await window.html2canvas(area,{ backgroundColor:'#0a0d12', scale:2, useCORS:true, logging:false, windowWidth:area.scrollWidth, windowHeight:area.scrollHeight });
+    const imgData=canvas.toDataURL('image/jpeg',0.92); const {jsPDF}=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight();
+    const imgW=pageW-20; const imgH=canvas.height*imgW/canvas.width; let heightLeft=imgH; let position=10;
+    pdf.addImage(imgData,'JPEG',10,position,imgW,imgH,undefined,'FAST'); heightLeft-=(pageH-10);
+    while(heightLeft>0){ position=-(imgH-heightLeft)+10; pdf.addPage(); pdf.addImage(imgData,'JPEG',10,position,imgW,imgH,undefined,'FAST'); heightLeft-=(pageH-10); }
+    pdf.save(`relatorio_${_relPeca.codigo||'peca'}_${new Date().toISOString().slice(0,10)}.pdf`); showToast('PDF baixado ✓');
+  }catch(e){ console.error('rel pdf',e); showToast('Erro ao gerar PDF: '+(e.message||e),true); }
+}
+
+function _relHistoricoHTML(){
+  if(!_relHistorico.length) return `<div class="rel-hist rel-no-print"><div class="rel-hist-t">🕐 Relatórios recentes <span class="rel-hist-count">0</span></div><div class="rel-hist-empty">Nenhum relatório gerado ainda. Ao gerar um relatório ele aparece aqui.</div></div>`;
+  return `<div class="rel-hist rel-no-print"><div class="rel-hist-t">🕐 Relatórios recentes <span class="rel-hist-count">${_relHistorico.length}</span></div><div class="rel-hist-list">${_relHistorico.map((h,i)=>{
+    const dt=new Date(h.ts); const dtStr=dt.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
+    return `<div class="rel-hist-item" onclick="_relRegenerar(${i})" title="Regerar este relatório"><div class="rel-hist-cod">${esc(h.cod||'—')}</div><div class="rel-hist-info"><div class="rel-hist-per">${esc(_relPeriodoLabel(h.periodo))}${h.total?` · ${_relFormatarNum(h.total)} pç`:''}${h.cliente?` · ${esc(h.cliente)}`:''}</div><div class="rel-hist-ts">${dtStr}</div></div><div class="rel-hist-arrow">↻</div></div>`;
+  }).join('')}</div></div>`;
 }
 
 /* ---------- Placeholder ---------- */

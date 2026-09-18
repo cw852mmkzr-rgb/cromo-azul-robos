@@ -1743,9 +1743,10 @@ function viewPainel(){
   const pct=metaDia?Math.min(100,Math.round(hojeT/metaDia*100)):0;
   const dash=232, off=dash-(dash*pct/100);
   // alertas
-  const alerta=Object.keys(robos()).sort((a,b)=>a-b).filter(k=>['Manutenção','Parado','Setup'].includes(robos()[k].status));
+  const alerta=Object.keys(robos()).sort((a,b)=>a-b).filter(k=>(robos()[k].status||"")!=="Produzindo");
   const nCh=chamados().filter(c=>c.status!=='Concluído').length;
-  let alertHtml=alerta.slice(0,4).map(k=>{const c=robos()[k],cor=STATUS_COR[c.status];return `<div class="pn-alert"><span class="dot" style="color:${cor}"></span>${esc(k)} :: ${esc((c.status||'').toUpperCase())}</div>`;}).join("");
+  let alertHtml=alerta.slice(0,6).map(k=>{const c=robos()[k],cor=STATUS_COR[c.status];return `<div class="pn-alert"><span class="dot" style="color:${cor}"></span>${esc(k)} :: ${esc((c.status||'').toUpperCase())}</div>`;}).join("");
+  if(alerta.length>6) alertHtml+=`<div class="pn-alert" style="color:var(--faint)"><span class="dot" style="color:var(--faint)"></span>+${alerta.length-6} ROBÔ${alerta.length-6>1?'S':''}</div>`;
   if(nCh) alertHtml+=`<div class="pn-alert"><span class="dot" style="color:var(--nm)"></span>${nCh} CHAMADO${nCh>1?'S':''} ABERTO${nCh>1?'S':''}</div>`;
   if(!alertHtml) alertHtml=`<div class="pn-alert" style="color:var(--ok)"><span class="dot" style="color:var(--ok)"></span>TUDO OPERANDO</div>`;
   const robos6=Object.keys(robos()).sort((a,b)=>a-b).map(k=>{ const c=robos()[k],cor=STATUS_COR[c.status]||"var(--faint)"; const t=totalRoboDia(A,M,D,k);

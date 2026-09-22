@@ -1268,7 +1268,31 @@ async function precarregarConfig(){
 // e o "Modo Dashboard TV" continuam livres - nao usam senha.
 const LOGIN_MAX_TENT    = 3;
 const LOGIN_BLOQUEIO_MS = 5 * 60 * 1000;
+const SENHA_ALERTA_APOS = 5;                 // total de erros que dispara o aviso
+const SENHA_ALERTA_FONE = "5511963262732";   // WhatsApp do Eduardo
+const SENHA_SITE_NOME   = "Cromo Azul";
 let _loginTick = null;
+
+// Avisa o Eduardo no WhatsApp quando passa do limite de erros no aparelho.
+// A Edge Function do bot tem dedup de 1h por chave, entao nao vira spam.
+async function _senhaAvisarWhats(total){
+  try{
+    const agora = new Date();
+    const quando = String(agora.getDate()).padStart(2,"0")+"/"+String(agora.getMonth()+1).padStart(2,"0")+"/"+agora.getFullYear()
+                 + " " + String(agora.getHours()).padStart(2,"0")+":"+String(agora.getMinutes()).padStart(2,"0");
+    const msg = "\u{1F6A8} *Tentativas de senha no site " + SENHA_SITE_NOME + "*\n\n"
+              + total + " senhas erradas neste aparelho.\n"
+              + "Tela: login do site\n"
+              + "Quando: " + quando + "\n\n"
+              + "_Aviso automático. Se foi você tentando entrar, pode ignorar._";
+    const dia = agora.getFullYear()+"-"+agora.getMonth()+"-"+agora.getDate()+"-"+agora.getHours();
+    await fetch("https://dtsrisqueekmommmoqxf.supabase.co/functions/v1/whatsapp-bot", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({tipo: "alerta", phone: SENHA_ALERTA_FONE, mensagem: msg,
+                            dedup_key: "senha_cromo_" + dia})
+    });
+  }catch(e){ /* aviso e best-effort: nunca atrapalha o login */ }
+}
 
 function _loginEstado(){
   try{
@@ -1309,6 +1333,12 @@ function loginBloqueado(){ return _loginAplicaBloqueio(); }
 function loginErrou(){
   const err = document.getElementById('loginErr');
   const st = _loginEstado();
+  let total = 0;
+  try{
+    total = (parseInt(localStorage.getItem('senha_err_total') || '0') || 0) + 1;
+    localStorage.setItem('senha_err_total', String(total));
+  }catch(e){}
+  if(total >= SENHA_ALERTA_APOS) _senhaAvisarWhats(total);
   const tent = st.tent + 1;
   if(tent >= LOGIN_MAX_TENT){
     _loginSalva(Date.now() + LOGIN_BLOQUEIO_MS, 0);
@@ -1322,7 +1352,7 @@ function loginErrou(){
     setTimeout(()=>{ if(!(_loginEstado().ate > Date.now())) err.textContent=''; }, 2500);
   }
 }
-function loginAcertou(){ _loginSalva(0, 0); if(_loginTick){ clearInterval(_loginTick); _loginTick=null; } }
+function loginAcertou(){ _loginSalva(0, 0); try{ localStorage.setItem('senha_err_total','0'); }catch(e){} if(_loginTick){ clearInterval(_loginTick); _loginTick=null; } }
 // Se a pagina abrir ja dentro do bloqueio, o campo aparece travado com a contagem.
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", ()=>_loginAplicaBloqueio());
 else _loginAplicaBloqueio();

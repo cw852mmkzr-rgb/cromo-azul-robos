@@ -1262,11 +1262,77 @@ async function precarregarConfig(){
   try{ const r=await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main&select=conteudo",{headers:HEADERS_SB});
     const d=await r.json(); const cfg=d&&d[0]&&d[0].conteudo&&d[0].conteudo.config; _senhaHost=(cfg&&cfg.senha)||""; }catch(e){}
 }
+// ===== Limite de tentativas de senha no login =====
+// 3 erros seguidos bloqueiam o campo de senha por 5 minutos. O contador fica no
+// localStorage, entao recarregar a pagina (F5) nao zera. "Entrar como Visualizador"
+// e o "Modo Dashboard TV" continuam livres - nao usam senha.
+const LOGIN_MAX_TENT    = 3;
+const LOGIN_BLOQUEIO_MS = 5 * 60 * 1000;
+let _loginTick = null;
+
+function _loginEstado(){
+  try{
+    const ate  = parseInt(localStorage.getItem('login_bloqueado_ate') || '0');
+    const tent = parseInt(localStorage.getItem('login_tentativas') || '0');
+    return { ate: isNaN(ate) ? 0 : ate, tent: isNaN(tent) ? 0 : tent };
+  }catch(e){ return { ate: 0, tent: 0 }; }
+}
+function _loginSalva(ate, tent){
+  try{
+    localStorage.setItem('login_bloqueado_ate', String(ate));
+    localStorage.setItem('login_tentativas', String(tent));
+  }catch(e){}
+}
+function _loginRestante(){
+  const ms = _loginEstado().ate - Date.now();
+  if(ms <= 0) return '';
+  const tot = Math.ceil(ms/1000);
+  const mm = Math.floor(tot/60), ss = tot%60;
+  return mm > 0 ? (mm+'min '+String(ss).padStart(2,'0')+'s') : (ss+'s');
+}
+function _loginAplicaBloqueio(){
+  const inp = document.getElementById('pwInput');
+  const err = document.getElementById('loginErr');
+  const bloqueado = _loginEstado().ate > Date.now();
+  if(inp){ inp.disabled = bloqueado; if(bloqueado) inp.value=''; }
+  if(bloqueado){
+    if(err) err.textContent = 'Muitas tentativas. Aguarde ' + _loginRestante() + '.';
+    if(!_loginTick) _loginTick = setInterval(_loginAplicaBloqueio, 1000);
+  } else {
+    if(_loginTick){ clearInterval(_loginTick); _loginTick = null; }
+    if(err && /Muitas tentativas/.test(err.textContent||'')) err.textContent = '';
+    if(inp) inp.disabled = false;
+  }
+  return bloqueado;
+}
+function loginBloqueado(){ return _loginAplicaBloqueio(); }
+function loginErrou(){
+  const err = document.getElementById('loginErr');
+  const st = _loginEstado();
+  const tent = st.tent + 1;
+  if(tent >= LOGIN_MAX_TENT){
+    _loginSalva(Date.now() + LOGIN_BLOQUEIO_MS, 0);
+    _loginAplicaBloqueio();
+    return;
+  }
+  _loginSalva(0, tent);
+  const faltam = LOGIN_MAX_TENT - tent;
+  if(err){
+    err.textContent = 'Senha incorreta \u2014 ' + faltam + (faltam===1 ? ' tentativa restante' : ' tentativas restantes');
+    setTimeout(()=>{ if(!(_loginEstado().ate > Date.now())) err.textContent=''; }, 2500);
+  }
+}
+function loginAcertou(){ _loginSalva(0, 0); if(_loginTick){ clearInterval(_loginTick); _loginTick=null; } }
+// Se a pagina abrir ja dentro do bloqueio, o campo aparece travado com a contagem.
+if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", ()=>_loginAplicaBloqueio());
+else _loginAplicaBloqueio();
+
 function autoLogin(){
-  const pw=document.getElementById("pwInput").value.trim(); const err=document.getElementById("loginErr");
-  if(pw===ADMIN_PW || (_senhaHost && pw===_senhaHost)){ isHost=true; isGerente=false; enterApp(); }
-  else if(pw===GESTOR_PW){ isHost=true; isGerente=true; enterApp(); }
-  else { err.textContent="Senha incorreta"; setTimeout(()=>err.textContent="",2500); }
+  if(loginBloqueado()) return;
+  const pw=document.getElementById("pwInput").value.trim();
+  if(pw===ADMIN_PW || (_senhaHost && pw===_senhaHost)){ loginAcertou(); isHost=true; isGerente=false; enterApp(); }
+  else if(pw===GESTOR_PW){ loginAcertou(); isHost=true; isGerente=true; enterApp(); }
+  else { loginErrou(); }
 }
 function startViewer(){ isHost=false; isGerente=false; enterApp(); }
 function enterApp(){
@@ -1286,6 +1352,7 @@ function logout(){
   document.getElementById("app").style.display="none";
   document.getElementById("pwInput").value="";
   document.getElementById("loginScreen").style.display="flex";
+  _loginAplicaBloqueio();
 }
 
 /* ============================================================

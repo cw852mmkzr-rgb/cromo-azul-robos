@@ -1900,7 +1900,7 @@ function viewMeta(){
   const totNoite=ROBOS.reduce((s,r)=>s+HORAS_NOITE.reduce((a,h)=>a+parseCelVal((md[r]||{})[campoH(h)]).num,0),0);
   const diasOpts=(()=>{let o="";for(let d=1;d<=ndias;d++)o+=`<option value="${d}" ${d===selDia?'selected':''}>${d}</option>`;return o;})();
 
-  let head=pageHead(IC.meta,"Meta Diária","Apontar produção por hora / robô", isHost?`<button type="button" class="btn ${divisaoAtiva()?'primary':'ghost'} tiny" onclick="toggleDivisao()" title="Divide o valor digitado pela quantidade de pontos de solda (coluna PTS)">➗ Divisão pts: ${divisaoAtiva()?'ON':'OFF'}</button> <button type="button" class="btn ghost tiny" onclick="copiarDiaAnterior()" title="Copia os códigos e pontos do dia anterior mais recente com dados">📋 Copiar dia anterior</button>`:'')
+  let head=pageHead(IC.meta,"Meta Diária","Apontar produção por hora / robô", isHost?`<button type="button" class="btn ${divisaoAtiva()?'primary':'ghost'} tiny" onclick="toggleDivisao()" title="Divide o valor digitado pela quantidade de pontos de solda (coluna PTS)">➗ Divisão pts: ${divisaoAtiva()?'ON':'OFF'}</button> <button type="button" class="btn ghost tiny" onclick="copiarDiaAnterior()" title="Copia os códigos e pontos do dia anterior mais recente com dados (pede confirmação)">📋 Copiar dia anterior</button> <button type="button" class="btn ghost tiny" onclick="limparCodDia()" title="Limpa o código e os pontos do dia selecionado (não apaga a produção lançada)">🧹 Limpar cód/pts do dia</button>`:'')
     + `<div class="selrow card glass">
         <div class="sel"><label>Dia</label><select onchange="setPeriodo('dia',+this.value)">${diasOpts}</select></div>
         <div class="sel"><label>Mês</label><select onchange="setPeriodo('mes',+this.value)">${MESES.map((m,i)=>`<option value="${i}" ${i===selMes?'selected':''}>${m}</option>`).join("")}</select></div>
@@ -2029,6 +2029,21 @@ function copiarDiaAnterior(){
   if(!dadosAnt){ showToast("Nenhum dia anterior com dados encontrado",true); return; }
   const chaveAtual=chaveData(selAno,selMes,selDia);
   const p=prod();
+  const atual=p.metas_dias[chaveAtual]||{};
+
+  // Confirma antes de gravar: um clique sem querer nao pode mais preencher o dia.
+  const [pa,pm,pd]=chaveAnt.split("_").map(Number);
+  const dataAntTxt=String(pd).padStart(2,"0")+"/"+String(pm+1).padStart(2,"0")+"/"+pa;
+  const dataAtualTxt=String(selDia).padStart(2,"0")+"/"+String(selMes+1).padStart(2,"0")+"/"+selAno;
+  const vaiCopiar=ROBOS.map(r=>{ const rk=String(r); const ant=dadosAnt[rk]||{};
+      if(!ant.cod && !ant.pontos) return null;
+      return "  • Robô "+rk+": "+(ant.cod||"sem código")+(ant.pontos?" ("+ant.pontos+" pts)":"");
+    }).filter(Boolean);
+  if(!vaiCopiar.length){ showToast("O dia "+dataAntTxt+" não tem código nem pontos para copiar",true); return; }
+  const jaTem=ROBOS.filter(r=>{ const rd=atual[String(r)]||{}; return rd.cod||rd.pontos; }).length;
+  const aviso=jaTem?"\n\n⚠ O dia "+dataAtualTxt+" já tem código/pontos em "+jaTem+" robô(s) — eles serão SOBRESCRITOS.":"";
+  if(!confirm("Copiar os códigos e pontos de "+dataAntTxt+" para "+dataAtualTxt+"?\n\n"+vaiCopiar.join("\n")+aviso+"\n\n(A produção por hora NÃO é copiada.)")) return;
+
   if(!p.metas_dias[chaveAtual]) p.metas_dias[chaveAtual]={};
   ROBOS.forEach(r=>{ const rk=String(r); const ant=dadosAnt[rk]||{};
     if(ant.cod||ant.pontos){
@@ -2038,7 +2053,23 @@ function copiarDiaAnterior(){
     }
   });
   _mainSig=""; renderMain();
-  saveToAPI().then(()=>showToast("Códigos e pontos copiados ✓",false,true));
+  saveToAPI().then(()=>showToast("Copiado de "+dataAntTxt+" ✓",false,true));
+}
+
+// Limpa o código e os pontos do dia que está na tela (não mexe na produção lançada).
+function limparCodDia(){
+  if(!isHost){ showToast("Entre como HOST para limpar",true); return; }
+  const chave=chaveData(selAno,selMes,selDia);
+  const dia=(prod().metas_dias||{})[chave]||{};
+  const comCod=ROBOS.filter(r=>{ const rd=dia[String(r)]||{}; return rd.cod||rd.pontos; });
+  const dataTxt=String(selDia).padStart(2,"0")+"/"+String(selMes+1).padStart(2,"0")+"/"+selAno;
+  if(!comCod.length){ showToast("O dia "+dataTxt+" já está sem código/pontos",true); return; }
+  if(!confirm("Limpar o código e os pontos de "+comCod.length+" robô(s) no dia "+dataTxt+"?\n\nA produção lançada por hora NÃO será apagada.")) return;
+  comCod.forEach(r=>{ const rd=dia[String(r)]; delete rd.cod; delete rd.pontos;
+    if(Object.keys(rd).length===0) delete dia[String(r)]; });
+  if(Object.keys(dia).length===0) delete prod().metas_dias[chave];
+  _mainSig=""; renderMain();
+  saveToAPI().then(()=>showToast("Código e pontos limpos ✓",false,true));
 }
 let _rmTimer=null; function renderMainSoon(){ clearTimeout(_rmTimer); _rmTimer=setTimeout(()=>{ if(!document.querySelector('#main input:focus')){ _mainSig=""; renderMain(); } },1200); }
 

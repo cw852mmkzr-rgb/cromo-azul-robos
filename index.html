@@ -1819,6 +1819,23 @@ function setStatusRobo(k,v,el){ if(!isHost||!robos()[k]) return;
   _mainSig=""; renderNav(); renderMainSoon(); saveDebounced();
 }
 // Meta editada na Meta Diária: atualiza a meta do robô e propaga p/ a peça informada (Catálogo) e p/ a tela do robô
+// Dois robôs rodando a mesma peça no mesmo dia têm a mesma meta e os mesmos
+// pontos — alterar num aplica nos outros. Devolve a lista de robôs afetados.
+function _espalharNaPeca(chave, robo, cod, campo, v){
+  if(!cod) return [];
+  const dia=(prod().metas_dias||{})[chave]||{};
+  const tocados=[];
+  ROBOS.forEach(r2=>{
+    const k2=String(r2); if(k2===String(robo)) return;
+    const rd2=dia[k2]; if(!rd2) return;
+    if(String(rd2.cod||"").trim().toUpperCase()!==String(cod).trim().toUpperCase()) return;
+    const atual=String(rd2[campo]!=null?rd2[campo]:"");
+    if(atual===String(v)) return;
+    if(v==="" || v==null) delete rd2[campo]; else rd2[campo]=v;
+    tocados.push(k2);
+  });
+  return tocados;
+}
 function setMetaHoraRobo(chave,robo,v){ if(!isHost) return;
   v=String(v).replace(",",".").trim();
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
@@ -1829,6 +1846,8 @@ function setMetaHoraRobo(chave,robo,v){ if(!isHost) return;
   if(Object.keys(rd).length===0) delete p.metas_dias[chave][robo];
   // Se a peca ja tem outra meta no cadastro, pergunta se quer atualizar la tambem.
   // So o SIM mexe no cadastro — o padrao e a meta valer apenas para este dia.
+  const juntos=_espalharNaPeca(chave, robo, cod, "meta", v);
+  if(juntos.length) showToast("Mesma peça "+cod+": meta aplicada também no robô "+juntos.join(", "),false,true);
   const nova=parseInt(v)||0;
   if(nova>0 && cod){
     const pc=pecasObj()[cod];
@@ -2050,9 +2069,13 @@ function setMeta(chave,robo,campo,v,el){
 }
 function setPontos(chave,robo,v){ if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
+  const rd=p.metas_dias[chave][robo];
   const n=parseInt(String(v).trim())||0;
-  if(!n) delete p.metas_dias[chave][robo].pontos; else p.metas_dias[chave][robo].pontos=n;
-  _mainSig=""; saveDebounced();
+  if(!n) delete rd.pontos; else rd.pontos=n;
+  const cod=rd.cod?String(rd.cod).trim():"";
+  const juntos=_espalharNaPeca(chave, robo, cod, "pontos", n||"");
+  if(juntos.length) showToast("Mesma peça "+cod+": pontos aplicados também no robô "+juntos.join(", "),false,true);
+  _mainSig=""; saveDebounced(); renderMainSoon();
 }
 function toggleDivisao(){ if(!isHost) return;
   cfg().divisao_pontos = divisaoAtiva() ? false : true;

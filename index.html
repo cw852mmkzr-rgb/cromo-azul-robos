@@ -1826,8 +1826,8 @@ function setMetaHoraRobo(chave,robo,v){ if(!isHost) return;
   // a meta vale SO para este dia; nao vaza para os proximos
   if(v==="") delete rd.meta; else rd.meta=v;
   if(Object.keys(rd).length===0) delete p.metas_dias[chave][robo];
-  const cod=rd&&rd.cod?String(rd.cod).trim():"";
-  if(v!=="" && cod && pecasObj()[cod]) pecasObj()[cod].meta_hora=v;   // reflete no Catálogo de Peças
+  // NAO mexe no cadastro da peca: a meta digitada aqui vale so para este dia.
+  // (antes isso gravava em pecasObj()[cod].meta_hora e vazava para todos os dias e robos)
   _mainSig=""; renderMainSoon(); saveDebounced();
 }
 function registrarTroca(k){ if(!isHost) return; const c=robos()[k];

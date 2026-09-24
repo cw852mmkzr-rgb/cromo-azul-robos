@@ -1103,8 +1103,8 @@ function ehCafe(h){ return HORAS_CAFE.includes(h); }
 function ehCafeCampo(campo){ return HORAS_CAFE.some(h=>campoH(h)===campo); }
 // meta efetiva da hora: na parada do café a meta cai proporcional ao tempo produtivo
 function metaHora(meta,h){ meta=parseInt(meta)||0; if(meta<=0) return 0; return ehCafe(h) ? Math.max(1,Math.round(meta*(60-CAFE_PARADA_MIN)/60)) : meta; }
-// Meta/hora de um robô num dia: a meta lançada naquele dia manda; se não houver,
-// cai na meta do cadastro do robô. Usado pelo dashboard, painéis e relatórios.
+// Meta/hora de um robô num dia: vale SO a meta lançada naquele dia.
+// Dia sem meta = sem meta (0): o dashboard mostra "—" e a célula não ganha cor.
 function metaRoboEm(robo, chaveDia){
   const rk=String(robo);
   try{
@@ -1113,7 +1113,7 @@ function metaRoboEm(robo, chaveDia){
     const md=rd&&rd.meta;
     if(md!=null && String(md).trim()!=="") { const v=parseInt(md); if(v>0) return v; }
   }catch(e){}
-  return parseInt((robos()[rk]||{}).meta_hora)||0;
+  return 0;
 }
 // Meta/hora "de agora" (dia de hoje) — para telas que não olham um dia específico.
 function metaRoboHoje(robo){ const h=new Date(); return metaRoboEm(robo, chaveData(h.getFullYear(),h.getMonth(),h.getDate())); }
@@ -1967,7 +1967,7 @@ function metaTable(chave,md,horas){
   ROBOS.forEach(r=>{ const rd=md[String(r)]||{};
     const metaPadrao=parseInt(rb[String(r)]&&rb[String(r)].meta_hora)||0;
     const metaDia=(rd.meta!=null&&String(rd.meta).trim()!=="")?String(rd.meta).trim():"";
-    const meta=parseInt(metaDia)||metaPadrao;
+    const meta=parseInt(metaDia)||0;
     const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; let linTot=0;
     h+=`<tr>${statusCellRobo(r)}`;
     // META
@@ -2016,8 +2016,7 @@ function setMeta(chave,robo,campo,v,el){
     }
   }
   if(v==="") delete rd[campo]; else rd[campo]=v;
-  if(el){ const _md=(rd.meta!=null&&String(rd.meta).trim()!=="")?rd.meta:(robos()[robo]&&robos()[robo].meta_hora);
-    const meta=metaHoraCampo(_md, campo), pv=parseCelVal(v);
+  if(el){ const meta=metaHoraCampo(rd.meta, campo), pv=parseCelVal(v);
     el.className = v===''?'':(pv.adj?'adj':(meta>0?(pv.num>=meta?'ok':'low'):'')); }
   _mainSig=""; saveDebounced(); renderMainSoon();
 }

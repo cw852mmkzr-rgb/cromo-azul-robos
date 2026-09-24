@@ -1246,9 +1246,10 @@ async function loadFromAPI(){
   if(!dados){ try{const c=localStorage.getItem("cromo_cache"); if(c){dados=migrar(JSON.parse(c))||buildDefault(); render();}}catch(e){} }
   try{
     const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),8000);
-    const r=await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main&select=conteudo",{headers:HEADERS_SB,signal:ctrl.signal});
+    const r=await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main&select=conteudo,atualizado_em",{headers:HEADERS_SB,signal:ctrl.signal});
     clearTimeout(to);
     const d=await r.json();
+    _verServidor=(d&&d[0]&&d[0].atualizado_em)||_verServidor;
     const c=(d&&d[0]&&d[0].conteudo)||{};
     const m=migrar(c);
     if(m && m.robos && Object.keys(m.robos).length){ dados=m; try{localStorage.setItem("cromo_cache",JSON.stringify(dados))}catch(e){} }
@@ -1257,13 +1258,43 @@ async function loadFromAPI(){
   render();
   if(document.getElementById("dashScreen").style.display==="flex") renderDash();
 }
+// Versão do registro que ESTA aba viu por último. Serve para detectar que outra
+// aba (ou outro aparelho) gravou no meio do caminho.
+let _verServidor=null;
+
+// Junta o que o servidor tem com o que esta aba tem, SEM apagar nada que só
+// exista no servidor. É o que evita uma aba antiga zerar dias lançados em outra.
+function _mesclar(srv, loc){
+  if(Array.isArray(loc) || Array.isArray(srv)) return loc;
+  if(!srv || typeof srv!=="object") return loc;
+  if(!loc || typeof loc!=="object") return loc===undefined ? srv : loc;
+  const out={...srv};
+  Object.keys(loc).forEach(k=>{ out[k]=_mesclar(srv[k], loc[k]); });
+  return out;
+}
+
 async function saveToAPI(){
   try{
+    // quem mexeu no registro desde a última vez que esta aba leu?
+    let conflito=false;
+    try{
+      const rv=await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main&select=conteudo,atualizado_em",{headers:HEADERS_SB});
+      const dv=await rv.json();
+      const srvVer=(dv&&dv[0]&&dv[0].atualizado_em)||null;
+      if(_verServidor && srvVer && srvVer!==_verServidor){
+        const srvCont=(dv&&dv[0]&&dv[0].conteudo)||null;
+        if(srvCont){ dados=_mesclar(srvCont, dados); conflito=true; }
+      }
+    }catch(e){ /* sem rede pra conferir: segue e salva o que temos */ }
+
+    const agoraISO=new Date().toISOString();
     await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main",{method:"PATCH",headers:HEADERS_SB,
-      body:JSON.stringify({conteudo:dados,atualizado_em:new Date().toISOString()})});
+      body:JSON.stringify({conteudo:dados,atualizado_em:agoraISO})});
+    _verServidor=agoraISO;
     try{localStorage.setItem("cromo_cache",JSON.stringify(dados))}catch(e){}
     const now=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
     const sl=document.getElementById("savedLabel"); if(sl) sl.textContent="salvo "+now;
+    if(conflito){ showToast("Outra aba tinha alterado os dados — juntei as duas versões",true); _mainSig=""; render&&render(); }
   }catch(e){ showToast("Erro ao salvar",true); }
 }
 function saveDebounced(){ clearTimeout(_saveTimer); _saveTimer=setTimeout(()=>{saveToAPI().then(()=>showToast("Salvo",false,true))},700); }

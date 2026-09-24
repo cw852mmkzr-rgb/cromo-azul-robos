@@ -1951,7 +1951,10 @@ function setCod(chave,robo,v){ if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
   const rd=p.metas_dias[chave][robo];
   v=String(v).trim().toUpperCase();
-  if(v==="") delete rd.cod;
+  // apagar o codigo limpa junto o que veio dele: pontos e meta do dia
+  if(v===""){ delete rd.cod; delete rd.pontos; delete rd.meta;
+    if(Object.keys(rd).length===0) delete p.metas_dias[chave][robo];
+  }
   else { rd.cod=v; const pc=pecasObj()[v];
     const pn=pc?parseInt(pc.pontos):0;
     if(pn>0 && !(parseInt(rd.pontos)>0)) rd.pontos=pn;          // puxa os pontos da peça cadastrada

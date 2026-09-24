@@ -1103,6 +1103,20 @@ function ehCafe(h){ return HORAS_CAFE.includes(h); }
 function ehCafeCampo(campo){ return HORAS_CAFE.some(h=>campoH(h)===campo); }
 // meta efetiva da hora: na parada do café a meta cai proporcional ao tempo produtivo
 function metaHora(meta,h){ meta=parseInt(meta)||0; if(meta<=0) return 0; return ehCafe(h) ? Math.max(1,Math.round(meta*(60-CAFE_PARADA_MIN)/60)) : meta; }
+// Meta/hora de um robô num dia: a meta lançada naquele dia manda; se não houver,
+// cai na meta do cadastro do robô. Usado pelo dashboard, painéis e relatórios.
+function metaRoboEm(robo, chaveDia){
+  const rk=String(robo);
+  try{
+    const dia=(prod().metas_dias||{})[chaveDia];
+    const rd=dia&&dia[rk];
+    const md=rd&&rd.meta;
+    if(md!=null && String(md).trim()!=="") { const v=parseInt(md); if(v>0) return v; }
+  }catch(e){}
+  return parseInt((robos()[rk]||{}).meta_hora)||0;
+}
+// Meta/hora "de agora" (dia de hoje) — para telas que não olham um dia específico.
+function metaRoboHoje(robo){ const h=new Date(); return metaRoboEm(robo, chaveData(h.getFullYear(),h.getMonth(),h.getDate())); }
 function metaHoraCampo(meta,campo){ meta=parseInt(meta)||0; if(meta<=0) return 0; return ehCafeCampo(campo) ? Math.max(1,Math.round(meta*(60-CAFE_PARADA_MIN)/60)) : meta; }
 // peças descontadas da meta do dia de um robô por causa da(s) parada(s) do café
 function cafeDescontoRobo(meta){ meta=parseInt(meta)||0; if(meta<=0) return 0; return HORAS_CAFE.reduce((s,h)=>s+(meta-metaHora(meta,h)),0); }
@@ -1636,7 +1650,7 @@ function renderHistoricoRobo(k){
   const acum=registros.reduce((s,r)=>s+r.totalGeral,0);
   const media=Math.round(acum/registros.length);
   const melhor=registros.reduce((b,r)=>r.totalGeral>b.totalGeral?r:b,registros[0]);
-  const meta=parseInt(robos()[k]?.meta_hora)||0; const metaDia=Math.max(0,meta*(HORAS_DIA.length+HORAS_NOITE.length)-cafeDescontoRobo(meta));
+  const meta=metaRoboHoje(k); const metaDia=Math.max(0,meta*(HORAS_DIA.length+HORAS_NOITE.length)-cafeDescontoRobo(meta));
   const linhas=registros.map(r=>{
     const pct=Math.round(r.totalGeral/maxTot*100);
     const atingiu=metaDia>0 && r.totalGeral>=metaDia;
@@ -1839,7 +1853,7 @@ function viewPainel(){
   const jan=serie.slice(Math.max(0,serie.length-14)); const maxv=Math.max(1,...jan);
   const pts=jan.length>1?jan.map((v,i)=>`${(i/(jan.length-1)*320).toFixed(0)},${(40-(v/maxv)*34).toFixed(1)}`).join(' '):`0,38 320,38`;
   // meta do dia: soma das metas/hora dos robôs × 10h dia, descontando a parada do café
-  const metaDia=ROBOS.reduce((s,r)=>{ const m=parseInt(robos()[String(r)]?.meta_hora)||0; return s+Math.max(0,m*10-cafeDescontoRobo(m)); },0);
+  const metaDia=ROBOS.reduce((s,r)=>{ const m=metaRoboHoje(r); return s+Math.max(0,m*10-cafeDescontoRobo(m)); },0);
   const pct=metaDia?Math.min(100,Math.round(hojeT/metaDia*100)):0;
   const dash=232, off=dash-(dash*pct/100);
   // alertas
@@ -2114,7 +2128,7 @@ function viewRelMensal(){
     const info={robos:{},totalGeral:0};
     ROBOS.forEach(robo=>{
       const rd=dia[String(robo)]||{};
-      const meta=parseInt(robos()[String(robo)]?.meta_hora)||0;
+      const meta=metaRoboEm(robo, chave);
       const cod=rd.cod||'—';
       const tDia=HORAS_DIA.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]||'').num,0);
       const tNoite=HORAS_NOITE.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]||'').num,0);
@@ -2132,7 +2146,7 @@ function viewRelMensal(){
 
   const eficienciaRobo = ROBOS.map(robo=>{
     let totalProd=0,diasAtivo=0,diasBateu=0;
-    const metaHora=parseInt(robos()[String(robo)]?.meta_hora)||0;
+    const metaHora=diasComDados.length?metaRoboEm(robo, chaveData(anoSel,mesIdx,diasComDados[diasComDados.length-1])):0;
     diasComDados.forEach(d=>{
       const r=diasDoMes[d].robos[robo]||{};
       if(r.total>0){totalProd+=r.total;diasAtivo++;}
@@ -2257,7 +2271,7 @@ function viewRelMensal(){
   const HORAS=[...HORAS_DIA,...HORAS_NOITE];
   const metasAtingidas = ROBOS.map(robo=>{
     let atingiu=0,naoAtingiu=0, cod='—';
-    const meta=parseInt(robos()[String(robo)]?.meta_hora)||0;
+    const meta=diasComDados.length?metaRoboEm(robo, chaveData(anoSel,mesIdx,diasComDados[diasComDados.length-1])):0;
     diasComDados.forEach(d=>{
       const rd=diasDoMes[d].robos[robo]?.dia||{};
       if(rd.cod && rd.cod!=='—') cod=rd.cod;
@@ -2614,7 +2628,7 @@ function _ppmAbrirDetalhe(cod){
   const mediaMin = horasRobo>0? +(total/(horasRobo*60)).toFixed(2):0;
   // meta = média das metas dos robôs que produziram esta peça
   const robosOrd=Object.entries(d.robos).sort((a,b)=>b[1]-a[1]);
-  const metaSum=robosOrd.reduce((s,[r])=>s+(parseInt((robos()[r]||{}).meta_hora)||0),0);
+  const metaSum=robosOrd.reduce((s,[r])=>s+metaRoboHoje(r),0);
   const meta = robosOrd.length? Math.round(metaSum/robosOrd.length) : 0;
   const pctMeta = meta>0? Math.round(mediaHora/meta*100):null;
   let melhorDia=null,piorDia=null;
@@ -2848,7 +2862,7 @@ function desempenhoFunc(ano,mes){
     const p=chave.split('_').map(Number); if(p.length!==3) return;
     if(p[0]!==ano) return; if(mes!=null && p[1]!==mes) return;
     ROBOS.forEach(r=>{ const rk=String(r); const rd=dia[rk]; if(!rd) return;
-      const meta=parseInt(robos()[rk]?.meta_hora)||0;
+      const meta=metaRoboEm(rk, chave);
       [...HORAS_DIA,...HORAS_NOITE].forEach(hr=>{ const campo=campoH(hr);
         const val=parseCelVal(rd[campo]||'').num; if(val<=0) return;
         const nome=rd["func_"+campo]; if(!nome) return;
@@ -2990,7 +3004,7 @@ function desempenhoFuncDetalhe(nome,ano,mes){
     const p=chave.split('_').map(Number); if(p.length!==3) return;
     if(p[0]!==ano) return; if(mes!=null && p[1]!==mes) return;
     ROBOS.forEach(r=>{ const rk=String(r); const rd=dia[rk]; if(!rd) return;
-      const meta=parseInt(robos()[rk]?.meta_hora)||0;
+      const meta=metaRoboEm(rk, chave);
       [...HORAS_DIA,...HORAS_NOITE].forEach(hr=>{ const campo=campoH(hr);
         if(rd["func_"+campo]!==nome) return;
         const val=parseCelVal(rd[campo]||'').num; if(val<=0) return;
@@ -4209,7 +4223,7 @@ function dashRoboSVG(cor){ const m=dashModelo(); if(m===2) return dashRoboSVG2(c
 
 function dashRenderRobo(k){ const main=document.getElementById("dashMain"); const c=robos()[k]; if(!main||!c) return;
   const rd=dashDados()[k]||{}, hora=dashHoraAtual();
-  const meta=parseInt(c.meta_hora)||0, prodH=parseCelVal(rd[campoH(hora)]).num;
+  const meta=metaRoboEm(k, dashChave()), prodH=parseCelVal(rd[campoH(hora)]).num;
   const cafe=ehCafe(hora); const metaEf=metaHora(meta,hora);
   const pct=metaEf>0?Math.round(prodH/metaEf*100):0, bateu=metaEf>0&&prodH>=metaEf, faltam=metaEf>0?Math.max(metaEf-prodH,0):0;
   const cor=cafe?DASH_CAFE:((prodH===0&&meta===0)?DASH_NONE:bateu?DASH_OK:DASH_FAIL);
@@ -4230,9 +4244,9 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
 
 function dashRenderGeral(){ const main=document.getElementById("dashMain"); if(!main) return;
   const dd=dashDados(), hora=dashHoraAtual(), horas=[...HORAS_DIA,...HORAS_NOITE], rb=dashRobos();
-  const sig="G|"+hora+"|"+JSON.stringify(dd)+"|"+rb.map(k=>robos()[k].meta_hora).join(','); if(sig===_dashSigMain) return; _dashSigMain=sig;
+  const sig="G|"+hora+"|"+JSON.stringify(dd)+"|"+rb.map(k=>metaRoboEm(k,dashChave())).join(','); if(sig===_dashSigMain) return; _dashSigMain=sig;
   let totalGeral=0;
-  const linhas=rb.map(k=>{ const rd=dd[k]||{}, meta=parseInt(robos()[k].meta_hora)||0;
+  const linhas=rb.map(k=>{ const rd=dd[k]||{}, meta=metaRoboEm(k, dashChave());
     const pa=parseCelVal(rd[campoH(hora)]).num, metaAt=metaHora(meta,hora), corAtual=(meta===0||pa===0)?DASH_NONE:(pa>=metaAt?DASH_OK:DASH_RED);
     const tr=horas.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]).num,0); totalGeral+=tr;
     const cells=horas.map(h=>{ const v=parseCelVal(rd[campoH(h)]).num, at=h===hora, cafe=ehCafe(h), metaEf=metaHora(meta,h);
@@ -4248,8 +4262,8 @@ function dashRenderGeral(){ const main=document.getElementById("dashMain"); if(!
 
 function dashRenderFooter(){ const f=document.getElementById("dashHoras"); if(!f) return;
   const dd=dashDados(), hora=dashHoraAtual(), horas=[...HORAS_DIA,...HORAS_NOITE], rb=dashRobos();
-  const sig="F|"+hora+"|"+JSON.stringify(dd)+"|"+rb.map(k=>robos()[k].meta_hora).join(','); if(sig===_dashSigFoot) return; _dashSigFoot=sig;
-  const metaT=rb.reduce((s,k)=>s+(parseInt(robos()[k].meta_hora)||0),0); let totalDiaV=0;
+  const sig="F|"+hora+"|"+JSON.stringify(dd)+"|"+rb.map(k=>metaRoboEm(k,dashChave())).join(','); if(sig===_dashSigFoot) return; _dashSigFoot=sig;
+  const metaT=rb.reduce((s,k)=>s+metaRoboEm(k, dashChave()),0); let totalDiaV=0;
   f.innerHTML=horas.map(h=>{ const t=rb.reduce((s,k)=>s+parseCelVal((dd[k]||{})[campoH(h)]).num,0); totalDiaV+=t; const at=h===hora;
     const cor=t===0?DASH_NONE:(metaT>0&&t>=metaT)?DASH_OK:DASH_RED;
     const cafe=ehCafe(h); const cor2=cafe?DASH_CAFE:cor;

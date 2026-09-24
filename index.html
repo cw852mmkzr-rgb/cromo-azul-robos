@@ -1806,11 +1806,14 @@ function setStatusRobo(k,v,el){ if(!isHost||!robos()[k]) return;
 }
 // Meta editada na Meta Diária: atualiza a meta do robô e propaga p/ a peça informada (Catálogo) e p/ a tela do robô
 function setMetaHoraRobo(chave,robo,v){ if(!isHost) return;
-  v=String(v).replace(",",".");
-  if(robos()[robo]) robos()[robo].meta_hora=v;
-  const rd=(prod().metas_dias[chave]||{})[String(robo)];
+  v=String(v).replace(",",".").trim();
+  const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
+  const rd=p.metas_dias[chave][robo];
+  // a meta vale SO para este dia; nao vaza para os proximos
+  if(v==="") delete rd.meta; else rd.meta=v;
+  if(Object.keys(rd).length===0) delete p.metas_dias[chave][robo];
   const cod=rd&&rd.cod?String(rd.cod).trim():"";
-  if(cod && pecasObj()[cod]) pecasObj()[cod].meta_hora=v;   // reflete no Catálogo de Peças
+  if(v!=="" && cod && pecasObj()[cod]) pecasObj()[cod].meta_hora=v;   // reflete no Catálogo de Peças
   _mainSig=""; renderMainSoon(); saveDebounced();
 }
 function registrarTroca(k){ if(!isHost) return; const c=robos()[k];
@@ -1900,7 +1903,7 @@ function viewMeta(){
   const totNoite=ROBOS.reduce((s,r)=>s+HORAS_NOITE.reduce((a,h)=>a+parseCelVal((md[r]||{})[campoH(h)]).num,0),0);
   const diasOpts=(()=>{let o="";for(let d=1;d<=ndias;d++)o+=`<option value="${d}" ${d===selDia?'selected':''}>${d}</option>`;return o;})();
 
-  let head=pageHead(IC.meta,"Meta Diária","Apontar produção por hora / robô", isHost?`<button type="button" class="btn ${divisaoAtiva()?'primary':'ghost'} tiny" onclick="toggleDivisao()" title="Divide o valor digitado pela quantidade de pontos de solda (coluna PTS)">➗ Divisão pts: ${divisaoAtiva()?'ON':'OFF'}</button> <button type="button" class="btn ghost tiny" onclick="copiarDiaAnterior()" title="Copia os códigos e pontos do dia anterior mais recente com dados (pede confirmação)">📋 Copiar dia anterior</button> <button type="button" class="btn ghost tiny" onclick="limparCodDia()" title="Limpa o código e os pontos do dia selecionado (não apaga a produção lançada)">🧹 Limpar cód/pts do dia</button>`:'')
+  let head=pageHead(IC.meta,"Meta Diária","Apontar produção por hora / robô", isHost?`<button type="button" class="btn ${divisaoAtiva()?'primary':'ghost'} tiny" onclick="toggleDivisao()" title="Divide o valor digitado pela quantidade de pontos de solda (coluna PTS)">➗ Divisão pts: ${divisaoAtiva()?'ON':'OFF'}</button> <button type="button" class="btn ghost tiny" onclick="copiarDiaAnterior()" title="Copia os códigos e pontos do dia anterior mais recente com dados (pede confirmação)">📋 Copiar dia anterior</button> <button type="button" class="btn ghost tiny" onclick="limparCodDia()" title="Limpa a meta, o código e os pontos do dia selecionado (não apaga a produção lançada)">🧹 Limpar meta/cód/pts</button>`:'')
     + `<div class="selrow card glass">
         <div class="sel"><label>Dia</label><select onchange="setPeriodo('dia',+this.value)">${diasOpts}</select></div>
         <div class="sel"><label>Mês</label><select onchange="setPeriodo('mes',+this.value)">${MESES.map((m,i)=>`<option value="${i}" ${i===selMes?'selected':''}>${m}</option>`).join("")}</select></div>
@@ -1947,12 +1950,15 @@ function metaTable(chave,md,horas){
     + `<th class="rlab">Robô</th><th class="cmeta">Meta</th><th class="ccod">Cód</th><th class="cpts">Pts</th>`
     + horas.map(hr=>`<th class="hora${ehCafe(hr)?" cafe":""}">${hr}${ehCafe(hr)?" ☕":""}</th>`).join("")
     + `<th>Total</th></tr></thead><tbody>`;
-  ROBOS.forEach(r=>{ const rd=md[String(r)]||{}; const meta=parseInt(rb[String(r)]&&rb[String(r)].meta_hora)||0;
+  ROBOS.forEach(r=>{ const rd=md[String(r)]||{};
+    const metaPadrao=parseInt(rb[String(r)]&&rb[String(r)].meta_hora)||0;
+    const metaDia=(rd.meta!=null&&String(rd.meta).trim()!=="")?String(rd.meta).trim():"";
+    const meta=parseInt(metaDia)||metaPadrao;
     const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; let linTot=0;
     h+=`<tr>${statusCellRobo(r)}`;
     // META
-    h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(rb[String(r)]?rb[String(r)].meta_hora:'')}" onchange="setMetaHoraRobo('${chave}','${r}',this.value)"></td>`
-               : `<td class="cmeta" style="color:var(--blue)">${meta||'—'}</td>`;
+    h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(metaDia)}" placeholder="${esc(metaPadrao||'')}" title="Meta por hora deste dia. Vazio = usa a meta do cadastro do robô (${metaPadrao||'não definida'})." onchange="setMetaHoraRobo('${chave}','${r}',this.value)"></td>`
+               : `<td class="cmeta" style="color:var(--blue)">${metaDia||(meta?meta:'—')}</td>`;
     // CÓD
     h+= isHost ? `<td class="ccod"><input class="cinp" list="pecaCods" value="${esc(cod)}" placeholder="—" onchange="setCod('${chave}','${r}',this.value)"></td>`
                : `<td class="ccod" style="color:var(--warn)">${cod?esc(cod):'—'}</td>`;
@@ -1996,7 +2002,8 @@ function setMeta(chave,robo,campo,v,el){
     }
   }
   if(v==="") delete rd[campo]; else rd[campo]=v;
-  if(el){ const meta=metaHoraCampo(robos()[robo]&&robos()[robo].meta_hora, campo), pv=parseCelVal(v);
+  if(el){ const _md=(rd.meta!=null&&String(rd.meta).trim()!=="")?rd.meta:(robos()[robo]&&robos()[robo].meta_hora);
+    const meta=metaHoraCampo(_md, campo), pv=parseCelVal(v);
     el.className = v===''?'':(pv.adj?'adj':(meta>0?(pv.num>=meta?'ok':'low'):'')); }
   _mainSig=""; saveDebounced(); renderMainSoon();
 }
@@ -2021,7 +2028,7 @@ function copiarDiaAnterior(){
     const ch=chaveData(a,m,d);
     if(md[ch] && Object.keys(md[ch]).length>0){
       // só considera se tem algo útil (cod ou pontos ou alguma hora)
-      const temAlgo=Object.values(md[ch]).some(rd=>rd && (rd.cod||rd.pontos||Object.keys(rd).some(k=>k.startsWith('h'))));
+      const temAlgo=Object.values(md[ch]).some(rd=>rd && (rd.cod||rd.pontos||rd.meta||Object.keys(rd).some(k=>k.startsWith('h'))));
       if(temAlgo){ dadosAnt=md[ch]; chaveAnt=ch; break; }
     }
     d--;
@@ -2036,20 +2043,21 @@ function copiarDiaAnterior(){
   const dataAntTxt=String(pd).padStart(2,"0")+"/"+String(pm+1).padStart(2,"0")+"/"+pa;
   const dataAtualTxt=String(selDia).padStart(2,"0")+"/"+String(selMes+1).padStart(2,"0")+"/"+selAno;
   const vaiCopiar=ROBOS.map(r=>{ const rk=String(r); const ant=dadosAnt[rk]||{};
-      if(!ant.cod && !ant.pontos) return null;
-      return "  • Robô "+rk+": "+(ant.cod||"sem código")+(ant.pontos?" ("+ant.pontos+" pts)":"");
+      if(!ant.cod && !ant.pontos && !ant.meta) return null;
+      return "  • Robô "+rk+": "+(ant.cod||"sem código")+(ant.pontos?" ("+ant.pontos+" pts)":"")+(ant.meta?" — meta "+ant.meta+"/h":"");
     }).filter(Boolean);
-  if(!vaiCopiar.length){ showToast("O dia "+dataAntTxt+" não tem código nem pontos para copiar",true); return; }
-  const jaTem=ROBOS.filter(r=>{ const rd=atual[String(r)]||{}; return rd.cod||rd.pontos; }).length;
-  const aviso=jaTem?"\n\n⚠ O dia "+dataAtualTxt+" já tem código/pontos em "+jaTem+" robô(s) — eles serão SOBRESCRITOS.":"";
-  if(!confirm("Copiar os códigos e pontos de "+dataAntTxt+" para "+dataAtualTxt+"?\n\n"+vaiCopiar.join("\n")+aviso+"\n\n(A produção por hora NÃO é copiada.)")) return;
+  if(!vaiCopiar.length){ showToast("O dia "+dataAntTxt+" não tem meta, código nem pontos para copiar",true); return; }
+  const jaTem=ROBOS.filter(r=>{ const rd=atual[String(r)]||{}; return rd.cod||rd.pontos||rd.meta; }).length;
+  const aviso=jaTem?"\n\n⚠ O dia "+dataAtualTxt+" já tem meta/código/pontos em "+jaTem+" robô(s) — eles serão SOBRESCRITOS.":"";
+  if(!confirm("Copiar a meta, os códigos e os pontos de "+dataAntTxt+" para "+dataAtualTxt+"?\n\n"+vaiCopiar.join("\n")+aviso+"\n\n(A produção por hora NÃO é copiada.)")) return;
 
   if(!p.metas_dias[chaveAtual]) p.metas_dias[chaveAtual]={};
   ROBOS.forEach(r=>{ const rk=String(r); const ant=dadosAnt[rk]||{};
-    if(ant.cod||ant.pontos){
+    if(ant.cod||ant.pontos||ant.meta){
       if(!p.metas_dias[chaveAtual][rk]) p.metas_dias[chaveAtual][rk]={};
       if(ant.cod) p.metas_dias[chaveAtual][rk].cod=ant.cod;
       if(ant.pontos) p.metas_dias[chaveAtual][rk].pontos=ant.pontos;
+      if(ant.meta) p.metas_dias[chaveAtual][rk].meta=ant.meta;
     }
   });
   _mainSig=""; renderMain();
@@ -2061,11 +2069,11 @@ function limparCodDia(){
   if(!isHost){ showToast("Entre como HOST para limpar",true); return; }
   const chave=chaveData(selAno,selMes,selDia);
   const dia=(prod().metas_dias||{})[chave]||{};
-  const comCod=ROBOS.filter(r=>{ const rd=dia[String(r)]||{}; return rd.cod||rd.pontos; });
+  const comCod=ROBOS.filter(r=>{ const rd=dia[String(r)]||{}; return rd.cod||rd.pontos||rd.meta; });
   const dataTxt=String(selDia).padStart(2,"0")+"/"+String(selMes+1).padStart(2,"0")+"/"+selAno;
-  if(!comCod.length){ showToast("O dia "+dataTxt+" já está sem código/pontos",true); return; }
-  if(!confirm("Limpar o código e os pontos de "+comCod.length+" robô(s) no dia "+dataTxt+"?\n\nA produção lançada por hora NÃO será apagada.")) return;
-  comCod.forEach(r=>{ const rd=dia[String(r)]; delete rd.cod; delete rd.pontos;
+  if(!comCod.length){ showToast("O dia "+dataTxt+" já está sem meta/código/pontos",true); return; }
+  if(!confirm("Limpar a meta, o código e os pontos de "+comCod.length+" robô(s) no dia "+dataTxt+"?\n\nA produção lançada por hora NÃO será apagada.")) return;
+  comCod.forEach(r=>{ const rd=dia[String(r)]; delete rd.cod; delete rd.pontos; delete rd.meta;
     if(Object.keys(rd).length===0) delete dia[String(r)]; });
   if(Object.keys(dia).length===0) delete prod().metas_dias[chave];
   _mainSig=""; renderMain();

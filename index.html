@@ -1952,8 +1952,12 @@ function setCod(chave,robo,v){ if(!isHost) return;
   const rd=p.metas_dias[chave][robo];
   v=String(v).trim().toUpperCase();
   if(v==="") delete rd.cod;
-  else { rd.cod=v; const pc=pecasObj()[v], pn=pc?parseInt(pc.pontos):0;
-    if(pn>0 && !(parseInt(rd.pontos)>0)) rd.pontos=pn; }  // puxa os pontos da peça cadastrada
+  else { rd.cod=v; const pc=pecasObj()[v];
+    const pn=pc?parseInt(pc.pontos):0;
+    if(pn>0 && !(parseInt(rd.pontos)>0)) rd.pontos=pn;          // puxa os pontos da peça cadastrada
+    const pm=pc?parseInt(pc.meta_hora):0;
+    if(pm>0 && !(parseInt(rd.meta)>0)) rd.meta=String(pm);      // e a meta/hora dela, se o dia ainda nao tem
+  }
   _mainSig=""; saveDebounced(); renderMainSoon();
 }
 function metaTable(chave,md,horas){

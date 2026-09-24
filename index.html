@@ -1955,11 +1955,19 @@ function setCod(chave,robo,v){ if(!isHost) return;
   if(v===""){ delete rd.cod; delete rd.pontos; delete rd.meta;
     if(Object.keys(rd).length===0) delete p.metas_dias[chave][robo];
   }
-  else { rd.cod=v; const pc=pecasObj()[v];
+  else {
+    // trocar o codigo troca a meta e os pontos junto. So nao mexe no que foi
+    // digitado a mao: se o valor atual nao bate com o da peca anterior, e do usuario.
+    const pcAnt=rd.cod?pecasObj()[rd.cod]:null;
+    const ptsAtual=parseInt(rd.pontos)||0, metaAtual=parseInt(rd.meta)||0;
+    const ptsEraDaPeca  = ptsAtual===0  || (pcAnt && (parseInt(pcAnt.pontos)||0)===ptsAtual);
+    const metaEraDaPeca = metaAtual===0 || (pcAnt && (parseInt(pcAnt.meta_hora)||0)===metaAtual);
+    rd.cod=v;
+    const pc=pecasObj()[v];
     const pn=pc?parseInt(pc.pontos):0;
-    if(pn>0 && !(parseInt(rd.pontos)>0)) rd.pontos=pn;          // puxa os pontos da peça cadastrada
+    if(ptsEraDaPeca){ if(pn>0) rd.pontos=pn; else delete rd.pontos; }
     const pm=pc?parseInt(pc.meta_hora):0;
-    if(pm>0 && !(parseInt(rd.meta)>0)) rd.meta=String(pm);      // e a meta/hora dela, se o dia ainda nao tem
+    if(metaEraDaPeca){ if(pm>0) rd.meta=String(pm); else delete rd.meta; }
   }
   _mainSig=""; saveDebounced(); renderMainSoon();
 }

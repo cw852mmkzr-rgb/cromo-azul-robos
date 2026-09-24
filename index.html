@@ -1836,6 +1836,27 @@ function _espalharNaPeca(chave, robo, cod, campo, v){
   });
   return tocados;
 }
+// Aplica a meta nos dias POSTERIORES a 'chaveBase' que ja tenham essa peca lancada.
+// Nunca mexe no dia base nem em nada anterior a ele.
+function _ordChave(ch){ const p=String(ch).split("_").map(Number); return (p[0]||0)*10000+(p[1]||0)*100+(p[2]||0); }
+function _aplicarMetaDaquiPraFrente(chaveBase, cod, meta){
+  if(!cod) return 0;
+  const md=prod().metas_dias||{};
+  const base=_ordChave(chaveBase);
+  let dias=0;
+  Object.keys(md).forEach(ch=>{
+    if(_ordChave(ch)<=base) return;              // passado e o proprio dia ficam como estao
+    const dia=md[ch]; let mexeu=false;
+    ROBOS.forEach(r=>{
+      const rd=dia[String(r)]; if(!rd) return;
+      if(String(rd.cod||"").trim().toUpperCase()!==String(cod).trim().toUpperCase()) return;
+      if(String(rd.meta||"")===String(meta)) return;
+      rd.meta=String(meta); mexeu=true;
+    });
+    if(mexeu) dias++;
+  });
+  return dias;
+}
 function setMetaHoraRobo(chave,robo,v){ if(!isHost) return;
   v=String(v).replace(",",".").trim();
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
@@ -1857,7 +1878,13 @@ function setMetaHoraRobo(chave,robo,v){ if(!isHost) return;
         + (antiga>0 ? "Cadastro hoje: "+antiga+" pç/h\n" : "A peça ainda não tem meta no cadastro.\n")
         + "\nSIM  → vale também para os próximos dias em que essa peça for lançada.\n"
         + "NÃO  → a meta "+nova+" fica só no dia "+String(selDia).padStart(2,"0")+"/"+String(selMes+1).padStart(2,"0")+"/"+selAno+".";
-      if(confirm(msg)){ pc.meta_hora=String(nova); showToast("Meta da peça "+cod+" atualizada no cadastro ✓",false,true); }
+      if(confirm(msg)){
+        pc.meta_hora=String(nova);
+        // Vale DAQUI PRA FRENTE: dias ja lancados com essa peca DEPOIS do dia
+        // alterado acompanham. Dias anteriores nunca sao tocados.
+        const frente=_aplicarMetaDaquiPraFrente(chave, cod, String(nova));
+        showToast("Meta da peça "+cod+" no cadastro: "+nova+" pç/h ✓"+(frente?" — e em "+frente+" dia(s) seguinte(s)":""),false,true);
+      }
     }
   }
   _mainSig=""; renderMainSoon(); saveDebounced();

@@ -2222,15 +2222,17 @@ function viewRelMensal(){
   const melhorDia=diasComDados.reduce((best,d)=>diasDoMes[d].totalGeral>(diasDoMes[best]?.totalGeral||0)?d:best, diasComDados[0]);
 
   const eficienciaRobo = ROBOS.map(robo=>{
-    let totalProd=0,diasAtivo=0,diasBateu=0;
-    const metaHora=diasComDados.length?metaRoboEm(robo, chaveData(anoSel,mesIdx,diasComDados[diasComDados.length-1])):0;
+    let totalProd=0,diasAtivo=0,diasBateu=0,metaAcum=0,diasComMeta=0;
     diasComDados.forEach(d=>{
       const r=diasDoMes[d].robos[robo]||{};
-      if(r.total>0){totalProd+=r.total;diasAtivo++;}
-      const metaEst=metaHora*9;
+      // cada dia vale pela meta que estava valendo NELE
+      const metaDoDia=metaRoboEm(robo, chaveData(anoSel,mesIdx,d));
+      if(r.total>0){totalProd+=r.total;diasAtivo++; if(metaDoDia>0){ metaAcum+=metaDoDia*9; diasComMeta++; }}
+      const metaEst=metaDoDia*9;
       if(metaEst>0 && r.total>=metaEst) diasBateu++;
     });
-    const efic = diasAtivo>0&&metaHora>0 ? Math.round(totalProd/(diasAtivo*metaHora*9)*100) : 0;
+    const metaHora=diasComMeta>0?Math.round(metaAcum/(diasComMeta*9)):0;
+    const efic = metaAcum>0 ? Math.round(totalProd/metaAcum*100) : 0;
     return {robo,totalProd,diasAtivo,diasBateu,mediaMetaHora:metaHora,efic};
   }).filter(r=>r.diasAtivo>0).sort((a,b)=>b.totalProd-a.totalProd);
 
@@ -2348,10 +2350,11 @@ function viewRelMensal(){
   const HORAS=[...HORAS_DIA,...HORAS_NOITE];
   const metasAtingidas = ROBOS.map(robo=>{
     let atingiu=0,naoAtingiu=0, cod='—';
-    const meta=diasComDados.length?metaRoboEm(robo, chaveData(anoSel,mesIdx,diasComDados[diasComDados.length-1])):0;
     diasComDados.forEach(d=>{
       const rd=diasDoMes[d].robos[robo]?.dia||{};
       if(rd.cod && rd.cod!=='—') cod=rd.cod;
+      // cada dia vale pela meta daquele dia
+      const meta=metaRoboEm(robo, chaveData(anoSel,mesIdx,d));
       if(meta<=0) return;
       HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v<=0) return; const metaEf=metaHora(meta,h);
         if(v>=metaEf) atingiu++; else naoAtingiu++;

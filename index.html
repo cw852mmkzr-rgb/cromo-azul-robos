@@ -1824,10 +1824,23 @@ function setMetaHoraRobo(chave,robo,v){ if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
   const rd=p.metas_dias[chave][robo];
   // a meta vale SO para este dia; nao vaza para os proximos
+  const cod=rd.cod?String(rd.cod).trim():"";
   if(v==="") delete rd.meta; else rd.meta=v;
   if(Object.keys(rd).length===0) delete p.metas_dias[chave][robo];
-  // NAO mexe no cadastro da peca: a meta digitada aqui vale so para este dia.
-  // (antes isso gravava em pecasObj()[cod].meta_hora e vazava para todos os dias e robos)
+  // Se a peca ja tem outra meta no cadastro, pergunta se quer atualizar la tambem.
+  // So o SIM mexe no cadastro — o padrao e a meta valer apenas para este dia.
+  const nova=parseInt(v)||0;
+  if(nova>0 && cod){
+    const pc=pecasObj()[cod];
+    const antiga=pc?parseInt(pc.meta_hora)||0:0;
+    if(pc && antiga!==nova){
+      const msg="Salvar "+nova+" pç/h como meta da peça "+cod+" no cadastro?\n\n"
+        + (antiga>0 ? "Cadastro hoje: "+antiga+" pç/h\n" : "A peça ainda não tem meta no cadastro.\n")
+        + "\nSIM  → vale também para os próximos dias em que essa peça for lançada.\n"
+        + "NÃO  → a meta "+nova+" fica só no dia "+String(selDia).padStart(2,"0")+"/"+String(selMes+1).padStart(2,"0")+"/"+selAno+".";
+      if(confirm(msg)){ pc.meta_hora=String(nova); showToast("Meta da peça "+cod+" atualizada no cadastro ✓",false,true); }
+    }
+  }
   _mainSig=""; renderMainSoon(); saveDebounced();
 }
 function registrarTroca(k){ if(!isHost) return; const c=robos()[k];

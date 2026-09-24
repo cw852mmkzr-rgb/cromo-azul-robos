@@ -1971,7 +1971,7 @@ function metaTable(chave,md,horas){
     const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; let linTot=0;
     h+=`<tr>${statusCellRobo(r)}`;
     // META
-    h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(metaDia)}" placeholder="${esc(metaPadrao||'')}" title="Meta por hora deste dia. Vazio = usa a meta do cadastro do robô (${metaPadrao||'não definida'})." onchange="setMetaHoraRobo('${chave}','${r}',this.value)"></td>`
+    h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(metaDia)}" placeholder="" title="Meta por hora deste dia. Digite para definir; vazio usa a meta do cadastro do robô (${metaPadrao||'não definida'}) só para colorir as células." onchange="setMetaHoraRobo('${chave}','${r}',this.value)"></td>`
                : `<td class="cmeta" style="color:var(--blue)">${metaDia||(meta?meta:'—')}</td>`;
     // CÓD
     h+= isHost ? `<td class="ccod"><input class="cinp" list="pecaCods" value="${esc(cod)}" placeholder="—" onchange="setCod('${chave}','${r}',this.value)"></td>`

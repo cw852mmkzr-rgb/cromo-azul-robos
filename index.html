@@ -4735,6 +4735,7 @@ document.addEventListener('input', e=>{
     sel.classList.add('fs-native'); sel.setAttribute('tabindex','-1'); sel.setAttribute('aria-hidden','true');
     sel.after(b);
     sync(sel);
+    sel.addEventListener('change', () => sync(sel));
     b.addEventListener('click', e => { e.stopPropagation(); if(aberto && aberto.sel === sel) fechar(); else abrir(sel); });
     b.addEventListener('keydown', e => {
       if(aberto && aberto.sel === sel) return teclas(e);

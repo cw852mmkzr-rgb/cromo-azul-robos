@@ -3268,6 +3268,15 @@ function limparProducao(){ if(!isHost) return;
    ============================================================ */
 function chamados(){ if(!dados.manutencao) dados.manutencao={chamados:[]}; if(!Array.isArray(dados.manutencao.chamados)) dados.manutencao.chamados=[]; return dados.manutencao.chamados; }
 function _isConcluido(c){ return c.status==="Concluído" || !!c.concluido_em; }
+// Aviso no WhatsApp (mesmos números de manutenção da Tremps, via bot MR.ROBOT). Falha em silêncio: nunca trava o site.
+const MANU_AVISO_URL="https://dtsrisqueekmommmoqxf.supabase.co/functions/v1/whatsapp-bot";
+function _avisarManuWhats(c,fim){
+  try{
+    const hora=c.criado?new Date(c.criado).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"";
+    const m=Object.assign({},c,{descricao:[c.titulo,c.descricao].filter(Boolean).join(" — "),data:(c.data||"")+(hora&&!fim?" às "+hora:""),origem:"site"});
+    fetch(MANU_AVISO_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tipo:"manu_cromo",m,fim:!!fim})}).catch(()=>{});
+  }catch(e){}
+}
 function viewManutencao(){
   const lista=chamados();
   const nPend=lista.filter(c=>!_isConcluido(c)).length;
@@ -3423,8 +3432,10 @@ function saveChamado(){ if(!isHost) return;
     responsavel:document.getElementById("chResp").value.trim()
   };
   if(_chamEdit){ const c=chamados().find(x=>x.id===_chamEdit); if(c) Object.assign(c,obj); }
-  else { obj.id="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); obj.criado=Date.now(); obj.status="Aberto"; chamados().push(obj); }
-  closeModal("modalChamado"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Manutenção salva",false,true));
+  let novo=null;
+  if(_chamEdit){ const c=chamados().find(x=>x.id===_chamEdit); if(c) Object.assign(c,obj); }
+  else { obj.id="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); obj.criado=Date.now(); obj.status="Aberto"; chamados().push(obj); novo=obj; }
+  closeModal("modalChamado"); _mainSig=""; renderMain(); saveToAPI().then(()=>{ showToast("Manutenção salva",false,true); if(novo) _avisarManuWhats(novo,false); });
 }
 function concluirChamado(id){ if(!isHost) return;
   const c=chamados().find(x=>x.id===id); if(!c) return;
@@ -3439,7 +3450,7 @@ function concluirChamado(id){ if(!isHost) return;
   c.pecas_trocadas=pecas.trim();
   c.tempo_parada=tempo.trim();
   c.realizado_por=por.trim();
-  _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Manutenção concluída ✓",false,true));
+  _mainSig=""; renderMain(); saveToAPI().then(()=>{ showToast("Manutenção concluída ✓",false,true); _avisarManuWhats(c,true); });
 }
 function reabrirChamado(id){ if(!isHost) return;
   const c=chamados().find(x=>x.id===id); if(!c) return;

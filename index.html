@@ -997,6 +997,67 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 @media(max-width:900px){.lg-hud{display:none}}
 @media(max-width:480px){#loginScreen{padding:24px 16px}.lg-body{padding:24px 18px 20px}#loginScreen .login-title{font-size:25px}#loginScreen .login-sub{letter-spacing:.22em;font-size:9.5px}.lg-head,.lg-foot{font-size:9.5px;letter-spacing:.14em;padding:9px 12px}}
 @media(prefers-reduced-motion:reduce){#loginScreen *,#loginScreen *::before,#loginScreen *::after{animation:none!important}}
+
+/* ============================================================
+   SELETOR NEON (fsel) — substitui visualmente todo <select> do site
+   O <select> original continua no DOM (valor/onchange intactos), só fica escondido.
+   ============================================================ */
+select.fs-native{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;min-width:0!important;padding:0!important;border:0!important;margin:0!important;overflow:hidden!important}
+.fsel{position:relative;display:inline-flex;align-items:center;justify-content:space-between;gap:10px;min-width:120px;height:38px;padding:0 10px 0 12px;cursor:pointer;
+  font-family:'Chakra Petch',system-ui,sans-serif;font-size:13.5px;font-weight:600;color:#eaf6ff;text-align:left;letter-spacing:.02em;
+  background:linear-gradient(180deg,rgba(0,240,255,.07),rgba(0,240,255,.025));border:1px solid rgba(0,240,255,.26);border-radius:3px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:border-color .2s,box-shadow .2s,background .2s}
+.fsel::before{content:'';position:absolute;left:-1px;top:-1px;width:7px;height:7px;border-left:2px solid var(--nc,#00f0ff);border-top:2px solid var(--nc,#00f0ff);opacity:.8}
+.fsel .fs-txt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fsel .fs-car{flex:none;width:20px;height:20px;display:grid;place-items:center;border-left:1px solid rgba(0,240,255,.18);padding-left:6px;box-sizing:content-box}
+.fsel .fs-car svg{width:12px;height:12px;fill:none;stroke:var(--nc,#00f0ff);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s cubic-bezier(.16,1,.3,1);filter:drop-shadow(0 0 3px rgba(0,240,255,.8))}
+@media(hover:hover){.fsel:hover{border-color:rgba(0,240,255,.6);background:linear-gradient(180deg,rgba(0,240,255,.12),rgba(0,240,255,.04))}}
+.fsel:focus-visible{outline:none;border-color:#f9f871;box-shadow:0 0 0 2px rgba(249,248,113,.25)}
+.fsel.open{border-color:var(--nc,#00f0ff);box-shadow:0 0 0 1px rgba(0,240,255,.3),0 0 18px -4px rgba(0,240,255,.7)}
+.fsel.open .fs-car svg{transform:rotate(180deg)}
+.fsel:disabled{opacity:.45;cursor:not-allowed}
+.field .fsel,select.inp+.fsel{width:100%;display:flex}
+.robot-view .field .fsel{height:46px;font-size:16px}
+.fs-pop{position:fixed;z-index:1200;min-width:160px;max-width:min(360px,calc(100vw - 16px));padding:6px;
+  background:linear-gradient(180deg,rgba(10,15,32,.98),rgba(5,7,17,.98));border:1px solid rgba(0,240,255,.34);border-radius:3px;
+  box-shadow:0 0 0 1px rgba(255,43,214,.08),0 0 30px -8px rgba(0,240,255,.55),0 22px 50px -12px rgba(2,3,22,.95);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transform-origin:50% 0;animation:fsIn .18s cubic-bezier(.16,1,.3,1)}
+.fs-pop.up{transform-origin:50% 100%}
+.fs-pop::before,.fs-pop::after{content:'';position:absolute;width:10px;height:10px;pointer-events:none}
+.fs-pop::before{top:-2px;left:-2px;border-left:2px solid var(--nc,#00f0ff);border-top:2px solid var(--nc,#00f0ff)}
+.fs-pop::after{bottom:-2px;right:-2px;border-right:2px solid var(--nm,#ff2bd6);border-bottom:2px solid var(--nm,#ff2bd6)}
+@keyframes fsIn{from{opacity:0;transform:scaleY(.92) translateY(-4px)}to{opacity:1;transform:none}}
+.fs-head{display:flex;justify-content:space-between;align-items:center;padding:5px 7px 8px;margin-bottom:4px;border-bottom:1px solid rgba(0,240,255,.14);
+  font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,240,255,.7)}
+.fs-head b{font-weight:400;color:var(--nm,#ff2bd6)}
+.fs-list{max-height:min(320px,55vh);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:2px}
+.fs-list.grid{display:grid;grid-template-columns:repeat(var(--fs-cols),1fr);gap:4px}
+.fs-opt{position:relative;display:flex;align-items:center;gap:9px;padding:9px 10px 9px 14px;border-radius:2px;cursor:pointer;
+  font-family:'Chakra Petch',system-ui,sans-serif;font-size:13.5px;font-weight:600;color:#cfe3f5;white-space:nowrap;
+  transition:background .12s,color .12s}
+.fs-opt .ck{margin-left:auto;width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.fs-opt.act{background:rgba(0,240,255,.09);color:#fff}
+.fs-opt.sel{color:var(--nc,#00f0ff);text-shadow:0 0 10px rgba(0,240,255,.5)}
+.fs-opt.sel::before{content:'';position:absolute;left:3px;top:7px;bottom:7px;width:2px;background:var(--nc,#00f0ff);box-shadow:0 0 8px var(--nc,#00f0ff)}
+.fs-opt.sel .ck{opacity:1}
+.fs-opt.dis{opacity:.35;pointer-events:none}
+.fs-list.grid .fs-opt{justify-content:center;padding:10px 4px;font-family:'Orbitron',sans-serif;font-size:12.5px;font-weight:700;letter-spacing:.02em;
+  background:rgba(0,240,255,.035);border:1px solid rgba(0,240,255,.1)}
+.fs-list.grid.txt .fs-opt{font-family:'Chakra Petch',system-ui,sans-serif;font-size:13px;font-weight:600}
+.fs-list.grid .fs-opt .ck{display:none}
+.fs-list.grid .fs-opt.act{border-color:rgba(0,240,255,.5);background:rgba(0,240,255,.1)}
+.fs-list.grid .fs-opt.sel{background:var(--nc,#00f0ff);border-color:var(--nc,#00f0ff);color:#04121a;text-shadow:none;box-shadow:0 0 14px -2px rgba(0,240,255,.8)}
+.fs-list.grid .fs-opt.sel::before{display:none}
+.fs-list.grid .fs-opt.hoje:not(.sel){border-color:rgba(255,43,214,.7);color:#ffb3ee}
+.fs-ov{position:fixed;inset:0;z-index:1199;background:rgba(2,3,12,.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);animation:fadeIn .18s}
+@media(max-width:600px){
+  .fs-pop.sheet{left:8px!important;right:8px!important;top:auto!important;bottom:8px!important;width:auto!important;max-width:none;padding:8px 8px 10px;transform-origin:50% 100%;animation:fsUp .24s cubic-bezier(.16,1,.3,1)}
+  .fs-pop.sheet .fs-list{max-height:52vh}
+  .fs-pop.sheet .fs-opt{padding:13px 12px 13px 16px;font-size:15px}
+  .fs-pop.sheet .fs-list.grid .fs-opt{padding:13px 2px;font-size:14px}
+}
+@keyframes fsUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.fs-pop,.fs-ov,.fsel .fs-car svg{animation:none!important;transition:none!important}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1369,6 +1430,7 @@ async function loadFromAPI(){
   const a=document.activeElement;
   if(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")){lastUserAction=agora;return;}
   if(document.querySelector('.modal-bg.open')) return;
+  if(window._fsAberto && window._fsAberto()){ lastUserAction=agora; return; }
   if(!dados){ try{const c=localStorage.getItem("cromo_cache"); if(c){dados=migrar(JSON.parse(c))||buildDefault(); render();}}catch(e){} }
   try{
     const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),8000);
@@ -4625,6 +4687,176 @@ document.addEventListener('input', e=>{
   function teclaPular(){ fim(); document.removeEventListener("keydown", teclaPular); }
   document.addEventListener("keydown", teclaPular);
   timers.push(setTimeout(passo, reduz?60:500));
+})();
+
+
+/* ============================================================
+   SELETOR NEON (fsel)
+   Todo <select> (menos a faixa de status .stband e os marcados data-native)
+   ganha um botão neon; o <select> original fica escondido e continua sendo
+   a fonte do valor, então onchange/.value do resto do código não mudam.
+   Dia (1–31) abre em calendário de 7 colunas, mês em grade de 3, ano em
+   grade; o resto abre em lista. No celular abre como painel de baixo.
+   ============================================================ */
+(function(){
+  const CAR = '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
+  const CK = '<svg class="ck" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  let aberto = null; // {sel, btn, pop, ov, opts, act, cols}
+
+  function texto(sel){ const o = sel.options[sel.selectedIndex]; return o ? o.textContent.trim() : '—'; }
+  function sync(sel){
+    const b = sel._fs; if(!b) return;
+    const t = texto(sel), el = b.firstChild;
+    if(el.textContent !== t) el.textContent = t;
+    if(b.disabled !== sel.disabled) b.disabled = sel.disabled;
+    const c = sel.style.color || ''; if(b.style.color !== c) b.style.color = c;
+  }
+  window._fsSync = sync;
+  // .value / .selectedIndex setados por código também atualizam o botão
+  ['value','selectedIndex'].forEach(p => {
+    const d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, p);
+    if(!d || !d.set) return;
+    Object.defineProperty(HTMLSelectElement.prototype, p, { configurable:true, enumerable:d.enumerable,
+      get(){ return d.get.call(this); },
+      set(v){ d.set.call(this, v); if(this._fs) sync(this); } });
+  });
+
+  function enhance(sel){
+    if(sel._fs || sel.classList.contains('stband') || sel.hasAttribute('data-native') || sel.multiple) return;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'fsel';
+    b.setAttribute('aria-haspopup','listbox'); b.setAttribute('aria-expanded','false');
+    b.innerHTML = '<span class="fs-txt"></span><span class="fs-car">' + CAR + '</span>';
+    ['maxWidth','minWidth','width','flex'].forEach(k => { if(sel.style[k]) b.style[k] = sel.style[k]; });
+    if(sel.title) b.title = sel.title;
+    const lb = sel.parentElement && sel.parentElement.querySelector(':scope > label');
+    if(lb) b.setAttribute('aria-label', lb.textContent.trim());
+    sel._fs = b; b._sel = sel;
+    sel.classList.add('fs-native'); sel.setAttribute('tabindex','-1'); sel.setAttribute('aria-hidden','true');
+    sel.after(b);
+    sync(sel);
+    b.addEventListener('click', e => { e.stopPropagation(); if(aberto && aberto.sel === sel) fechar(); else abrir(sel); });
+    b.addEventListener('keydown', e => {
+      if(aberto && aberto.sel === sel) return teclas(e);
+      if(['ArrowDown','ArrowUp','Enter',' '].includes(e.key)){ e.preventDefault(); abrir(sel); }
+    });
+  }
+
+  function layout(opts, sel){
+    const tx = opts.map(o => o.textContent.trim());
+    if(tx.length >= 20 && tx.every(t => /^[0-9]{1,2}$/.test(t))) return {cols:7, txt:false, dia:true};
+    if(tx.length === 12 && tx[0] === 'Janeiro') return {cols:3, txt:true};
+    if(tx.length >= 2 && tx.length <= 8 && tx.every(t => /^[0-9]{4}$/.test(t))) return {cols:Math.min(4, tx.length), txt:false};
+    return null;
+  }
+  function rotulo(sel){
+    const lb = sel.parentElement && sel.parentElement.querySelector(':scope > label');
+    return lb ? lb.textContent.trim() : 'Escolha';
+  }
+
+  function abrir(sel){
+    fechar();
+    const b = sel._fs, opts = Array.from(sel.options), lay = layout(opts, sel);
+    const mob = window.matchMedia('(max-width:600px)').matches;
+    const pop = document.createElement('div');
+    pop.className = 'fs-pop' + (mob ? ' sheet' : '');
+    pop.setAttribute('role','listbox');
+    const cur = sel.selectedIndex;
+    let hojeIdx = -1;
+    if(lay && lay.dia){ const h = new Date(), box = sel.closest('.selrow') || sel.parentElement.parentElement; let okM = true, okA = true;
+      box && box.querySelectorAll('select').forEach(x => { const t0 = x.options[0] && x.options[0].textContent.trim(); if(t0 === 'Janeiro') okM = +x.value === h.getMonth(); else if(/^[0-9]{4}$/.test(t0 || '')) okA = +x.value === h.getFullYear(); });
+      if(okM && okA){ const n = String(h.getDate()); hojeIdx = opts.findIndex(o => o.textContent.trim() === n); } }
+    pop.innerHTML = '<div class="fs-head"><span>' + esc(rotulo(sel)) + '</span><b>' + (opts.length) + ' opç' + (opts.length === 1 ? 'ão' : 'ões') + '</b></div>'
+      + '<div class="fs-list' + (lay ? ' grid' + (lay.txt ? ' txt' : '') : '') + '"' + (lay ? ' style="--fs-cols:' + lay.cols + '"' : '') + '>'
+      + opts.map((o, i) => '<div class="fs-opt' + (i === cur ? ' sel act' : '') + (o.disabled ? ' dis' : '') + (i === hojeIdx ? ' hoje' : '') + '" role="option" data-i="' + i + '"'
+        + (i === hojeIdx ? ' title="Hoje"' : '') + ' aria-selected="' + (i === cur) + '">' + esc(o.textContent.trim()) + CK + '</div>').join('')
+      + '</div>';
+    // bloqueia vazamento de toque/clique pro que está atrás (padrão do bottom sheet no iOS)
+    ['click','pointerdown','touchstart','touchend','mousedown'].forEach(ev => pop.addEventListener(ev, e => e.stopPropagation()));
+    pop.addEventListener('click', e => { const o = e.target.closest('.fs-opt'); if(o && !o.classList.contains('dis')) escolher(+o.dataset.i); });
+    pop.addEventListener('mousemove', e => { const o = e.target.closest('.fs-opt'); if(o) marcar(+o.dataset.i, false); });
+    let ov = null;
+    if(mob){
+      ov = document.createElement('div'); ov.className = 'fs-ov';
+      ov._close = e => { if(e.target === ov) fechar(); };
+      ov.addEventListener('pointerdown', ov._close);
+      document.body.appendChild(ov);
+    }
+    document.body.appendChild(pop);
+    aberto = {sel, btn:b, pop, ov, act:cur, cols: lay ? lay.cols : 1, n: opts.length};
+    b.classList.add('open'); b.setAttribute('aria-expanded','true');
+    if(!mob) posicionar();
+    const a = pop.querySelector('.fs-opt.sel'); if(a) a.scrollIntoView({block:'nearest'});
+    if(mob) b.blur();
+  }
+  function posicionar(){
+    if(!aberto || aberto.ov) return;
+    const {btn, pop} = aberto, r = btn.getBoundingClientRect();
+    if(!btn.isConnected || (r.width === 0 && r.height === 0)) return fechar();
+    const w = Math.max(r.width, aberto.cols >= 7 ? 290 : aberto.cols === 3 ? 320 : 170);
+    pop.style.width = Math.min(w, window.innerWidth - 16) + 'px';
+    const ph = pop.offsetHeight, baixo = window.innerHeight - r.bottom - 8, cima = r.top - 8;
+    const up = ph > baixo && cima > baixo;
+    pop.classList.toggle('up', up);
+    pop.style.top = (up ? Math.max(8, r.top - ph - 6) : r.bottom + 6) + 'px';
+    let left = r.left; if(left + pop.offsetWidth > window.innerWidth - 8) left = window.innerWidth - 8 - pop.offsetWidth;
+    pop.style.left = Math.max(8, left) + 'px';
+  }
+  function marcar(i, rolar){
+    if(!aberto) return;
+    aberto.act = i;
+    aberto.pop.querySelectorAll('.fs-opt').forEach(o => o.classList.toggle('act', +o.dataset.i === i));
+    if(rolar){ const o = aberto.pop.querySelector('.fs-opt[data-i="' + i + '"]'); if(o) o.scrollIntoView({block:'nearest'}); }
+  }
+  function escolher(i){
+    if(!aberto) return;
+    const {sel, btn} = aberto;
+    fechar(true);
+    if(sel.selectedIndex !== i){
+      sel.selectedIndex = i;
+      sel.dispatchEvent(new Event('input', {bubbles:true}));
+      sel.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+    if(btn.isConnected && !window.matchMedia('(max-width:600px)').matches) btn.focus({preventScroll:true});
+  }
+  function fechar(){
+    if(!aberto) return;
+    const {btn, pop, ov} = aberto;
+    pop.remove();
+    if(ov){ ov.removeEventListener('pointerdown', ov._close); ov.remove(); }
+    btn.classList.remove('open'); btn.setAttribute('aria-expanded','false');
+    aberto = null;
+  }
+  function teclas(e){
+    const {act, cols, n, sel} = aberto;
+    const pula = d => { let i = act + d; while(i >= 0 && i < n && sel.options[i].disabled) i += d > 0 ? 1 : -1; if(i >= 0 && i < n) marcar(i, true); };
+    if(e.key === 'Escape'){ e.preventDefault(); fechar(); }
+    else if(e.key === 'Tab'){ fechar(); }
+    else if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); escolher(act); }
+    else if(e.key === 'ArrowDown'){ e.preventDefault(); pula(cols); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); pula(-cols); }
+    else if(e.key === 'ArrowRight' && cols > 1){ e.preventDefault(); pula(1); }
+    else if(e.key === 'ArrowLeft' && cols > 1){ e.preventDefault(); pula(-1); }
+    else if(e.key === 'Home'){ e.preventDefault(); marcar(0, true); }
+    else if(e.key === 'End'){ e.preventDefault(); marcar(n - 1, true); }
+  }
+  window._fsAberto = () => !!aberto;
+  // Esc fecha só o seletor (não o modal/menu que está atrás)
+  document.addEventListener('keydown', e => { if(aberto && e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); fechar(); } }, true);
+
+  document.addEventListener('pointerdown', e => { if(aberto && !aberto.ov && !aberto.pop.contains(e.target) && !aberto.btn.contains(e.target)) fechar(); }, true);
+  window.addEventListener('resize', () => { if(aberto && !aberto.ov) fechar(); });
+  document.addEventListener('scroll', e => { if(aberto && !aberto.ov && !aberto.pop.contains(e.target)) posicionar(); }, true);
+
+  let agendado = false;
+  function varrer(){
+    agendado = false;
+    document.querySelectorAll('select').forEach(sel => { if(sel._fs) sync(sel); else enhance(sel); });
+    if(aberto && !aberto.btn.isConnected) fechar();
+  }
+  const mo = new MutationObserver(() => { if(!agendado){ agendado = true; varrer(); } }); // direto (rAF não roda com a aba em segundo plano)
+  function iniciar(){ varrer(); mo.observe(document.body, {childList:true, subtree:true}); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();
 
 precarregarConfig();

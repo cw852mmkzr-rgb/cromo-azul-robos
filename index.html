@@ -889,6 +889,8 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 #bootStatic.on{animation:dashStatic .5s steps(8)}
 #bootStatic.on::before{animation-duration:.5s}
 @media(prefers-reduced-motion:reduce){#bootScreen,#bootScreen *{animation:none!important}.boot-line{opacity:1}#bootStatic.on,#bootStatic.on::before{animation:none!important;opacity:0}}
+/* card de manutenção: coluna do robô mais estreita no celular */
+@media(max-width:560px){.manu-robo{width:78px!important;padding:12px 4px!important}.manu-robo>div:nth-child(2){font-size:28px!important}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -3349,29 +3351,37 @@ function viewManutencao(){
         : `<button type="button" class="btn primary tiny" onclick="concluirChamado('${c.id}')">✓ Concluir</button>
            <button type="button" class="btn ghost tiny" onclick="openChamado('${c.id}')" style="border-color:rgba(167,139,250,.35);color:#a78bfa">✏ Editar</button>
            <button type="button" class="btn ghost tiny" onclick="deleteChamado('${c.id}')" style="border-color:rgba(255,43,94,.4);color:var(--danger)">🗑</button>`);
-      return `<div style="display:flex;background:rgba(10,14,28,.6);border:1px solid ${done?'rgba(0,255,174,.22)':_prioBd(c.prioridade)};border-radius:14px;overflow:hidden;box-shadow:0 0 12px ${done?'rgba(0,255,174,.06)':'rgba(0,240,255,.05)'}">
+      const horaAb=c.criado?new Date(c.criado).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):'';
+      const horaCo=c.concluido_em?new Date(c.concluido_em).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):'';
+      const roboCor=done?'var(--ok)':'var(--nc)';
+      const info=(ic,lbl,val,cor)=>`<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:8px 12px;min-width:0">
+            <div style="font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;font-family:'Share Tech Mono',monospace">${ic} ${lbl}</div>
+            <div style="font-size:14px;font-weight:800;color:${cor||'var(--txt)'};margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${val}</div>
+          </div>`;
+      return `<div class="manu-card" style="display:flex;background:rgba(10,14,28,.6);border:1px solid ${done?'rgba(0,255,174,.22)':_prioBd(c.prioridade)};border-radius:16px;overflow:hidden;box-shadow:0 0 14px ${done?'rgba(0,255,174,.06)':'rgba(0,240,255,.06)'}">
         <div style="width:5px;background:${barCor};box-shadow:0 0 8px ${barCor};flex-shrink:0"></div>
-        <div style="flex:1;padding:14px 16px;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-            <span style="display:flex;align-items:center;gap:6px;background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.35);border-radius:8px;padding:4px 10px">
-              <span style="font-size:13px;font-weight:900;color:var(--nc);font-family:Orbitron,sans-serif">${esc(c.robo)}</span>
-              <span style="font-size:9px;font-weight:800;color:var(--nc);letter-spacing:.1em;font-family:'Share Tech Mono',monospace">FANUC</span>
-            </span>
+        <div class="manu-robo" style="width:118px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:16px 8px;background:rgba(0,240,255,.04);border-right:1px solid rgba(255,255,255,.06)">
+          <div style="font-size:10px;font-weight:800;color:var(--faint);letter-spacing:.2em;font-family:'Share Tech Mono',monospace">ROBÔ</div>
+          <div style="font-size:40px;font-weight:900;color:${roboCor};font-family:Orbitron,sans-serif;line-height:1;text-shadow:0 0 14px ${roboCor}">${esc(c.robo)}</div>
+          <div style="font-size:9.5px;font-weight:800;color:var(--faint);letter-spacing:.14em;font-family:'Share Tech Mono',monospace;text-align:center">${esc((rob&&rob.modelo)||'FANUC')}</div>
+        </div>
+        <div style="flex:1;padding:16px 18px;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
             ${c.tipo?`<span style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:3px 9px;font-size:11px;color:var(--faint);font-weight:700;font-family:'Share Tech Mono',monospace">${tipoIc} ${esc(c.tipo)}</span>`:''}
             <span style="background:${_prioBg(c.prioridade)};border:1px solid ${_prioBd(c.prioridade)};border-radius:6px;padding:3px 9px;font-size:11px;color:${pc};font-weight:800;font-family:'Share Tech Mono',monospace">${PRIO_IC[c.prioridade]||''} ${esc(c.prioridade||'Média')}</span>
             <span style="margin-left:auto;font-size:11px;font-weight:800;color:${done?'var(--ok)':'var(--ny)'};display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace"><span style="width:8px;height:8px;border-radius:50%;background:${done?'var(--ok)':'var(--ny)'};box-shadow:0 0 6px ${done?'var(--ok)':'var(--ny)'}"></span>${done?'CONCLUÍDA':'PENDENTE'}</span>
           </div>
-          <div style="font-size:15px;font-weight:800;color:${done?'var(--faint)':'var(--txt)'};line-height:1.35;${done?'text-decoration:line-through':''}">${esc(c.titulo||c.descricao||"(sem título)")}</div>
-          ${c.descricao && c.titulo?`<div style="font-size:12.5px;color:var(--faint);margin-top:6px;line-height:1.4">${esc(c.descricao)}</div>`:''}
-          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--faint);font-family:'Share Tech Mono',monospace">
-            ${c.peca?`<span>🔩 <b style="color:var(--nc);font-weight:700">${esc(c.peca)}</b></span>`:''}
-            <span>📅 ${esc(dataAb)}</span>
-            ${c.responsavel?`<span>👤 ${esc(c.responsavel)}</span>`:''}
-            ${done&&c.data_conclusao?`<span style="color:var(--ok)">✓ ${esc(c.data_conclusao)}${c.realizado_por?' · '+esc(c.realizado_por):''}</span>`:''}
-            ${done&&c.tempo_parada?`<span style="color:var(--ny)">⏱ ${esc(c.tempo_parada)} min</span>`:''}
+          <div style="font-size:17px;font-weight:800;color:${done?'var(--faint)':'var(--txt)'};line-height:1.35;${done?'text-decoration:line-through':''}">${esc(c.titulo||c.descricao||"(sem título)")}</div>
+          ${c.descricao && c.titulo?`<div style="font-size:13px;color:var(--faint);margin-top:6px;line-height:1.45">${esc(c.descricao)}</div>`:''}
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px">
+            ${info('👤','Aberto por',c.responsavel?esc(c.responsavel):'<span style="color:var(--faint);font-weight:600">não informado</span>')}
+            ${info('🕒','Abertura',esc(dataAb)+(horaAb?` <span style="color:var(--nc)">às ${horaAb}</span>`:''))}
+            ${c.peca?info('🔩','Peça',esc(c.peca),'var(--nc)'):''}
+            ${done?info('✓','Concluída',esc(c.data_conclusao||'—')+(horaCo?` <span style="color:var(--ok)">às ${horaCo}</span>`:'')+(c.realizado_por?` · ${esc(c.realizado_por)}`:''),'var(--ok)'):''}
+            ${done&&c.tempo_parada?info('⏱','Parada',esc(c.tempo_parada)+' min','var(--ny)'):''}
           </div>
-          ${done&&c.como_foi?`<div style="font-size:12px;color:var(--faint);margin-top:8px;padding:8px 11px;background:rgba(0,255,174,.05);border-radius:8px;border-left:3px solid rgba(0,255,174,.45)"><b style="color:var(--ok)">Como foi:</b> ${esc(c.como_foi)}${c.pecas_trocadas?` · <b style="color:var(--txt)">Peças:</b> ${esc(c.pecas_trocadas)}`:''}</div>`:''}
-          ${acoes?`<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">${acoes}</div>`:''}
+          ${done&&c.como_foi?`<div style="font-size:12.5px;color:var(--faint);margin-top:10px;padding:8px 11px;background:rgba(0,255,174,.05);border-radius:8px;border-left:3px solid rgba(0,255,174,.45)"><b style="color:var(--ok)">Como foi:</b> ${esc(c.como_foi)}${c.pecas_trocadas?` · <b style="color:var(--txt)">Peças:</b> ${esc(c.pecas_trocadas)}`:''}</div>`:''}
+          ${acoes?`<div style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap">${acoes}</div>`:''}
         </div>
       </div>`;
     }).join('')+`</div>`;

@@ -1902,9 +1902,12 @@ function viewRobot(k){
   return html+`</div>`;
 }
 
+// mês escolhido no histórico de cada robô ("ano_mes" ou "todos")
+const _histRoboMes={};
+function _histRoboSet(k,v){ _histRoboMes[k]=v; const el=document.getElementById('histRobo'); if(el) el.outerHTML=renderHistoricoRobo(k); }
 function renderHistoricoRobo(k){
   const md=prod().metas_dias||{};
-  const registros=[];
+  let registros=[];
   Object.entries(md).forEach(([chave,dia])=>{
     const p=chave.split('_').map(Number); if(p.length!==3) return;
     const rd=dia[k]||{};
@@ -1915,11 +1918,18 @@ function renderHistoricoRobo(k){
     registros.push({chave,ano:p[0],mes:p[1],dia:p[2],cod:rd.cod||'—',totalDia:tDia,totalNoite:tNoi,totalGeral:total});
   });
   if(!registros.length){
-    return `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.anual}</svg>Histórico de Produção — Robô ${esc(k)}</h3>
+    return `<div class="card glass" id="histRobo"><h3><svg viewBox="0 0 24 24">${IC.anual}</svg>Histórico de Produção — Robô ${esc(k)}</h3>
       <div style="font-size:12px;color:var(--faint);padding:8px 0">Nenhum registro ainda. Os dados vêm automaticamente das Metas Diárias.</div>
     </div>`;
   }
   registros.sort((a,b)=>b.ano!==a.ano?b.ano-a.ano:b.mes!==a.mes?b.mes-a.mes:b.dia-a.dia);
+  // seletor de mês: abre no mês atual (ou no último mês com produção)
+  const meses=[...new Set(registros.map(r=>r.ano+'_'+r.mes))];
+  const hjK=hoje.getFullYear()+'_'+hoje.getMonth();
+  let selM=_histRoboMes[k];
+  if(selM!=='todos' && !meses.includes(selM)) selM=meses.includes(hjK)?hjK:meses[0];
+  if(selM!=='todos') registros=registros.filter(r=>r.ano+'_'+r.mes===selM);
+  const selHtml=`<select onchange="_histRoboSet('${k}',this.value)" title="Mês do histórico">${meses.map(m=>{ const [a,mm]=m.split('_').map(Number); return `<option value="${m}" ${m===selM?'selected':''}>${MESES[mm]} ${a}</option>`; }).join('')}<option value="todos" ${selM==='todos'?'selected':''}>Todos os meses</option></select>`;
   const maxTot=Math.max(...registros.map(r=>r.totalGeral),1);
   const acum=registros.reduce((s,r)=>s+r.totalGeral,0);
   const media=Math.round(acum/registros.length);
@@ -1945,7 +1955,7 @@ function renderHistoricoRobo(k){
       </td>
     </tr>`;
   }).join('');
-  return `<div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.anual}</svg>Histórico de Produção — Robô ${esc(k)} <span style="font-size:10px;color:var(--faint);font-family:'Share Tech Mono',monospace;margin-left:auto">${registros.length} DIA(S)</span></h3>
+  return `<div class="card glass" id="histRobo"><h3 style="flex-wrap:wrap;gap:10px"><svg viewBox="0 0 24 24">${IC.anual}</svg>Histórico de Produção — Robô ${esc(k)} <span style="display:flex;align-items:center;gap:10px;margin-left:auto"><span style="font-size:10px;color:var(--faint);font-family:'Share Tech Mono',monospace">${registros.length} DIA(S)</span>${selHtml}</span></h3>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
       <div style="background:rgba(0,255,174,.06);border:1px solid rgba(0,255,174,.25);border-radius:10px;padding:12px 14px">
         <div style="font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;font-family:'Share Tech Mono',monospace;margin-bottom:4px">Total acumulado</div>

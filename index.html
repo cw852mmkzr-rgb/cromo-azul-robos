@@ -1837,7 +1837,8 @@ function viewRobot(k){
   });
 
   // ── Ritmo por peça / hora ──
-  const ritmo=calcRitmo(c.meta_hora,c.tempo_peca);
+  // mesma fonte dos campos da tela: valor do robô ou, se vazio, o do cadastro da peça
+  const ritmo=calcRitmo(valCampoRobo(c,pcReg,'meta_hora'),valCampoRobo(c,pcReg,'tempo_peca'));
   html+=`<div class="card glass"><h3><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Ritmo de Produção</h3>
     <div class="grid">
       <div class="field"><label>🎯 Meta por hora (peças)</label>${isHost?`<input type="number" value="${c.meta_hora||0}" onchange="setField('${k}','meta_hora',this.value)">`:`<div class="val">${c.meta_hora||"—"}</div>`}</div>
@@ -1950,10 +1951,11 @@ function parseTempoPeca(str){
 }
 function calcRitmo(mh,tp){
   const mn=parseFloat(mh); const st=parseTempoPeca(tp);
-  if(!mn||mn<=0||!st) return '—';
-  const d=3600/mn; const ef=Math.round((st/d)*100);
-  const m=Math.floor(d/60); const s=Math.round(d%60);
-  return `${m>0?m+'min ':''}${s>0?s+'s':''} por peça · ${ef}% do tempo`.trim();
+  if(!mn||mn<=0) return '—';
+  const d=3600/mn; const m=Math.floor(d/60); const s=Math.round(d%60);
+  const ritmo=`${m>0?m+'min ':''}${s>0?s+'s':''}`.trim()+' / peça';
+  // sem tempo/peça cadastrado mostra só o ritmo que a meta exige
+  return st ? `${ritmo} (${Math.round((st/d)*100)}% do tempo)` : ritmo;
 }
 function registrarLimpeza(k){
   if(!isHost){ showToast("Apenas o HOST pode registrar",true); return; }

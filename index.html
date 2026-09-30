@@ -2838,9 +2838,9 @@ function _ppmAgregar(per){
     if(!diaData || !_ppecaEmPeriodo(chave,per)) return;
     Object.keys(robos()).forEach(robo=>{
       const rd=diaData[robo]||{}; const cod=(rd.cod||'').trim(); if(!cod||cod==='—') return;
-      const o=out[cod] || (out[cod]={total:0, porDia:{}, porHora:{}, robos:{}, horasRobo:0});
+      const o=out[cod] || (out[cod]={total:0, porDia:{}, porHora:{}, porHoraN:{}, robos:{}, horasRobo:0});
       let ts=0;
-      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v>0){ ts+=v; o.porHora[h]=(o.porHora[h]||0)+v; o.horasRobo++; } });
+      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v>0){ ts+=v; o.porHora[h]=(o.porHora[h]||0)+v; o.porHoraN[h]=(o.porHoraN[h]||0)+1; o.horasRobo++; } });
       if(ts<=0) return;
       o.total+=ts; o.porDia[chave]=(o.porDia[chave]||0)+ts; o.robos[robo]=(o.robos[robo]||0)+ts;
     });
@@ -2950,7 +2950,8 @@ function _ppmAbrirDetalhe(cod){
   let melhorDia=null,piorDia=null;
   Object.entries(d.porDia).forEach(([k,v])=>{ if(!melhorDia||v>melhorDia.v)melhorDia={k,v}; if(!piorDia||v<piorDia.v)piorDia={k,v}; });
   let melhorHora=null;
-  Object.entries(d.porHora).forEach(([h,v])=>{ if(!melhorHora||v>melhorHora.v)melhorHora={h,v}; });
+  // melhor hora = maior MÉDIA por apontamento naquela hora (não a soma do período)
+  Object.entries(d.porHora).forEach(([h,v])=>{ const n=(d.porHoraN||{})[h]||1, m=v/n; if(!melhorHora||m>melhorHora.m)melhorHora={h,m,n}; });
   const fmtK=k=>{ const p=k.split('_').map(Number); return String(p[2]).padStart(2,'0')+'/'+String(p[1]+1).padStart(2,'0'); };
   const kpi=(l,v,s,c)=>`<div class="ppd-kpi" style="--kc:${c}"><div class="ppd-kpi-l">${l}</div><div class="ppd-kpi-v">${v}</div><div class="ppd-kpi-s">${s}</div></div>`;
   const kpis=[
@@ -2960,7 +2961,7 @@ function _ppmAbrirDetalhe(cod){
     kpi('Meta/hora', meta>0?meta.toLocaleString('pt-BR'):'—', pctMeta!=null?pctMeta+'% da meta atingido':'sem meta cadastrada', pctMeta==null?'var(--faint)':(pctMeta>=100?'var(--ok)':'#ff6a00')),
     melhorDia?kpi('Melhor dia', melhorDia.v.toLocaleString('pt-BR'), fmtK(melhorDia.k), 'var(--ok)'):'',
     (piorDia&&diasProd>1)?kpi('Menor dia', piorDia.v.toLocaleString('pt-BR'), fmtK(piorDia.k), 'var(--danger)'):'',
-    melhorHora?kpi('Melhor hora', melhorHora.v.toLocaleString('pt-BR'), 'às '+melhorHora.h, 'var(--ok)'):'',
+    melhorHora?kpi('Melhor hora', Math.round(melhorHora.m).toLocaleString('pt-BR'), 'média às '+melhorHora.h+' ('+melhorHora.n+' registro'+(melhorHora.n!==1?'s':'')+')', 'var(--ok)'):'',
     kpi('Dias produtivos', diasProd+'/'+per.numDias, 'dias com produção', 'var(--blue)'),
     kpi('Robôs', String(robosOrd.length), robosOrd.length===1?'único robô':'robôs envolvidos', 'var(--purple)')
   ].filter(Boolean).join('');

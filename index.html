@@ -905,8 +905,9 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
   border:1px solid rgba(0,240,255,.16);box-shadow:inset 0 0 60px rgba(0,0,0,.6)}
 .ap-palco:fullscreen{padding:30px 80px 18px;display:flex;flex-direction:column;justify-content:center;border-radius:0;border:0}
 .ap-livro-wrap{position:relative;min-height:320px;display:flex;justify-content:center;margin:0 auto}
-.ap-livro{width:100%;margin:0 auto;filter:drop-shadow(0 18px 30px rgba(0,0,0,.7))}
-.ap-palco:fullscreen .ap-livro-wrap{flex:1;align-items:center}
+.ap-livro{flex:none;margin:0 auto;filter:drop-shadow(0 18px 30px rgba(0,0,0,.7))}
+.ap-palco:fullscreen .ap-livro-wrap,.ap-palco.ap-fs .ap-livro-wrap{flex:1;align-items:center}
+.ap-palco.ap-fs{position:fixed;inset:0;z-index:1250;margin:0;border-radius:0;border:0;display:flex;flex-direction:column;justify-content:center;padding:16px 56px calc(12px + env(safe-area-inset-bottom))}
 .ap-pg{background:#fff;overflow:hidden}
 .ap-pg img{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;background:#fff}
 .ap-pg img:not([src]){visibility:hidden}
@@ -922,12 +923,24 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .ap-barra{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
 .ap-pag{font-family:Orbitron,sans-serif;font-weight:700;font-size:13px;color:#eaf6ff;min-width:150px;text-align:center}
 .ap-ir{display:inline-flex;gap:6px}.ap-ir .inp{width:78px;height:32px;padding:4px 8px;font-size:13px}
-.ap-zoom{position:fixed;inset:0;z-index:1300;background:rgba(2,3,10,.94);overflow:auto;display:flex;justify-content:center;padding:54px 12px 24px}
-.ap-zoom-in{display:flex;flex-direction:column;gap:14px;align-items:center;width:min(1400px,100%)}
-.ap-zoom-pg{width:100%;min-height:300px;display:grid;place-items:center;background:#fff;border-radius:4px}
-.ap-zoom-pg canvas{width:100%;height:auto;display:block}
-.ap-zoom-x{position:fixed;top:12px;right:14px;width:40px;height:40px;border-radius:6px;border:1px solid rgba(0,240,255,.4);background:rgba(8,12,26,.9);color:#fff;font-size:18px;cursor:pointer;z-index:2}
-@media(max-width:700px){.ap-palco{padding:16px 8px 12px}.ap-seta{width:34px;height:60px;background:rgba(8,12,26,.55)}.ap-seta.esq{left:4px}.ap-seta.dir{right:4px}.ap-pag{min-width:0;width:100%}}
+.ap-zoom{position:fixed;inset:0;z-index:1300;background:#03040b;display:flex;flex-direction:column}
+.apz-palco{flex:1;position:relative;overflow:hidden;cursor:zoom-in;touch-action:none;user-select:none}
+.apz-palco.zoom-on{cursor:grab}.apz-palco.zoom-on.arrastando{cursor:grabbing}
+.apz-palco .ap-spin{position:absolute;left:50%;top:50%;margin:-17px 0 0 -17px}
+.apz-img{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;box-shadow:0 10px 50px rgba(0,0,0,.7);pointer-events:none}
+.apz-barra{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(8,12,26,.96);border-top:1px solid rgba(0,240,255,.22)}
+.apz-b{min-width:42px;height:42px;padding:0 10px;border-radius:6px;border:1px solid rgba(0,240,255,.35);background:rgba(0,240,255,.06);color:#eaf6ff;font-size:20px;line-height:1;cursor:pointer;transition:background .15s,border-color .15s}
+@media(hover:hover){.apz-b:hover{background:rgba(0,240,255,.14);border-color:var(--nc)}}
+.apz-b:active{transform:scale(.95)}
+.apz-txt{font-size:13px;font-family:'Share Tech Mono',monospace;letter-spacing:.06em}
+.apz-x{border-color:rgba(255,43,94,.5);color:#ff8fab}
+.apz-pag{font-family:Orbitron,sans-serif;font-weight:700;font-size:13px;color:#fff;min-width:132px;text-align:center}
+.apz-pct{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--nc);min-width:50px;text-align:center}
+.apz-sep{width:1px;height:28px;background:rgba(255,255,255,.12)}
+.apz-dica{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:6px 12px;border-radius:4px;background:rgba(0,0,0,.6);color:var(--mut);font-family:'Share Tech Mono',monospace;font-size:11.5px;white-space:nowrap;pointer-events:none;animation:apzDica 5s forwards}
+@keyframes apzDica{0%,70%{opacity:1}100%{opacity:0}}
+@media(max-width:600px){.apz-dica{display:none}.apz-sep{display:none}.apz-pag{min-width:0;width:100%;order:-1}.apz-b{min-width:40px;height:40px}}
+@media(max-width:700px){.ap-palco,.ap-palco.ap-fs{padding:16px 8px 12px}.ap-seta{width:34px;height:60px;background:rgba(8,12,26,.55)}.ap-seta.esq{left:4px}.ap-seta.dir{right:4px}.ap-pag{min-width:0;width:100%}}
 /* Guia + botão "?" */
 .help-btn{flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:4px;border:1px solid rgba(0,240,255,.45);background:rgba(0,240,255,.06);color:var(--nc);font-family:Orbitron,sans-serif;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 0 10px -4px var(--nc);transition:background .15s,border-color .15s,color .15s,transform .15s;padding:0}
 @media(hover:hover){.help-btn:hover{background:rgba(255,43,214,.12);border-color:var(--nm);color:#fff;box-shadow:0 0 14px -3px var(--nm)}}
@@ -1796,7 +1809,7 @@ function renderMain(){
   if(nav.sec==="painel" && nav.id==="guia") sig="painel:guia|"+isHost+"|"+isGerente;
   document.body.classList.toggle("ap-on", nav.sec==="painel" && nav.id==="apostila"); // sem as linhas de CRT sobre as páginas brancas
   if(nav.sec==="painel" && nav.id==="apostila") sig="painel:apostila|"+isHost+"|"+isGerente+"|"+(!!_apSenha)+"|"+(_apInfo?_apInfo.versao:0);
-  if(_apFlip && !(nav.sec==="painel" && nav.id==="apostila") && sig!==_mainSig){ try{ _apFlip.destroy(); }catch(e){} _apFlip=null; if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
+  if(_apFlip && !(nav.sec==="painel" && nav.id==="apostila") && sig!==_mainSig){ if(document.querySelector('.ap-zoom')) _apZFechar(); if(document.querySelector('.ap-fs')) _apSaiFsCss(); try{ _apFlip.destroy(); }catch(e){} _apFlip=null; if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
   if(sig===_mainSig) return; _mainSig=sig;
 
   if(nav.sec==="robo"){ box.innerHTML=viewRobot(nav.id); return; }
@@ -4933,7 +4946,7 @@ function viewApostila(){
         <span class="ap-pag" id="apPag">—</span>
         <span class="ap-ir"><input type="number" min="1" class="inp nocaps" id="apIrInp" placeholder="pág." onkeydown="if(event.key==='Enter')_apIr()"><button type="button" class="btn ghost tiny" onclick="_apIr()">Ir</button></span>
         <button type="button" class="btn ghost tiny" onclick="_apZoom()" title="Ver a página grande">🔍 Zoom</button>
-        <button type="button" class="btn ghost tiny" onclick="_apTelaCheia()" title="Tela cheia">⛶ Tela cheia</button>
+        <button type="button" class="btn ghost tiny" id="apFsBtn" onclick="_apTelaCheia()" title="Tela cheia">⛶ Tela cheia</button>
         ${enviar}
       </div>
       <div class="ap-err" id="apErr">${esc(_apErro)}</div>
@@ -4967,7 +4980,7 @@ async function _apMontar(){
       for(let i = 0; i < _apInfo.partes; i++){ _apSetStatus('Baixando a apostila... ' + Math.round(i / _apInfo.partes * 100) + '%'); partes.push(await _apRpc('apostila_parte', {p_senha: _apSenha, p_i: i})); }
       const bin = atob(partes.join('')), u8 = new Uint8Array(bin.length);
       for(let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-      _apBytes = {v: _apInfo.versao, u8}; _apPdf = null; _apImgs = {};
+      _apBytes = {v: _apInfo.versao, u8}; _apPdf = null; _apImgs = {}; _apZ.cache = {};
     }
     _apSetStatus('Preparando as páginas...');
     await _apScript(AP_PDFJS); await _apScript(AP_FLIP);
@@ -4978,26 +4991,47 @@ async function _apMontar(){
     _apCriarLivro();
   }catch(e){ console.error('apostila', e); _apErro = e.message === 'senha' ? 'A senha mudou. Saia e entre de novo na aba.' : 'Não consegui abrir a apostila: ' + e.message; const el = document.getElementById('apErr'); if(el) el.textContent = _apErro; }
 }
+// tamanho do livro = cabe inteiro na área (largura E altura); remonta ao mudar o tamanho da tela
+function _apTamanho(){
+  const palco = document.getElementById('apPalco'); if(!palco) return null;
+  const cs = getComputedStyle(palco), cheia = palco.classList.contains('ap-fs') || document.fullscreenElement === palco;
+  const barra = palco.querySelector('.ap-barra'), barH = (barra ? barra.offsetHeight : 44) + 18;
+  const livreW = palco.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const livreH = (cheia ? palco.clientHeight : window.innerHeight - 170) - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - barH - 12;
+  const dupla = livreW >= 700;
+  let w = Math.floor(Math.min(dupla ? livreW / 2 : livreW, Math.max(cheia ? 200 : 300, livreH) / _apRatio));
+  w = Math.max(160, w);
+  return {w, h: Math.floor(w * _apRatio), dupla};
+}
 function _apCriarLivro(){
-  const box = document.getElementById('apLivro'); if(!box) return;
+  const wrap = document.querySelector('#apPalco .ap-livro-wrap'); if(!wrap || !_apPdf) return;
+  const pagAtual = _apFlip ? _apFlip.getCurrentPageIndex() : Math.min(_apPagSalva(), _apPdf.numPages - 1);
   if(_apFlip){ try{ _apFlip.destroy(); }catch(e){} _apFlip = null; }
-  box.innerHTML = ''; _apAjustaLargura();
+  const velho = document.getElementById('apLivro'); if(velho) velho.remove();
+  const t = _apTamanho(); if(!t) return;
+  const box = document.createElement('div'); box.id = 'apLivro'; box.className = 'ap-livro';
+  box.style.width = (t.dupla ? t.w * 2 : t.w) + 'px'; box.style.height = t.h + 'px';
+  wrap.insertBefore(box, wrap.firstChild);
   const n = _apPdf.numPages;
   for(let i = 0; i < n; i++){ const d = document.createElement('div'); d.className = 'ap-pg'; d.dataset.p = i; if(i === 0 || i === n - 1) d.dataset.density = 'hard';
     d.innerHTML = `<img alt="Página ${i + 1}" draggable="false"${_apImgs[i] ? ` src="${_apImgs[i]}"` : ''}><span class="ap-num">${i + 1}</span>`; box.appendChild(d); }
-  const W = 560;
-  _apFlip = new St.PageFlip(box, {width: W, height: Math.round(W * _apRatio), size: 'stretch', minWidth: 240, maxWidth: 1100, minHeight: Math.round(240 * _apRatio), maxHeight: Math.round(1100 * _apRatio),
-    showCover: true, usePortrait: true, maxShadowOpacity: .45, mobileScrollSupport: false, flippingTime: 700, drawShadow: true});
+  _apFlip = new St.PageFlip(box, {width: t.w, height: t.h, size: 'fixed', showCover: true, usePortrait: true, autoSize: false,
+    maxShadowOpacity: .45, mobileScrollSupport: false, flippingTime: 700, drawShadow: true, startPage: pagAtual});
   _apFlip.loadFromHTML(box.querySelectorAll('.ap-pg'));
   _apFlip.on('flip', () => _apAtualiza());
   _apFlip.on('changeOrientation', () => _apAtualiza());
-  const salva = Math.min(_apPagSalva(), n - 1); if(salva > 0) _apFlip.turnToPage(salva);
+  if(pagAtual > 0 && _apFlip.getCurrentPageIndex() !== pagAtual) _apFlip.turnToPage(pagAtual);
+  _apTam = t.w + 'x' + t.dupla;
   const c = document.getElementById('apCarregando'); if(c) c.style.display = 'none';
   _apAtualiza();
 }
-// o livro cabe na altura da tela (o page-flip só olha a largura)
-function _apAjustaLargura(){ const el = document.getElementById('apLivro'), box = el && el.parentElement; if(!box) return; const alt = window.innerHeight - (document.fullscreenElement ? 120 : 250); box.style.maxWidth = Math.max(320, Math.round(Math.max(260, alt) / _apRatio * (window.innerWidth > 700 ? 2 : 1))) + 'px'; }
-window.addEventListener('resize', _apAjustaLargura);
+let _apTam = '', _apResizeT = null;
+function _apReajusta(){
+  clearTimeout(_apResizeT);
+  _apResizeT = setTimeout(() => { if(!_apFlip || document.querySelector('.ap-zoom')) return; const t = _apTamanho(); if(t && (t.w + 'x' + t.dupla) !== _apTam) _apCriarLivro(); }, 180);
+}
+window.addEventListener('resize', _apReajusta);
+document.addEventListener('fullscreenchange', () => { const b = document.getElementById('apFsBtn'); if(b) b.textContent = document.fullscreenElement ? '✕ Sair da tela cheia' : '⛶ Tela cheia'; setTimeout(_apReajusta, 60); });
 function _apAtualiza(){
   if(!_apFlip || !_apPdf) return;
   const i = _apFlip.getCurrentPageIndex(), n = _apPdf.numPages, dupla = _apFlip.getOrientation && _apFlip.getOrientation() === 'landscape';
@@ -5031,26 +5065,117 @@ function _apIr(){
 }
 function _apTelaCheia(){
   const el = document.getElementById('apPalco'); if(!el) return;
-  if(document.fullscreenElement) document.exitFullscreen(); else if(el.requestFullscreen) el.requestFullscreen().catch(() => showToast('Tela cheia não disponível neste aparelho', true));
+  if(document.fullscreenElement){ document.exitFullscreen().catch(() => {}); return; }
+  if(el.classList.contains('ap-fs')){ _apSaiFsCss(); return; }
+  if(el.requestFullscreen) el.requestFullscreen().catch(() => _apFsCss());
+  else _apFsCss();   // iPhone não tem tela cheia de elemento: ocupa a tela toda pelo CSS
 }
+function _apFsCss(){ const el = document.getElementById('apPalco'); if(!el) return; el.classList.add('ap-fs'); document.body.style.overflow = 'hidden'; const b = document.getElementById('apFsBtn'); if(b) b.textContent = '✕ Sair da tela cheia'; setTimeout(_apReajusta, 60); }
+function _apSaiFsCss(){ const el = document.getElementById('apPalco'); if(el) el.classList.remove('ap-fs'); document.body.style.overflow = ''; const b = document.getElementById('apFsBtn'); if(b) b.textContent = '⛶ Tela cheia'; setTimeout(_apReajusta, 60); }
+
+/* ---- Zoom: uma página por vez, com lupa (roda do mouse, arrastar, duplo clique, pinça) ---- */
+const _apZ = {pag: 0, s: 1, fit: 1, x: 0, y: 0, img: null, iw: 0, ih: 0, ptrs: new Map(), dist: 0, arr: null, cache: {}};
 async function _apZoom(){
   if(!_apFlip || !_apPdf) return;
-  const i = _apFlip.getCurrentPageIndex(), n = _apPdf.numPages, dupla = _apFlip.getOrientation() === 'landscape' && i > 0 && i < n - 1;
-  const pags = dupla ? [i, i + 1] : [i];
-  const ov = document.createElement('div'); ov.className = 'ap-zoom'; ov.innerHTML = `<button type="button" class="ap-zoom-x" aria-label="Fechar">✕</button><div class="ap-zoom-in">${pags.map(p => `<div class="ap-zoom-pg"><div class="ap-spin"></div></div>`).join('')}</div>`;
-  const fechar = () => { ov.remove(); document.removeEventListener('keydown', esc1, true); };
-  const esc1 = e => { if(e.key === 'Escape'){ e.stopPropagation(); fechar(); } };
-  ov.querySelector('.ap-zoom-x').onclick = fechar; ov.addEventListener('click', e => { if(e.target === ov) fechar(); });
-  document.addEventListener('keydown', esc1, true);
+  const i = _apFlip.getCurrentPageIndex(), n = _apPdf.numPages;
+  const dupla = _apFlip.getOrientation() === 'landscape' && i > 0 && i < n - 1;
+  const ov = document.createElement('div'); ov.className = 'ap-zoom'; ov.tabIndex = -1;
+  ov.innerHTML = `<div class="apz-palco" id="apzPalco"><div class="ap-spin"></div></div>
+    <div class="apz-barra">
+      <button type="button" class="apz-b" data-a="ant" title="Página anterior">‹</button>
+      <span class="apz-pag" id="apzPag"></span>
+      <button type="button" class="apz-b" data-a="prox" title="Próxima página">›</button>
+      <span class="apz-sep"></span>
+      <button type="button" class="apz-b" data-a="menos" title="Diminuir">−</button>
+      <span class="apz-pct" id="apzPct">100%</span>
+      <button type="button" class="apz-b" data-a="mais" title="Aumentar">+</button>
+      <button type="button" class="apz-b apz-txt" data-a="fit" title="Página inteira na tela">Ajustar</button>
+      <span class="apz-sep"></span>
+      <button type="button" class="apz-b apz-x" data-a="fechar" title="Fechar (Esc)">✕</button>
+    </div>
+    <div class="apz-dica">Role o mouse ou use + − para aumentar · arraste para mover · duplo clique aproxima</div>`;
   (document.fullscreenElement || document.body).appendChild(ov);
-  const boxes = ov.querySelectorAll('.ap-zoom-pg');
-  for(let k = 0; k < pags.length; k++){
-    const pg = await _apPdf.getPage(pags[k] + 1), v0 = pg.getViewport({scale: 1}), vp = pg.getViewport({scale: 2000 / v0.width});
-    const cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+  if(!document.fullscreenElement) document.body.style.overflow = 'hidden';
+  ov.querySelector('.apz-barra').addEventListener('click', e => { const b = e.target.closest('[data-a]'); if(!b) return; const a = b.dataset.a;
+    if(a === 'fechar') _apZFechar(); else if(a === 'ant') _apZPag(_apZ.pag - 1); else if(a === 'prox') _apZPag(_apZ.pag + 1);
+    else if(a === 'mais') _apZEscala(_apZ.s * 1.4); else if(a === 'menos') _apZEscala(_apZ.s / 1.4); else if(a === 'fit') _apZAjusta(); });
+  const pal = ov.querySelector('#apzPalco');
+  pal.addEventListener('wheel', e => { e.preventDefault(); const r = pal.getBoundingClientRect(); _apZEscala(_apZ.s * (e.deltaY < 0 ? 1.18 : 1 / 1.18), e.clientX - r.left, e.clientY - r.top); }, {passive: false});
+  pal.addEventListener('dblclick', e => { const r = pal.getBoundingClientRect(); if(_apZ.s > _apZ.fit * 1.05) _apZAjusta(); else _apZEscala(_apZ.fit * 2.5, e.clientX - r.left, e.clientY - r.top); });
+  pal.addEventListener('pointerdown', e => { pal.setPointerCapture(e.pointerId); _apZ.ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY}); if(_apZ.ptrs.size === 2){ const [a, b] = [..._apZ.ptrs.values()]; _apZ.dist = Math.hypot(a.x - b.x, a.y - b.y); } pal.classList.add('arrastando'); });
+  pal.addEventListener('pointermove', e => {
+    const p = _apZ.ptrs.get(e.pointerId); if(!p) return;
+    if(_apZ.ptrs.size === 2){
+      _apZ.ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY});
+      const [a, b] = [..._apZ.ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y), r = pal.getBoundingClientRect();
+      if(_apZ.dist) _apZEscala(_apZ.s * d / _apZ.dist, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top); _apZ.dist = d; return;
+    }
+    _apZ.x += e.clientX - p.x; _apZ.y += e.clientY - p.y; _apZ.ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY}); _apZAplica();
+  });
+  const solta = e => { _apZ.ptrs.delete(e.pointerId); if(_apZ.ptrs.size < 2) _apZ.dist = 0; if(!_apZ.ptrs.size) pal.classList.remove('arrastando'); };
+  pal.addEventListener('pointerup', solta); pal.addEventListener('pointercancel', solta);
+  document.addEventListener('keydown', _apZTecla, true);
+  window.addEventListener('resize', _apZAjusta);
+  _apZPag(dupla ? i : i);
+}
+function _apZTecla(e){
+  if(!document.querySelector('.ap-zoom')) return;
+  const k = e.key; let ok = true;
+  if(k === 'Escape') _apZFechar(); else if(k === 'ArrowRight') _apZPag(_apZ.pag + 1); else if(k === 'ArrowLeft') _apZPag(_apZ.pag - 1);
+  else if(k === '+' || k === '=') _apZEscala(_apZ.s * 1.4); else if(k === '-') _apZEscala(_apZ.s / 1.4); else if(k === '0') _apZAjusta(); else ok = false;
+  if(ok){ e.preventDefault(); e.stopPropagation(); }
+}
+async function _apZPag(p){
+  const n = _apPdf.numPages; if(p < 0 || p >= n) return;
+  _apZ.pag = p;
+  const lbl = document.getElementById('apzPag'); if(lbl) lbl.textContent = `Página ${p + 1} de ${n}`;
+  const pal = document.getElementById('apzPalco'); if(!pal) return;
+  pal.innerHTML = '<div class="ap-spin"></div>';
+  let url = _apZ.cache[p];
+  if(!url){
+    const pg = await _apPdf.getPage(p + 1), v0 = pg.getViewport({scale: 1}), esc0 = Math.min(3, 3000 / Math.max(v0.width, v0.height));
+    const vp = pg.getViewport({scale: esc0}), cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
     const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
     await pg.render({canvasContext: ctx, viewport: vp}).promise;
-    if(!ov.isConnected) return; boxes[k].innerHTML = ''; boxes[k].appendChild(cv);
+    url = URL.createObjectURL(await new Promise(ok => cv.toBlob(ok, 'image/jpeg', .92))); _apZ.cache[p] = url;
   }
+  if(_apZ.pag !== p || !document.getElementById('apzPalco')) return;
+  const img = new Image(); img.className = 'apz-img'; img.draggable = false; img.alt = 'Página ' + (p + 1);
+  await new Promise(ok => { img.onload = ok; img.onerror = ok; img.src = url; });
+  pal.innerHTML = ''; pal.appendChild(img);
+  _apZ.img = img; _apZ.iw = img.naturalWidth; _apZ.ih = img.naturalHeight;
+  _apZAjusta();
+}
+function _apZAjusta(){
+  const pal = document.getElementById('apzPalco'); if(!pal || !_apZ.img) return;
+  const W = pal.clientWidth, H = pal.clientHeight;
+  _apZ.fit = Math.min((W - 24) / _apZ.iw, (H - 24) / _apZ.ih); _apZ.s = _apZ.fit;
+  _apZ.x = (W - _apZ.iw * _apZ.s) / 2; _apZ.y = (H - _apZ.ih * _apZ.s) / 2; _apZAplica();
+}
+function _apZEscala(s, cx, cy){
+  const pal = document.getElementById('apzPalco'); if(!pal || !_apZ.img) return;
+  s = Math.max(_apZ.fit, Math.min(_apZ.fit * 8, s));
+  if(cx == null){ cx = pal.clientWidth / 2; cy = pal.clientHeight / 2; }
+  _apZ.x = cx - (cx - _apZ.x) * (s / _apZ.s); _apZ.y = cy - (cy - _apZ.y) * (s / _apZ.s); _apZ.s = s; _apZAplica();
+}
+function _apZAplica(){
+  const pal = document.getElementById('apzPalco'), img = _apZ.img; if(!pal || !img) return;
+  const W = pal.clientWidth, H = pal.clientHeight, w = _apZ.iw * _apZ.s, h = _apZ.ih * _apZ.s;
+  // não deixa a página fugir da tela: centraliza no eixo que cabe, senão prende nas bordas
+  _apZ.x = w <= W ? (W - w) / 2 : Math.min(0, Math.max(W - w, _apZ.x));
+  _apZ.y = h <= H ? (H - h) / 2 : Math.min(0, Math.max(H - h, _apZ.y));
+  img.style.width = _apZ.iw + 'px'; img.style.height = _apZ.ih + 'px';
+  img.style.transform = `translate(${_apZ.x}px,${_apZ.y}px) scale(${_apZ.s})`;
+  pal.classList.toggle('zoom-on', _apZ.s > _apZ.fit * 1.02);
+  const pct = document.getElementById('apzPct'); if(pct) pct.textContent = Math.round(_apZ.s / _apZ.fit * 100) + '%';
+}
+function _apZFechar(){
+  const ov = document.querySelector('.ap-zoom'); if(!ov) return;
+  ov.remove(); document.removeEventListener('keydown', _apZTecla, true); window.removeEventListener('resize', _apZAjusta);
+  if(!document.fullscreenElement && !document.querySelector('.ap-fs')) document.body.style.overflow = '';
+  _apZ.img = null; _apZ.ptrs.clear();
+  // volta o livro para a página que estava sendo vista no zoom
+  if(_apFlip && _apZ.pag !== _apFlip.getCurrentPageIndex()) _apFlip.turnToPage(_apZ.pag);
 }
 async function _apEnviar(f){
   if(!f || !isHost || isGerente) return;
@@ -5068,7 +5193,7 @@ async function _apEnviar(f){
       await _apRpc('apostila_enviar', {p_senha: _apSenha, p_versao: versao, p_i: i, p_total: total, p_dados: b64.slice(i * AP_CHUNK, (i + 1) * AP_CHUNK), p_nome: f.name, p_tamanho: f.size});
     }
     _apInfo = await _apRpc('apostila_info', {p_senha: _apSenha});
-    _apBytes = {v: _apInfo.versao, u8}; _apPdf = null; _apImgs = {}; _apStatus = '';
+    _apBytes = {v: _apInfo.versao, u8}; _apPdf = null; _apImgs = {}; _apZ.cache = {}; _apStatus = '';
     showToast('Apostila enviada ✓'); _mainSig = ''; renderMain();
   }catch(e){ console.error('envio apostila', e); _apSetStatus(''); _apErro = 'Não consegui enviar: ' + e.message; const el = document.getElementById('apErr'); if(el) el.textContent = _apErro; }
 }

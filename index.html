@@ -908,7 +908,7 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .ap-livro{flex:none;margin:0 auto;filter:drop-shadow(0 18px 30px rgba(0,0,0,.7))}
 .ap-palco:fullscreen .ap-livro-wrap,.ap-palco.ap-fs .ap-livro-wrap{flex:1;align-items:center}
 .ap-palco.ap-fs{position:fixed;inset:0;z-index:1250;margin:0;border-radius:0;border:0;display:flex;flex-direction:column;justify-content:center;padding:16px 56px calc(12px + env(safe-area-inset-bottom))}
-.ap-pg{background:#fff;overflow:hidden}
+.ap-pg{background:#fff;overflow:hidden;cursor:zoom-in}
 .ap-pg img{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;background:#fff}
 .ap-pg img:not([src]){visibility:hidden}
 .ap-num{position:absolute;bottom:6px;right:10px;font:600 10px 'Share Tech Mono',monospace;color:rgba(0,0,0,.35)}
@@ -934,6 +934,8 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .apz-b:active{transform:scale(.95)}
 .apz-txt{font-size:13px;font-family:'Share Tech Mono',monospace;letter-spacing:.06em}
 .apz-x{border-color:rgba(255,43,94,.5);color:#ff8fab}
+.apz-b.on{background:rgba(0,240,255,.18);border-color:var(--nc);color:#fff;box-shadow:0 0 12px -4px var(--nc)}
+.ap-dica-livro{width:100%;text-align:center;font-family:'Share Tech Mono',monospace;font-size:11.5px;color:var(--faint);letter-spacing:.04em}
 .apz-pag{font-family:Orbitron,sans-serif;font-weight:700;font-size:13px;color:#fff;min-width:132px;text-align:center}
 .apz-pct{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--nc);min-width:50px;text-align:center}
 .apz-sep{width:1px;height:28px;background:rgba(255,255,255,.12)}
@@ -4943,6 +4945,7 @@ function viewApostila(){
       <button type="button" class="ap-seta esq" onclick="_apFlip&&_apFlip.flipPrev()" aria-label="Página anterior"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
       <button type="button" class="ap-seta dir" onclick="_apFlip&&_apFlip.flipNext()" aria-label="Próxima página"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
       <div class="ap-barra">
+        <span class="ap-dica-livro">Toque na página para ler ampliada · setas ou arrastar o canto para virar</span>
         <span class="ap-pag" id="apPag">—</span>
         <span class="ap-ir"><input type="number" min="1" class="inp nocaps" id="apIrInp" placeholder="pág." onkeydown="if(event.key==='Enter')_apIr()"><button type="button" class="btn ghost tiny" onclick="_apIr()">Ir</button></span>
         <button type="button" class="btn ghost tiny" onclick="_apZoom()" title="Ver a página grande">🔍 Zoom</button>
@@ -5015,11 +5018,20 @@ function _apCriarLivro(){
   const n = _apPdf.numPages;
   for(let i = 0; i < n; i++){ const d = document.createElement('div'); d.className = 'ap-pg'; d.dataset.p = i; if(i === 0 || i === n - 1) d.dataset.density = 'hard';
     d.innerHTML = `<img alt="Página ${i + 1}" draggable="false"${_apImgs[i] ? ` src="${_apImgs[i]}"` : ''}><span class="ap-num">${i + 1}</span>`; box.appendChild(d); }
-  _apFlip = new St.PageFlip(box, {width: t.w, height: t.h, size: 'fixed', showCover: true, usePortrait: true, autoSize: false,
+  _apFlip = new St.PageFlip(box, {width: t.w, height: t.h, size: 'fixed', showCover: true, usePortrait: true, autoSize: false, disableFlipByClick: true,
     maxShadowOpacity: .45, mobileScrollSupport: false, flippingTime: 700, drawShadow: true, startPage: pagAtual});
   _apFlip.loadFromHTML(box.querySelectorAll('.ap-pg'));
   _apFlip.on('flip', () => _apAtualiza());
   _apFlip.on('changeOrientation', () => _apAtualiza());
+  let _pd = null;
+  box.addEventListener('pointerdown', e => { _pd = {x: e.clientX, y: e.clientY, t: Date.now()}; }, true);
+  box.addEventListener('pointerup', e => {
+    if(!_pd || !_apFlip) return; const mov = Math.hypot(e.clientX - _pd.x, e.clientY - _pd.y), dt = Date.now() - _pd.t; _pd = null;
+    if(mov > 8 || dt > 600) return;   // foi arrasto (virar a folha), não toque
+    const r = box.getBoundingClientRect(), i = _apFlip.getCurrentPageIndex(), nn = _apPdf.numPages;
+    let p = i; if(_apFlip.getOrientation() === 'landscape' && i > 0 && i < nn - 1 && e.clientX > r.left + r.width / 2) p = i + 1;
+    setTimeout(() => { if(!document.querySelector('.ap-zoom')) _apZoom(p); }, 40);
+  }, true);
   if(pagAtual > 0 && _apFlip.getCurrentPageIndex() !== pagAtual) _apFlip.turnToPage(pagAtual);
   _apTam = t.w + 'x' + t.dupla;
   const c = document.getElementById('apCarregando'); if(c) c.style.display = 'none';
@@ -5046,12 +5058,12 @@ async function _apRender(i){
   _apFila[i] = true;
   try{
     const pg = await _apPdf.getPage(i + 1), v0 = pg.getViewport({scale: 1});
-    const alvo = Math.min(1400, Math.max(900, Math.round((window.devicePixelRatio || 1) * 700)));
+    const alvo = Math.min(2200, Math.max(1400, Math.round((window.devicePixelRatio || 1) * 900)));   // >= resolução original das páginas
     const vp = pg.getViewport({scale: alvo / v0.width});
     const cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
     const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
     await pg.render({canvasContext: ctx, viewport: vp}).promise;
-    const blob = await new Promise(ok => cv.toBlob(ok, 'image/jpeg', .88));
+    const blob = await new Promise(ok => cv.toBlob(ok, 'image/jpeg', .95));
     _apImgs[i] = URL.createObjectURL(blob); _apPoe(i);
   }catch(e){ console.error('pagina', i, e); }
   delete _apFila[i];
@@ -5075,7 +5087,7 @@ function _apSaiFsCss(){ const el = document.getElementById('apPalco'); if(el) el
 
 /* ---- Zoom: uma página por vez, com lupa (roda do mouse, arrastar, duplo clique, pinça) ---- */
 const _apZ = {pag: 0, s: 1, fit: 1, x: 0, y: 0, img: null, iw: 0, ih: 0, ptrs: new Map(), dist: 0, arr: null, cache: {}};
-async function _apZoom(){
+async function _apZoom(pagIni){
   if(!_apFlip || !_apPdf) return;
   const i = _apFlip.getCurrentPageIndex(), n = _apPdf.numPages;
   const dupla = _apFlip.getOrientation() === 'landscape' && i > 0 && i < n - 1;
@@ -5089,19 +5101,23 @@ async function _apZoom(){
       <button type="button" class="apz-b" data-a="menos" title="Diminuir">−</button>
       <span class="apz-pct" id="apzPct">100%</span>
       <button type="button" class="apz-b" data-a="mais" title="Aumentar">+</button>
-      <button type="button" class="apz-b apz-txt" data-a="fit" title="Página inteira na tela">Ajustar</button>
+      <button type="button" class="apz-b apz-txt" data-a="larg" title="Página na largura da tela (role para ler)">↔ Largura</button>
+      <button type="button" class="apz-b apz-txt" data-a="fit" title="Página inteira na tela">▣ Inteira</button>
       <span class="apz-sep"></span>
       <button type="button" class="apz-b apz-x" data-a="fechar" title="Fechar (Esc)">✕</button>
     </div>
-    <div class="apz-dica">Role o mouse ou use + − para aumentar · arraste para mover · duplo clique aproxima</div>`;
+    <div class="apz-dica">Role para descer · Ctrl + roda ou + − para aumentar · arraste para mover · duplo clique aproxima</div>`;
   (document.fullscreenElement || document.body).appendChild(ov);
   if(!document.fullscreenElement) document.body.style.overflow = 'hidden';
   ov.querySelector('.apz-barra').addEventListener('click', e => { const b = e.target.closest('[data-a]'); if(!b) return; const a = b.dataset.a;
     if(a === 'fechar') _apZFechar(); else if(a === 'ant') _apZPag(_apZ.pag - 1); else if(a === 'prox') _apZPag(_apZ.pag + 1);
-    else if(a === 'mais') _apZEscala(_apZ.s * 1.4); else if(a === 'menos') _apZEscala(_apZ.s / 1.4); else if(a === 'fit') _apZAjusta(); });
+    else if(a === 'mais') _apZEscala(_apZ.s * 1.4); else if(a === 'menos') _apZEscala(_apZ.s / 1.4); else if(a === 'fit') _apZAjusta('inteira'); else if(a === 'larg') _apZAjusta('largura'); });
   const pal = ov.querySelector('#apzPalco');
-  pal.addEventListener('wheel', e => { e.preventDefault(); const r = pal.getBoundingClientRect(); _apZEscala(_apZ.s * (e.deltaY < 0 ? 1.18 : 1 / 1.18), e.clientX - r.left, e.clientY - r.top); }, {passive: false});
-  pal.addEventListener('dblclick', e => { const r = pal.getBoundingClientRect(); if(_apZ.s > _apZ.fit * 1.05) _apZAjusta(); else _apZEscala(_apZ.fit * 2.5, e.clientX - r.left, e.clientY - r.top); });
+  pal.addEventListener('wheel', e => { e.preventDefault(); const r = pal.getBoundingClientRect();
+    // página maior que a tela: a roda rola (como ler um documento); Ctrl + roda ou página inteira: aproxima
+    if(!e.ctrlKey && (_apZ.ih * _apZ.s > pal.clientHeight + 2 || _apZ.iw * _apZ.s > pal.clientWidth + 2)){ _apZ.x -= e.deltaX; _apZ.y -= e.deltaY; _apZAplica(); return; }
+    _apZEscala(_apZ.s * (e.deltaY < 0 ? 1.18 : 1 / 1.18), e.clientX - r.left, e.clientY - r.top); }, {passive: false});
+  pal.addEventListener('dblclick', e => { const r = pal.getBoundingClientRect(); if(_apZ.s > _apZ.fit * 1.05) _apZAjusta('inteira'); else _apZEscala(_apZ.fit * 2.5, e.clientX - r.left, e.clientY - r.top); });
   pal.addEventListener('pointerdown', e => { pal.setPointerCapture(e.pointerId); _apZ.ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY}); if(_apZ.ptrs.size === 2){ const [a, b] = [..._apZ.ptrs.values()]; _apZ.dist = Math.hypot(a.x - b.x, a.y - b.y); } pal.classList.add('arrastando'); });
   pal.addEventListener('pointermove', e => {
     const p = _apZ.ptrs.get(e.pointerId); if(!p) return;
@@ -5115,14 +5131,15 @@ async function _apZoom(){
   const solta = e => { _apZ.ptrs.delete(e.pointerId); if(_apZ.ptrs.size < 2) _apZ.dist = 0; if(!_apZ.ptrs.size) pal.classList.remove('arrastando'); };
   pal.addEventListener('pointerup', solta); pal.addEventListener('pointercancel', solta);
   document.addEventListener('keydown', _apZTecla, true);
-  window.addEventListener('resize', _apZAjusta);
-  _apZPag(dupla ? i : i);
+  window.addEventListener('resize', _apZAjustaMesmo);
+  _apZ.modo = (window.innerWidth > window.innerHeight * .9) ? 'largura' : 'inteira';
+  _apZPag(pagIni != null ? pagIni : i);
 }
 function _apZTecla(e){
   if(!document.querySelector('.ap-zoom')) return;
   const k = e.key; let ok = true;
   if(k === 'Escape') _apZFechar(); else if(k === 'ArrowRight') _apZPag(_apZ.pag + 1); else if(k === 'ArrowLeft') _apZPag(_apZ.pag - 1);
-  else if(k === '+' || k === '=') _apZEscala(_apZ.s * 1.4); else if(k === '-') _apZEscala(_apZ.s / 1.4); else if(k === '0') _apZAjusta(); else ok = false;
+  else if(k === '+' || k === '=') _apZEscala(_apZ.s * 1.4); else if(k === '-') _apZEscala(_apZ.s / 1.4); else if(k === '0') _apZAjusta('inteira'); else if(k === 'ArrowDown' || k === 'ArrowUp'){ _apZ.y += (k === 'ArrowDown' ? -1 : 1) * 120; _apZAplica(); } else ok = false;
   if(ok){ e.preventDefault(); e.stopPropagation(); }
 }
 async function _apZPag(p){
@@ -5137,7 +5154,7 @@ async function _apZPag(p){
     const vp = pg.getViewport({scale: esc0}), cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
     const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
     await pg.render({canvasContext: ctx, viewport: vp}).promise;
-    url = URL.createObjectURL(await new Promise(ok => cv.toBlob(ok, 'image/jpeg', .92))); _apZ.cache[p] = url;
+    url = URL.createObjectURL(await new Promise(ok => cv.toBlob(ok, 'image/jpeg', .95))); _apZ.cache[p] = url;
   }
   if(_apZ.pag !== p || !document.getElementById('apzPalco')) return;
   const img = new Image(); img.className = 'apz-img'; img.draggable = false; img.alt = 'Página ' + (p + 1);
@@ -5146,12 +5163,17 @@ async function _apZPag(p){
   _apZ.img = img; _apZ.iw = img.naturalWidth; _apZ.ih = img.naturalHeight;
   _apZAjusta();
 }
-function _apZAjusta(){
+function _apZAjusta(modo){
   const pal = document.getElementById('apzPalco'); if(!pal || !_apZ.img) return;
+  if(typeof modo === 'string') _apZ.modo = modo;
   const W = pal.clientWidth, H = pal.clientHeight;
-  _apZ.fit = Math.min((W - 24) / _apZ.iw, (H - 24) / _apZ.ih); _apZ.s = _apZ.fit;
-  _apZ.x = (W - _apZ.iw * _apZ.s) / 2; _apZ.y = (H - _apZ.ih * _apZ.s) / 2; _apZAplica();
+  _apZ.fit = Math.min((W - 24) / _apZ.iw, (H - 24) / _apZ.ih);
+  if(_apZ.modo === 'largura'){ _apZ.s = Math.max(_apZ.fit, Math.min((W - 24) / _apZ.iw, _apZ.fit * 8)); _apZ.x = (W - _apZ.iw * _apZ.s) / 2; _apZ.y = 12; }
+  else { _apZ.s = _apZ.fit; _apZ.x = (W - _apZ.iw * _apZ.s) / 2; _apZ.y = (H - _apZ.ih * _apZ.s) / 2; }
+  _apZAplica();
+  document.querySelectorAll('.apz-b[data-a="larg"],.apz-b[data-a="fit"]').forEach(b => b.classList.toggle('on', (b.dataset.a === 'larg') === (_apZ.modo === 'largura')));
 }
+function _apZAjustaMesmo(){ _apZAjusta(); }
 function _apZEscala(s, cx, cy){
   const pal = document.getElementById('apzPalco'); if(!pal || !_apZ.img) return;
   s = Math.max(_apZ.fit, Math.min(_apZ.fit * 8, s));
@@ -5171,7 +5193,7 @@ function _apZAplica(){
 }
 function _apZFechar(){
   const ov = document.querySelector('.ap-zoom'); if(!ov) return;
-  ov.remove(); document.removeEventListener('keydown', _apZTecla, true); window.removeEventListener('resize', _apZAjusta);
+  ov.remove(); document.removeEventListener('keydown', _apZTecla, true); window.removeEventListener('resize', _apZAjustaMesmo);
   if(!document.fullscreenElement && !document.querySelector('.ap-fs')) document.body.style.overflow = '';
   _apZ.img = null; _apZ.ptrs.clear();
   // volta o livro para a página que estava sendo vista no zoom
@@ -5372,7 +5394,8 @@ const GUIA = [
       {t:'Como ler', passos:[
         'Use as setas <b>‹ ›</b> dos lados, as setas do teclado, ou puxe o canto da página com o mouse ou o dedo para virar a folha.',
         'No computador aparecem duas páginas lado a lado; no celular, uma por vez.',
-        'Embaixo: número da página, <b>Ir</b> (pula direto para uma página), <b>🔍 Zoom</b> (página grande para ler detalhes) e <b>⛶ Tela cheia</b>.',
+        '<b>Toque numa página</b> (ou use <b>🔍 Zoom</b>) para ler ampliada. Lá, <b>↔ Largura</b> põe a página na largura da tela para ler rolando, e <b>▣ Inteira</b> mostra ela toda.',
+        'Embaixo: número da página, <b>Ir</b> (pula direto para uma página) e <b>⛶ Tela cheia</b>.',
         'O site lembra a página em que você parou.']},
       {t:'Trocar a apostila (HOST)', passos:['Com a apostila aberta, use <b>⬆ Trocar apostila</b> e escolha o PDF novo. A antiga continua valendo até o envio terminar.']}
     ]},

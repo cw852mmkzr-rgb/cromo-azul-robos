@@ -896,6 +896,21 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .ap-lock svg{width:30px;height:30px;fill:none;stroke:var(--nc);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .ap-gate h2{font-family:Orbitron,sans-serif;font-size:18px;color:#fff;letter-spacing:.04em}
 .ap-gate p{color:var(--mut);font-size:14px;margin:8px 0 18px;line-height:1.5}
+.ap-intro{max-width:620px;text-align:left}
+.ap-intro .ap-lock,.ap-intro h2,.ap-intro-sub{text-align:center}
+.ap-intro-sub{font-family:'Share Tech Mono',monospace;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--nc);margin:6px 0 16px}
+.ap-intro-txt{font-size:14.5px!important;line-height:1.6!important;color:var(--txt)!important;margin:0 0 10px!important}
+.ap-intro-txt b,.ap-sigilo b{color:#fff}
+.ap-intro-lista{margin:0 0 16px;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--mut)}
+.ap-intro-lista li::marker{color:var(--nc)}
+.ap-sigilo{border:1px solid rgba(255,43,94,.5);background:rgba(255,43,94,.07);border-left:3px solid var(--danger);border-radius:6px;padding:12px 14px;margin-bottom:14px}
+.ap-sigilo-t{font-family:Orbitron,sans-serif;font-weight:800;font-size:13px;letter-spacing:.06em;color:#ff8fab;margin-bottom:6px}
+.ap-sigilo p{margin:0!important;font-size:13.5px!important;line-height:1.55!important;color:var(--txt)!important}
+.ap-autor{display:flex;align-items:baseline;justify-content:center;gap:10px;flex-wrap:wrap;margin:4px 0 16px;padding:10px;border-top:1px solid rgba(0,240,255,.14);border-bottom:1px solid rgba(0,240,255,.14)}
+.ap-autor span{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.ap-autor b{font-family:Orbitron,sans-serif;font-size:14px;color:#eaf6ff;letter-spacing:.05em;text-shadow:0 0 12px rgba(0,240,255,.4)}
+.ap-aceite{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--txt);margin-bottom:12px;cursor:pointer;line-height:1.45}
+.ap-aceite input{width:18px;height:18px;margin-top:1px;accent-color:#00f0ff;flex:none}
 .ap-gate-f{display:flex;gap:8px}.ap-gate-f .inp{flex:1;font-family:'Share Tech Mono',monospace;letter-spacing:.2em;height:44px}
 .ap-err{min-height:18px;margin-top:10px;color:var(--danger);font-family:'Share Tech Mono',monospace;font-size:12.5px}
 .ap-status{margin-top:8px;color:var(--nc);font-family:'Share Tech Mono',monospace;font-size:12.5px}
@@ -4926,12 +4941,24 @@ function viewApostila(){
   const head = pageHead(IC.apostila, 'Apostila', 'Apostila de treinamento dos robôs');
   if(!_apSenha){
     const b = _apBloqueio(), bloq = b.ate && b.ate > Date.now();
-    return head + `<div class="ap-gate card glass">
-      <div class="ap-lock"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
-      <h2>Apostila de treinamento</h2>
-      <p>Conteúdo protegido. Digite a senha da apostila para abrir.</p>
+    return head + `<div class="ap-gate ap-intro card glass">
+      <div class="ap-lock"><svg viewBox="0 0 24 24">${IC.apostila}</svg></div>
+      <h2>Apostila de Treinamento</h2>
+      <div class="ap-intro-sub">Dispositivos de solda e células robotizadas</div>
+      <p class="ap-intro-txt">Esta apostila foi criada para <b>informar e ensinar</b> quem trabalha com os robôs: como os dispositivos de solda e as células robotizadas funcionam, como operar no dia a dia com <b>segurança</b>, os cuidados que evitam paradas e retrabalho, e as boas práticas que mantêm a <b>qualidade</b> e a <b>produtividade</b>.</p>
+      <ul class="ap-intro-lista">
+        <li>Treinar e integrar novos operadores</li>
+        <li>Servir de consulta rápida na rotina da fábrica</li>
+        <li>Padronizar os procedimentos entre turnos e equipes</li>
+      </ul>
+      <div class="ap-sigilo">
+        <div class="ap-sigilo-t">🔒 Material confidencial</div>
+        <p>Esta apostila é <b>sigilosa</b> e faz parte do patrimônio da empresa. <b>É proibido compartilhar, divulgar, copiar, fotografar, imprimir ou enviar</b> o conteúdo, no todo ou em parte, para qualquer pessoa ou lugar fora da empresa sem autorização.</p>
+      </div>
+      <div class="ap-autor"><span>Autor e criador</span><b>Técnico LEONARDO FAVARO</b></div>
+      <label class="ap-aceite"><input type="checkbox" id="apAceite" onchange="document.getElementById('apAbrir').disabled=!this.checked||${bloq?'true':'false'}"> Li e entendi que este material é confidencial e não pode ser compartilhado.</label>
       <div class="ap-gate-f"><input type="password" class="inp nocaps" id="apSenha" placeholder="senha da apostila" autocomplete="off" ${bloq ? 'disabled' : ''} onkeydown="if(event.key==='Enter')_apEntrar()">
-        <button type="button" class="btn primary" onclick="_apEntrar()" ${bloq ? 'disabled' : ''}>Abrir</button></div>
+        <button type="button" class="btn primary" id="apAbrir" onclick="_apEntrar()" disabled>Abrir</button></div>
       <div class="ap-err" id="apErr">${bloq ? 'Muitas tentativas. Tente de novo em alguns minutos.' : ''}</div>
     </div>`;
   }
@@ -4945,7 +4972,7 @@ function viewApostila(){
       <button type="button" class="ap-seta esq" onclick="_apFlip&&_apFlip.flipPrev()" aria-label="Página anterior"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
       <button type="button" class="ap-seta dir" onclick="_apFlip&&_apFlip.flipNext()" aria-label="Próxima página"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
       <div class="ap-barra">
-        <span class="ap-dica-livro">Toque na página para ler ampliada · setas ou arrastar o canto para virar</span>
+        <span class="ap-dica-livro">Toque na página para ler ampliada · setas ou arrastar o canto para virar · 🔒 Material confidencial — autor: Técnico LEONARDO FAVARO</span>
         <span class="ap-pag" id="apPag">—</span>
         <span class="ap-ir"><input type="number" min="1" class="inp nocaps" id="apIrInp" placeholder="pág." onkeydown="if(event.key==='Enter')_apIr()"><button type="button" class="btn ghost tiny" onclick="_apIr()">Ir</button></span>
         <button type="button" class="btn ghost tiny" onclick="_apZoom()" title="Ver a página grande">🔍 Zoom</button>
@@ -4958,6 +4985,7 @@ function viewApostila(){
 async function _apEntrar(){
   const inp = document.getElementById('apSenha'), err = document.getElementById('apErr'); if(!inp) return;
   const b = _apBloqueio(); if(b.ate && b.ate > Date.now()) return;
+  const ac = document.getElementById('apAceite'); if(ac && !ac.checked){ err.textContent = 'Marque que leu e entendeu o aviso de confidencialidade.'; return; }
   const s = inp.value; if(!s){ err.textContent = 'Digite a senha.'; return; }
   err.textContent = 'Conferindo...';
   try{

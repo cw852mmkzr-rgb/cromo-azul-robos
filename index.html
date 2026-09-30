@@ -889,6 +889,48 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 #bootStatic.on{animation:dashStatic .5s steps(8)}
 #bootStatic.on::before{animation-duration:.5s}
 @media(prefers-reduced-motion:reduce){#bootScreen,#bootScreen *{animation:none!important}.boot-line{opacity:1}#bootStatic.on,#bootStatic.on::before{animation:none!important;opacity:0}}
+/* Guia + botão "?" */
+.help-btn{flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:4px;border:1px solid rgba(0,240,255,.45);background:rgba(0,240,255,.06);color:var(--nc);font-family:Orbitron,sans-serif;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 0 10px -4px var(--nc);transition:background .15s,border-color .15s,color .15s,transform .15s;padding:0}
+@media(hover:hover){.help-btn:hover{background:rgba(255,43,214,.12);border-color:var(--nm);color:#fff;box-shadow:0 0 14px -3px var(--nm)}}
+.help-btn:active{transform:scale(.94)}
+.help-btn:focus-visible{outline:2px solid #f9f871;outline-offset:2px}
+.robot-hero .help-btn{margin-left:auto}
+.gd-top{padding:14px 16px;margin-bottom:14px}
+.gd-busca{position:relative}
+.gd-busca svg{position:absolute;left:12px;top:50%;width:17px;height:17px;transform:translateY(-50%);fill:none;stroke:var(--nc);stroke-width:2;stroke-linecap:round;pointer-events:none}
+.gd-busca .inp{padding-left:40px;height:42px;font-size:14px}
+.gd-idx{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.gd-idx button{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:3px;border:1px solid rgba(0,240,255,.2);background:rgba(0,240,255,.035);color:#cdeffb;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:.04em;cursor:pointer;transition:background .15s,border-color .15s,opacity .15s}
+.gd-idx button svg{width:14px;height:14px;fill:none;stroke:var(--nc);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media(hover:hover){.gd-idx button:hover{background:rgba(0,240,255,.1);border-color:var(--nc)}}
+.gd-idx button.off{opacity:.3}
+.gd-lista{display:flex;flex-direction:column;gap:14px}
+.gd-sec{padding:18px 20px;scroll-margin-top:80px}
+.gd-sec.gd-flash{animation:gdFlash 1.2s ease-out}
+@keyframes gdFlash{0%{box-shadow:0 0 0 2px var(--nc),0 0 30px -4px var(--nc)}100%{box-shadow:inset 0 0 0 1px rgba(0,240,255,.10),0 0 22px -12px rgba(0,240,255,.4)}}
+.gd-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
+.gd-ico{flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:6px;background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.3)}
+.gd-ico svg{width:20px;height:20px;fill:none;stroke:var(--nc);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.gd-ht{flex:1;min-width:0}
+.gd-ht h2{font-family:Orbitron,sans-serif;font-weight:800;font-size:17px;color:#fff;letter-spacing:.03em}
+.gd-ht p{font-size:13.5px;color:var(--mut);margin-top:4px;line-height:1.45}
+.gd-quem{flex:none;font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ok);border:1px solid rgba(0,255,174,.35);background:rgba(0,255,174,.06);padding:4px 8px;border-radius:3px;max-width:190px;text-align:center;line-height:1.35}
+.gd-quem.host{color:var(--nm);border-color:rgba(255,43,214,.45);background:rgba(255,43,214,.07)}
+.gd-bloco{margin-top:14px}
+.gd-bt{font-family:'Share Tech Mono',monospace;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--nc);margin-bottom:8px}
+.gd-passos{list-style:none;counter-reset:gp;display:flex;flex-direction:column;gap:7px;padding:0;margin:0}
+.gd-passos li{counter-increment:gp;position:relative;padding-left:32px;font-size:14px;line-height:1.5;color:var(--txt)}
+.gd-passos li::before{content:counter(gp);position:absolute;left:0;top:1px;width:21px;height:21px;display:grid;place-items:center;border-radius:3px;background:rgba(0,240,255,.1);border:1px solid rgba(0,240,255,.35);color:var(--nc);font-family:Orbitron,sans-serif;font-size:10.5px;font-weight:800}
+.gd-passos li b,.gd-defs dd b{color:#fff}
+.gd-defs{display:flex;flex-direction:column;gap:2px;margin:0}
+.gd-defs>div{display:grid;grid-template-columns:190px 1fr;gap:14px;padding:8px 10px;border-radius:4px}
+.gd-defs>div:nth-child(odd){background:rgba(255,255,255,.025)}
+.gd-defs dt{font-weight:700;color:var(--ny);font-size:13.5px}
+.gd-defs dd{margin:0;font-size:14px;line-height:1.5;color:var(--txt)}
+.gd-ir{margin-top:14px;display:flex;justify-content:flex-end}
+.gd-nada{padding:28px;text-align:center;color:var(--faint)}
+.modal .gd-sec{background:none;border:0;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+@media(max-width:600px){.gd-defs>div{grid-template-columns:1fr;gap:3px}.gd-head{flex-wrap:wrap}.gd-quem{max-width:none}.gd-sec{padding:16px 14px}.gd-idx{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.gd-idx button{flex:none}}
 /* Funcionários: calendário de trabalho + horas do dia */
 .fcal-tit{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:4px 0 12px;font-size:13px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace}
 .fcal-leg{display:flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.06em;text-transform:none}
@@ -1298,6 +1340,9 @@ select.fs-native{position:absolute!important;opacity:0!important;pointer-events:
 </div>
 
 <!-- MODAL: Detalhe do funcionário -->
+<div class="modal-bg" id="modalGuia" onclick="if(event.target===this)closeModal('modalGuia')">
+  <div class="modal glass" id="modalGuiaBody" style="max-width:720px;width:96%"></div>
+</div>
 <div class="modal-bg" id="modalFunc" onclick="if(event.target===this)closeModal('modalFunc')">
   <div class="modal glass" id="modalFuncBody" style="max-width:840px;width:96%"></div>
 </div>
@@ -1379,6 +1424,7 @@ const IC = {
   painel:'<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="5" rx="1"/><rect x="13" y="10" width="8" height="11" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/>',
   func:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
 };
+IC.guia = '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7M9 12h5"/>';
 const PAINEIS = [
   {id:"painel",    nome:"Painel",           sub:"Visão geral",           ico:IC.painel,  built:true},
   {id:"mensal",    nome:"Produção Mensal",  sub:"Total por dia do mês",  ico:IC.mensal,  built:true},
@@ -1391,6 +1437,7 @@ const PAINEIS = [
   {id:"func",      nome:"Funcionários",     sub:"Desempenho da equipe",  ico:IC.func,    built:true},
   {id:"relat",     nome:"Relatórios",       sub:"Período e exportação",   ico:IC.relat,   built:true},
   {id:"ger",       nome:"Gerenciar",        sub:"Configurações do host", ico:IC.ger,     built:true, host:true},
+  {id:"guia",      nome:"Guia",             sub:"Como usar o sistema",   ico:IC.guia,    built:true},
 ];
 
 function novaCelula(num){
@@ -1705,6 +1752,7 @@ function renderMain(){
   let sig=nav.sec+":"+nav.id+"|"+isHost+"|";
   if(nav.sec==="robo") sig+=JSON.stringify(robos()[nav.id]||{});
   else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+_ppmModo+_ppmMes+_ppmAno+_ppmDataDia+_ppmDataSemana+_ppmDataIni+_ppmDataFim+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{})+"|R"+_relModo+_relDia+_relSemana+_relIni+_relFim+"|D"+(divisaoAtiva()?1:0)+"|F"+JSON.stringify(funcionarios());
+  if(nav.sec==="painel" && nav.id==="guia") sig="painel:guia|"+isHost+"|"+isGerente;
   if(sig===_mainSig) return; _mainSig=sig;
 
   if(nav.sec==="robo"){ box.innerHTML=viewRobot(nav.id); return; }
@@ -1720,13 +1768,15 @@ function renderMain(){
   else if(p.id==="ger") box.innerHTML=isGerente?viewRelatBloqueado("ger"):viewGerenciar();
   else if(p.id==="manut") box.innerHTML=viewManutencao();
   else if(p.id==="func") box.innerHTML=viewFuncionarios();
+  else if(p.id==="guia") box.innerHTML=viewGuia();
   else if(p.id==="relat"){ if(isHost && !isGerente){ box.innerHTML=pageHead(IC.relat,"Relatórios","Relatório executivo por peça")+`<div id="relHostWrap" class="relhost"></div>`; renderRelatoriosApp(); } else { box.innerHTML=viewRelatBloqueado("relat"); } }
   else box.innerHTML=viewPlaceholder(p);
 }
 
 function pageHead(ico,titulo,sub,extra){
+  const aj=(typeof GUIA_TELA!=='undefined'&&GUIA_TELA[titulo])?_ajudaBtn(GUIA_TELA[titulo]):'';
   return `<div class="page-head"><div class="pico"><svg viewBox="0 0 24 24">${ico}</svg></div>
-    <div><h1>${titulo}</h1><div class="psub">${sub}</div></div><div class="spacer"></div>${extra||""}</div>`;
+    <div><h1>${titulo}</h1><div class="psub">${sub}</div></div>${aj}<div class="spacer"></div>${extra||""}</div>`;
 }
 
 /* ---------- ROBÔ (detalhe da célula) ---------- */
@@ -1739,6 +1789,7 @@ function viewRobot(k){
       ${isHost?`<input class="login-input" style="text-align:left;font-family:'Space Grotesk';font-weight:700;font-size:20px;padding:8px 12px;letter-spacing:0" value="${esc(c.nome)}" onchange="setField('${k}','nome',this.value)">`
         :`<h1>${esc(c.nome||("Robô "+k))}</h1>`}
       <div class="rid">Robô ${esc(k)} · FANUC</div></div>
+    ${_ajudaBtn('robo')}
     <div>${isHost
       ? `<select onchange="setField('${k}','status',this.value)" style="padding:9px 14px;border-radius:999px;font-weight:600;border:1px solid var(--glass-bd);background:rgba(255,255,255,.06);color:${cor}">${STATUS_LIST.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join("")}</select>`
       : `<span class="status-pill" style="color:${cor}"><span class="dot" style="color:${cor}"></span>${esc(c.status||"—")}</span>`}</div>
@@ -4787,6 +4838,231 @@ document.addEventListener('input', e=>{
   timers.push(setTimeout(passo, reduz?60:500));
 })();
 
+
+/* ============================================================
+   GUIA — como usar o sistema (aba "Guia" + botão "?" em cada tela)
+   Conteúdo em GUIA; cada tela chama o "?" pelo título (GUIA_TELA).
+   ============================================================ */
+const GUIA = [
+  { id:'comecar', titulo:'Primeiros passos', ico:'guia', quem:'Todos',
+    resumo:'Como entrar, navegar e o que cada tipo de acesso pode fazer.',
+    blocos:[
+      {t:'Tipos de acesso', defs:[
+        ['HOST','Entra com a senha do HOST. Edita tudo: produção, robôs, peças, funcionários, manutenção, backup e Gerenciar.'],
+        ['Gestor','Entra com a senha de gestor. Edita tudo, menos backup e a tela Gerenciar.'],
+        ['Visualizador','Entra sem senha. Só consulta: vê tudo, mas não altera nada.'],
+        ['Dashboard TV','Entra sem senha. Tela cheia para a TV do chão de fábrica, passando robô por robô sozinha.']]},
+      {t:'Navegar', passos:[
+        'O menu da esquerda tem os <b>Painéis</b> (telas de produção e relatórios) e, embaixo, a lista de <b>Robôs</b> 800 a 805.',
+        'No celular, o menu abre pelo botão ☰ no canto de cima.',
+        'Os seletores de <b>Dia / Mês / Ano</b> de cada tela escolhem o período mostrado.',
+        'O botão <b>?</b> ao lado do título de cada tela abre a explicação só daquela tela.']},
+      {t:'Salvar', passos:[
+        'Tudo que o HOST ou o Gestor digita é salvo sozinho em menos de 1 segundo. Não existe botão "Salvar".',
+        'O "salvo HH:MM" no topo mostra a hora da última gravação.',
+        'A tela atualiza sozinha a cada 5 segundos com o que outras pessoas lançaram.']},
+      {t:'Senha', passos:['Depois de 3 senhas erradas a tela trava por 5 minutos.']}
+    ]},
+  { id:'painel', titulo:'Painel', ico:'painel', quem:'Todos', ir:'painel',
+    resumo:'Visão geral do mês e de hoje, logo que você entra.',
+    blocos:[
+      {t:'O que mostra', defs:[
+        ['Produção do mês','Total de peças do mês, com a média por dia e o gráfico dos últimos 14 dias.'],
+        ['Meta do dia','Quanto da meta de hoje já foi feito. A meta soma a meta/hora de cada robô nas 10 horas do turno dia, já descontando a parada do café.'],
+        ['Alertas','Robôs que não estão "Produzindo" e manutenções abertas. "Tudo operando" quando não há nada.'],
+        ['Robôs · produção de hoje','Um cartão por robô com o status e as peças de hoje. Clique para abrir o robô.']]}
+    ]},
+  { id:'mensal', titulo:'Produção Mensal', ico:'mensal', quem:'Todos', ir:'mensal',
+    resumo:'Total de peças por dia do mês.',
+    blocos:[
+      {t:'Como usar', passos:['Escolha o <b>Mês</b> e o <b>Ano</b>.','Cada quadrado é um dia com o total de peças de todos os robôs.']},
+      {t:'O que significa', defs:[
+        ['Dias com produção','Quantos dias do mês tiveram alguma peça lançada.'],
+        ['Média diária','Total do mês dividido pelos dias com produção (dias parados não contam).']]}
+    ]},
+  { id:'meta', titulo:'Meta Diária', ico:'meta', quem:'Todos (lançar: HOST e Gestor)', ir:'meta',
+    resumo:'Onde a produção é apontada, hora a hora e robô a robô. Todas as outras telas leem daqui.',
+    blocos:[
+      {t:'Como apontar', passos:[
+        'Escolha o <b>Dia</b>, o <b>Mês</b> e o <b>Ano</b>.',
+        'Em cada robô, preencha a <b>Meta</b> (peças por hora), o <b>Cód</b> (código da peça) e, se precisar, os <b>PTS</b> (pontos de solda).',
+        'Digite as peças de cada hora na coluna da hora. O turno dia vai de 08:00 às 17:00 e o turno noite, de 18:00 às 22:00.',
+        'Depois de digitar as peças de uma hora, aparece embaixo o campo "quem fez?": escreva ou escolha o funcionário da lista. É isso que alimenta a tela Funcionários.']},
+      {t:'Cores e símbolos', defs:[
+        ['Verde','A hora bateu a meta.'],
+        ['Vermelho','A hora ficou abaixo da meta.'],
+        ['# no fim','Marca um ajuste técnico (ex.: 45#). Conta normal nos totais, só fica sinalizado.'],
+        ['☕ 09:00','Hora do café: a meta é reduzida porque a máquina roda só 35 dos 60 minutos (25 min de parada).']]},
+      {t:'Botões do topo', defs:[
+        ['➗ Divisão pts','Ligado: o valor digitado é dividido pelos pontos de solda (PTS) daquele robô.'],
+        ['📋 Copiar dia anterior','Copia meta, código e pontos do último dia com dados. Pede confirmação e não mexe na produção.'],
+        ['🧹 Limpar meta/cód/pts','Apaga meta, código e pontos do dia escolhido. A produção lançada fica.']]},
+      {t:'Dica', passos:['Um dia novo abre em branco. Use "Copiar dia anterior" para não redigitar metas e códigos.']}
+    ]},
+  { id:'relmes', titulo:'Relatório Mensal', ico:'relmes', quem:'Todos', ir:'relmes',
+    resumo:'Análise completa de um mês.',
+    blocos:[
+      {t:'O que mostra', defs:[
+        ['Total, média, melhor dia','Resumo do mês escolhido.'],
+        ['Robôs ativos','Quantos robôs produziram no mês.'],
+        ['Heatmap','Calendário colorido: quanto mais forte a cor, mais peças no dia.'],
+        ['Top peças','As peças que mais saíram no mês.'],
+        ['Detalhe por dia','Tabela dia a dia com turno dia, turno noite e total de cada robô.']]}
+    ]},
+  { id:'ppeca', titulo:'Produção por Peça', ico:'ppeca', quem:'Todos', ir:'ppeca',
+    resumo:'Quanto saiu de cada código de peça num período.',
+    blocos:[
+      {t:'Como usar', passos:[
+        'Escolha o período: <b>Dia</b>, <b>Semana</b>, <b>Mês</b>, <b>Ano</b> ou <b>Período</b> (de uma data até outra).',
+        'Use a busca para achar um código.',
+        'Toque numa peça para abrir os detalhes.']},
+      {t:'Nos detalhes da peça', defs:[
+        ['Média por hora','Peças por hora de robô trabalhando nessa peça.'],
+        ['Média por minuto','A mesma média por hora, dividida por 60.'],
+        ['Melhor hora','A hora do dia com a maior MÉDIA por apontamento (não a soma do período).'],
+        ['Distribuição por hora','Total de peças em cada hora do dia, somando o período.'],
+        ['Produção por robô','Em quais robôs a peça rodou e quanto em cada um.']]}
+    ]},
+  { id:'anual', titulo:'Relatório Anual', ico:'anual', quem:'Todos', ir:'anual',
+    resumo:'O ano inteiro, mês a mês.',
+    blocos:[
+      {t:'O que mostra', defs:[
+        ['Total e média mensal','Soma do ano e média por mês com produção.'],
+        ['Melhor mês','O mês com mais peças.'],
+        ['Por robô e top peças','Quanto cada robô fez no ano e as peças que mais saíram.'],
+        ['Detalhe por mês','Tabela com turno dia, turno noite e total de cada mês.']]}
+    ]},
+  { id:'catpeca', titulo:'Catálogo de Peças', ico:'catpeca', quem:'Todos (editar: HOST e Gestor)', ir:'catpeca',
+    resumo:'Ficha de cada peça, com foto.',
+    blocos:[
+      {t:'Como usar', passos:[
+        'Busque por código, nome ou cliente.',
+        'Toque na peça para ver ou editar a ficha: cliente, meta/hora, tempo/peça, pontos, corrente, eletrodo, gabarito e outros.',
+        '<b>+ Nova peça</b> cadastra uma peça nova. Dá para colocar uma foto da peça.']},
+      {t:'Por que cadastrar', passos:['Quando um robô está com essa peça na Meta Diária, a tela do robô puxa sozinha os dados da ficha (cliente, tempo/peça, eletrodo...) e o ritmo de produção.']}
+    ]},
+  { id:'manut', titulo:'Manutenção', ico:'manut', quem:'Todos (abrir e concluir: HOST e Gestor)', ir:'manut',
+    resumo:'Chamados de manutenção por robô, do aberto ao concluído.',
+    blocos:[
+      {t:'Abrir uma manutenção', passos:[
+        'Clique em <b>+ Nova manutenção</b>.',
+        'Escolha o robô, o <b>tipo</b> (Corretiva, Preventiva, Preditiva ou Melhoria) e a <b>prioridade</b> (Baixa, Média, Alta ou Urgente).',
+        'Escreva o título, a descrição e quem está abrindo, e salve.']},
+      {t:'Acompanhar e concluir', passos:[
+        'Use os filtros (Pendentes, Concluídas, Todas, robô e prioridade) para achar o chamado.',
+        'Cada cartão mostra o robô em destaque, quem abriu, a data e a hora de abertura.',
+        '<b>✓ Concluir</b> registra quem fez, como foi, as peças trocadas e o tempo de parada. <b>↺ Reabrir</b> volta um chamado concluído.']},
+      {t:'Avisos e WhatsApp', passos:[
+        'Ao abrir ou concluir, os números cadastrados recebem um aviso no WhatsApp.',
+        'Também dá para abrir e concluir pelo WhatsApp do MR.ROBOT: mande "abrir manutenção" ou "concluir manutenção" e digite a senha que ele pedir.']}
+    ]},
+  { id:'func', titulo:'Funcionários', ico:'func', quem:'Todos (cadastrar: HOST e Gestor)', ir:'func',
+    resumo:'Desempenho de cada pessoa, calculado a partir do "quem fez?" da Meta Diária.',
+    blocos:[
+      {t:'Como usar', passos:[
+        'Escolha <b>Mês selecionado</b> ou <b>Ano inteiro</b> em Período.',
+        'Toque num funcionário para ver o detalhe: robôs, histórico e o <b>calendário de trabalho</b>.',
+        'No calendário, toque num dia para ver hora a hora: robô, peça, quantas peças fez e se bateu a meta.']},
+      {t:'O que significa', defs:[
+        ['% da meta','Das horas que tinham meta, quantas a pessoa bateu (ex.: 5 de 7 = 71%).'],
+        ['Metas batidas','Horas que bateram a meta / horas com meta.'],
+        ['Média/hora','Peças por hora trabalhada.'],
+        ['Selo','Excelente (85%+), Muito bom (65%+), Regular (45%+) ou Precisa melhorar.']]},
+      {t:'Importante', passos:['Só conta a hora em que a pessoa foi escolhida em "quem fez?". Hora sem nome não entra no desempenho de ninguém.']}
+    ]},
+  { id:'relat', titulo:'Relatórios', ico:'relat', quem:'Só HOST', ir:'relat',
+    resumo:'Relatório executivo de uma peça, pronto para imprimir ou mandar em PDF.',
+    blocos:[
+      {t:'Como gerar', passos:[
+        'Busque a peça por código, nome ou cliente.',
+        'Escolha o período (dia, semana, mês, ano ou intervalo).',
+        'Clique em <b>Gerar Relatório →</b>.',
+        'Use <b>🖨 Imprimir</b> ou <b>📄 Baixar PDF</b>.']},
+      {t:'O que vem no relatório', passos:['Indicadores (total, médias, melhor dia e hora), gráfico por hora, produção por robô e uma análise escrita pela IA.']}
+    ]},
+  { id:'ger', titulo:'Gerenciar', ico:'ger', quem:'Só HOST', ir:'ger',
+    resumo:'Configurações gerais do sistema.',
+    blocos:[
+      {t:'O que tem aqui', defs:[
+        ['Células robóticas','Nome, meta/hora e exclusão de cada robô, e <b>+ Nova célula</b>.'],
+        ['Senha do HOST','Troca a senha de entrada do HOST.'],
+        ['Modelo do Dashboard TV','Escolhe o desenho de robô que aparece no modo TV.'],
+        ['Zona de perigo','Baixar backup, limpar toda a produção ou restaurar o padrão. Sempre baixe o backup antes de limpar ou restaurar.']]}
+    ]},
+  { id:'robo', titulo:'Tela do robô', ico:'robot', quem:'Todos (editar: HOST e Gestor)', ir:'robo',
+    resumo:'Tudo sobre um robô: status, peça, eletrodo, limpeza, ritmo e histórico.',
+    blocos:[
+      {t:'Como abrir', passos:['Clique no robô na lista da esquerda ou no cartão dele no Painel.']},
+      {t:'O que tem', defs:[
+        ['Status','Produzindo, Setup, Aguardando, Manutenção ou Parado. O HOST troca no seletor do topo.'],
+        ['Peça em produção','A peça lançada na Meta Diária. Os campos vazios do robô usam os dados da ficha dessa peça.'],
+        ['Eletrodo','Mostra o desgaste (peças feitas desde a última troca), os limites de aviso e crítico, e o botão <b>+ Registrar troca agora</b>.'],
+        ['Limpeza','Registra a última limpeza e quem fez.'],
+        ['Ritmo por peça / hora','Tempo que cada peça pode levar para bater a meta. O "% do tempo" compara com o tempo/peça cadastrado: acima de 100% a meta está apertada.'],
+        ['Histórico de produção','Dia a dia do robô, com seletor de mês.']]}
+    ]},
+  { id:'tv', titulo:'Dashboard TV', ico:'painel', quem:'Todos',
+    resumo:'Modo de tela cheia para a TV da fábrica.',
+    blocos:[
+      {t:'Como usar', passos:[
+        'Na tela de entrada, clique em <b>Modo Dashboard TV</b> (não pede senha).',
+        'Ele passa sozinho pelos robôs e pela visão geral, com relógio e produção de hoje por hora.',
+        'Para sair, use o botão de voltar no canto de cima.']}
+    ]},
+  { id:'whats', titulo:'MR.ROBOT no WhatsApp', ico:'robot', quem:'Todos',
+    resumo:'Perguntas sobre a produção pelo WhatsApp, a qualquer hora.',
+    blocos:[
+      {t:'Como usar', passos:[
+        'Mande uma mensagem para o MR.ROBOT e escolha <b>Cromo Azul</b>. A escolha fica gravada.',
+        'Pergunte com suas palavras: "quanto produziu hoje?", "quem está no 800?", "como foi a Tainá no mês?", "quantas peças da 3701?".',
+        '"trocar" muda de fábrica e "ajuda" mostra o que ele sabe responder.',
+        'Pelo WhatsApp só dá para consultar, com uma exceção: abrir e concluir manutenção, com senha.']}
+    ]}
+];
+const GUIA_TELA = {'Painel':'painel','Produção Mensal':'mensal','Meta Diária':'meta','Relatório Mensal':'relmes','Produção por Peça':'ppeca','Relatório Anual':'anual','Catálogo de Peças':'catpeca','Cadastro de Peças':'catpeca','Manutenção':'manut','Funcionários':'func','Relatórios':'relat','Gerenciar':'ger'};
+let _guiaBusca='';
+function _guiaSecao(s,compacto){
+  const bl=s.blocos.map(b=>{
+    let corpo='';
+    if(b.passos) corpo=`<ol class="gd-passos">${b.passos.map(p=>`<li>${p}</li>`).join('')}</ol>`;
+    if(b.defs) corpo=`<dl class="gd-defs">${b.defs.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
+    return `<div class="gd-bloco"><div class="gd-bt">${b.t}</div>${corpo}</div>`;
+  }).join('');
+  const ir = s.ir && !compacto ? (s.ir==='robo' ? `<button type="button" class="btn ghost tiny" onclick="goto('robo','${Object.keys(robos()).sort()[0]||'800'}')">Abrir um robô →</button>` : (PAINEIS.some(p=>p.id===s.ir&&(!p.host||isHost)) ? `<button type="button" class="btn ghost tiny" onclick="goto('painel','${s.ir}')">Abrir tela →</button>` : '')) : '';
+  return `<section class="gd-sec card glass" id="guia-${s.id}" data-busca="${esc((s.titulo+' '+s.resumo+' '+s.blocos.map(b=>b.t+' '+(b.passos||[]).join(' ')+' '+(b.defs||[]).flat().join(' ')).join(' ')).replace(/<[^>]+>/g,'').toLowerCase())}">
+    <div class="gd-head"><div class="gd-ico"><svg viewBox="0 0 24 24">${IC[s.ico]||IC.guia}</svg></div>
+      <div class="gd-ht"><h2>${s.titulo}</h2><p>${s.resumo}</p></div>
+      <span class="gd-quem${/Só HOST/.test(s.quem)?' host':''}">${s.quem}</span></div>
+    ${bl}${ir?`<div class="gd-ir">${ir}</div>`:''}
+  </section>`;
+}
+function viewGuia(){
+  return pageHead(IC.guia,'Guia','Como usar o sistema — toque num assunto ou busque')
+    + `<div class="gd-top card glass"><div class="gd-busca"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input class="inp nocaps" id="guiaBusca" placeholder="Buscar no guia (ex.: café, % da meta, backup)" value="${esc(_guiaBusca)}" oninput="_guiaFiltrar(this.value)" autocomplete="off"></div>
+        <nav class="gd-idx">${GUIA.map(s=>`<button type="button" data-g="${s.id}" onclick="_guiaIr('${s.id}')"><svg viewBox="0 0 24 24">${IC[s.ico]||IC.guia}</svg>${s.titulo}</button>`).join('')}</nav></div>
+      <div class="gd-lista">${GUIA.map(s=>_guiaSecao(s)).join('')}<div class="gd-nada card glass" id="guiaNada" style="display:none">Nada encontrado no guia para essa busca.</div></div>`;
+}
+function _guiaFiltrar(q){
+  _guiaBusca=q; const t=q.trim().toLowerCase(); let n=0;
+  document.querySelectorAll('.gd-sec').forEach(el=>{ const ok=!t||el.dataset.busca.includes(t); el.style.display=ok?'':'none'; if(ok) n++;
+    const b=document.querySelector('.gd-idx button[data-g="'+el.id.slice(6)+'"]'); if(b) b.classList.toggle('off',!ok); });
+  const nada=document.getElementById('guiaNada'); if(nada) nada.style.display=n?'none':'';
+}
+function _guiaIr(id){
+  const el=document.getElementById('guia-'+id); if(!el) return;
+  if(el.style.display==='none'){ _guiaFiltrar(''); const i=document.getElementById('guiaBusca'); if(i) i.value=''; }
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+  el.classList.remove('gd-flash'); void el.offsetWidth; el.classList.add('gd-flash');
+}
+// "?" das telas: abre só a parte do guia daquela tela, sem sair dela
+function abrirAjuda(id){
+  const s=GUIA.find(x=>x.id===id); if(!s) return;
+  document.getElementById('modalGuiaBody').innerHTML=_guiaSecao(s,true)
+    + `<div class="modal-actions" style="margin-top:14px"><button type="button" class="btn ghost" onclick="closeModal('modalGuia');goto('painel','guia');setTimeout(()=>_guiaIr('${id}'),60)">📖 Ver guia completo</button><button type="button" class="btn primary" onclick="closeModal('modalGuia')">Entendi</button></div>`;
+  openModal('modalGuia');
+}
+function _ajudaBtn(id){ return `<button type="button" class="help-btn" onclick="abrirAjuda('${id}')" title="Como usar esta tela" aria-label="Como usar esta tela">?</button>`; }
 
 /* ============================================================
    SELETOR NEON (fsel)

@@ -4982,6 +4982,42 @@ function viewApostila(){
       <div class="ap-err" id="apErr">${esc(_apErro)}</div>
     </div>`;
 }
+// marca d'água: empresa + "confidencial" + quando e com qual acesso foi aberta (identifica a origem de um print)
+let _apMarcaInfo = '';
+function _apMarcaTexto(){
+  const d = new Date(), z = n => String(n).padStart(2, '0');
+  const acesso = isGerente ? 'GESTOR' : (isHost ? 'HOST' : 'VISUALIZADOR');
+  return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()) + ' · ' + acesso;
+}
+function _apMarca(ctx, W, H){
+  const info = _apMarcaInfo || _apMarcaTexto();
+  ctx.save();
+  // texto em diagonal repetido pela página: escuro com contorno claro, aparece no fundo branco e no escuro
+  const fs = Math.round(W / 26);
+  ctx.font = '800 ' + fs + 'px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.translate(W / 2, H / 2); ctx.rotate(-Math.PI / 6);
+  const l1 = 'CONFIDENCIAL · CROMO AZUL', l2 = 'Uso interno · ' + info;
+  const passoX = fs * 18, passoY = fs * 6.2, alc = Math.hypot(W, H);
+  ctx.lineWidth = Math.max(1, fs / 18); ctx.lineJoin = 'round';
+  for(let y = -alc; y <= alc; y += passoY){
+    const off = (Math.round(y / passoY) % 2) * passoX / 2;
+    for(let x = -alc; x <= alc; x += passoX){
+      ctx.font = '800 ' + fs + 'px Arial, sans-serif';
+      ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.fillStyle = 'rgba(0,0,0,.075)';
+      ctx.strokeText(l1, x + off, y); ctx.fillText(l1, x + off, y);
+      ctx.font = '600 ' + Math.round(fs * .55) + 'px Arial, sans-serif';
+      ctx.strokeText(l2, x + off, y + fs * 1.05); ctx.fillText(l2, x + off, y + fs * 1.05);
+    }
+  }
+  ctx.restore();
+  // faixa no rodapé
+  ctx.save();
+  const fh = Math.round(H * .022), rf = Math.round(fh * .62);
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(0, H - fh, W, fh);
+  ctx.font = '600 ' + rf + 'px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  ctx.fillText('🔒 Material confidencial da CROMO AZUL · proibido compartilhar ou divulgar · aberto em ' + info, W / 2, H - fh / 2);
+  ctx.restore();
+}
 async function _apEntrar(){
   const inp = document.getElementById('apSenha'), err = document.getElementById('apErr'); if(!inp) return;
   const b = _apBloqueio(); if(b.ate && b.ate > Date.now()) return;
@@ -4990,7 +5026,7 @@ async function _apEntrar(){
   err.textContent = 'Conferindo...';
   try{
     _apInfo = await _apRpc('apostila_info', {p_senha: s});
-    _apSenha = s; _apSalvaBloq({});
+    _apSenha = s; _apSalvaBloq({}); _apMarcaInfo = _apMarcaTexto();
     _mainSig = ''; renderMain();
   }catch(e){
     if(e.message === 'senha'){
@@ -5091,6 +5127,7 @@ async function _apRender(i){
     const cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
     const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
     await pg.render({canvasContext: ctx, viewport: vp}).promise;
+    _apMarca(ctx, cv.width, cv.height);
     const blob = await new Promise(ok => cv.toBlob(ok, 'image/jpeg', .95));
     _apImgs[i] = URL.createObjectURL(blob); _apPoe(i);
   }catch(e){ console.error('pagina', i, e); }
@@ -5182,6 +5219,7 @@ async function _apZPag(p){
     const vp = pg.getViewport({scale: esc0}), cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
     const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
     await pg.render({canvasContext: ctx, viewport: vp}).promise;
+    _apMarca(ctx, cv.width, cv.height);
     url = URL.createObjectURL(await new Promise(ok => cv.toBlob(ok, 'image/jpeg', .95))); _apZ.cache[p] = url;
   }
   if(_apZ.pag !== p || !document.getElementById('apzPalco')) return;

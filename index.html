@@ -889,6 +889,43 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 #bootStatic.on{animation:dashStatic .5s steps(8)}
 #bootStatic.on::before{animation-duration:.5s}
 @media(prefers-reduced-motion:reduce){#bootScreen,#bootScreen *{animation:none!important}.boot-line{opacity:1}#bootStatic.on,#bootStatic.on::before{animation:none!important;opacity:0}}
+/* Funcionários: calendário de trabalho + horas do dia */
+.fcal-tit{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:4px 0 12px;font-size:13px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace}
+.fcal-leg{display:flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.06em;text-transform:none}
+.fcal-leg i{width:9px;height:9px;border-radius:2px;background:var(--fc);box-shadow:0 0 5px var(--fc);margin-left:6px}
+.fcal-wrap.multi{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.fcal{border:1px solid rgba(0,240,255,.14);border-radius:8px;padding:10px 12px 12px;background:rgba(0,240,255,.025)}
+.fcal-mes{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-family:Orbitron,sans-serif;font-weight:800;font-size:13px;color:#eaf6ff;letter-spacing:.06em}
+.fcal-mes em{font-style:normal;font-family:'Share Tech Mono',monospace;font-weight:400;font-size:11px;color:var(--faint);letter-spacing:.06em}
+.fcal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.fcal-w{text-align:center;font-family:'Share Tech Mono',monospace;font-size:10.5px;color:var(--faint);padding-bottom:2px}
+.fcal-d{position:relative;min-height:46px;border-radius:5px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:rgba(160,180,210,.35);font-family:Orbitron,sans-serif;font-size:12px;font-weight:700;padding:0}
+.fcal-d b{font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:400;color:var(--fc)}
+.fcal-d.on{cursor:pointer;color:#fff;border-color:color-mix(in srgb,var(--fc) 55%,transparent);background:color-mix(in srgb,var(--fc) 13%,transparent);transition:transform .15s,box-shadow .15s,background .15s}
+@media(hover:hover){.fcal-d.on:hover{transform:translateY(-1px);box-shadow:0 0 12px -3px var(--fc)}}
+.fcal-d.on:active{transform:scale(.96)}
+.fcal-d.on:focus-visible{outline:2px solid #f9f871;outline-offset:1px}
+.fcal-d.sel{background:var(--fc);border-color:var(--fc);color:#04121a;box-shadow:0 0 16px -2px var(--fc)}
+.fcal-d.sel b{color:#04121a;font-weight:700}
+.fcal-d.hoje::after{content:'';position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--nm,#ff2bd6);box-shadow:0 0 6px var(--nm,#ff2bd6)}
+.fcal-g.mini .fcal-d{min-height:34px;font-size:10.5px}.fcal-g.mini .fcal-d b{font-size:8.5px}
+.fdet{margin:12px 0 22px;border:1px solid rgba(0,240,255,.18);border-radius:8px;background:rgba(5,8,18,.6);overflow:hidden}
+.fdet-vazio{padding:16px;text-align:center;color:var(--faint);font-size:13px}
+.fdet-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);border-left:3px solid var(--fc);background:color-mix(in srgb,var(--fc) 7%,transparent)}
+.fdet-data{font-family:Orbitron,sans-serif;font-weight:800;font-size:17px;color:#fff}
+.fdet-sem{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;margin-top:2px}
+.fdet-res{font-size:13px;color:var(--mut)}.fdet-res b{color:#fff;font-weight:800}
+.fdet-list{padding:8px 10px;display:flex;flex-direction:column;gap:4px;max-height:300px;overflow-y:auto}
+.fdet-r{display:grid;grid-template-columns:78px minmax(90px,1.1fr) 2fr 52px 92px;align-items:center;gap:10px;padding:6px 6px;border-radius:5px}
+.fdet-r:nth-child(odd){background:rgba(255,255,255,.025)}
+.fdet-h{font-family:Orbitron,sans-serif;font-weight:700;font-size:13px;color:#eaf6ff}
+.fdet-rb{font-family:'Share Tech Mono',monospace;font-size:12.5px;color:var(--nc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fdet-rb em{font-style:normal;color:var(--mut)}
+.fdet-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}.fdet-bar i{display:block;height:100%;border-radius:99px}
+.fdet-v{font-family:Orbitron,sans-serif;font-weight:800;font-size:14px;text-align:right}
+.fdet-m{font-family:'Share Tech Mono',monospace;font-size:11.5px;color:var(--faint);text-align:right;white-space:nowrap}
+.fhist-r:hover{background:rgba(0,240,255,.05)}
+@media(max-width:560px){.fcal-g{gap:3px}.fcal-d{min-height:40px;font-size:11px}.fcal-d b{font-size:8.5px}.fdet-r{grid-template-columns:66px 1fr 44px;row-gap:3px}.fdet-bar{grid-column:1/-1;order:5}.fdet-m{grid-column:1/-1;text-align:left;order:6}.fcal-leg{display:none}}
 /* card de manutenção: coluna do robô mais estreita no celular */
 @media(max-width:560px){.manu-robo{width:78px!important;padding:12px 4px!important}.manu-robo>div:nth-child(2){font-size:28px!important}}
 
@@ -3329,9 +3366,10 @@ function desempenhoFuncDetalhe(nome,ano,mes){
         const val=parseCelVal(rd[campo]||'').num; if(val<=0) return;
         pecas+=val; horas+=1;
         porRobo[rk].pecas+=val; porRobo[rk].horas+=1;
-        if(!porDia[chave]) porDia[chave]={pecas:0,horas:0,metasOk:0,horasMeta:0};
+        if(!porDia[chave]) porDia[chave]={pecas:0,horas:0,metasOk:0,horasMeta:0,itens:[]};
         porDia[chave].pecas+=val; porDia[chave].horas+=1;
         const metaEf=metaHora(meta,hr);
+        porDia[chave].itens.push({h:hr, robo:rk, val, meta:metaEf, cod:String(rd.cod||'').trim()});
         if(metaEf>0){ horasMeta+=1; porRobo[rk].horasMeta+=1; porDia[chave].horasMeta+=1;
           if(val>=metaEf){ metasOk+=1; porRobo[rk].metasOk+=1; porDia[chave].metasOk+=1; } }
       });
@@ -3378,6 +3416,13 @@ function abrirFuncDetalhe(nomeEnc){
     html+=`<div style="background:rgba(0,255,174,.05);border:1px solid rgba(0,255,174,.3);border-radius:8px;padding:13px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
       <span style="font-size:22px">⭐</span><span style="font-size:16px;color:var(--txt)"><b style="color:var(--ok)">Melhor dia:</b> ${dataFmt} — ${md.pecas.toLocaleString("pt-BR")} peças</span></div>`;
   }
+  // Calendário de trabalho (clique no dia = horas detalhadas)
+  window._funcDiaCache={}; d.diasList.forEach(x=>{ window._funcDiaCache[x.chave]=x; });
+  const porCh=window._funcDiaCache;
+  const mesesCal=_funcMesTodos ? [...new Set(d.diasList.map(x=>x.mes))].sort((a,b)=>b-a) : [selMes];
+  html+=`<div class="fcal-tit"><span>Calendário de trabalho</span><span class="fcal-leg"><i style="--fc:var(--ok)"></i>85%+ <i style="--fc:var(--ny)"></i>45%+ <i style="--fc:var(--danger)"></i>abaixo <i style="--fc:var(--nc)"></i>sem meta</span></div>
+    <div class="fcal-wrap${mesesCal.length>1?' multi':''}">${mesesCal.map(m=>_funcCalMes(selAno,m,porCh,mesesCal.length>1)).join('')}</div>
+    <div id="funcDiaDet" class="fdet"><div class="fdet-vazio">Toque num dia destacado para ver as horas trabalhadas.</div></div>`;
   // Produção por robô
   const maxR=d.robosList.length?d.robosList[0].pecas:1;
   html+=`<div style="font-size:13px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;font-family:'Share Tech Mono',monospace;margin-bottom:12px">Produção por robô</div>`;
@@ -3400,7 +3445,7 @@ function abrirFuncDetalhe(nomeEnc){
         </tr></thead><tbody>
         ${d.diasList.map(x=>{ const dataFmt=`${String(x.dia).padStart(2,'0')}/${String(x.mes+1).padStart(2,'0')}/${x.ano}`; const tx=x.horasMeta>0?Math.round(x.metasOk/x.horasMeta*100):null;
           const corTx=tx==null?'var(--faint)':(tx>=85?'var(--ok)':tx>=45?'var(--ny)':'var(--danger)');
-          return `<tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+          return `<tr class="fhist-r" onclick="_funcVerDia('${x.chave}',true)" title="Ver as horas deste dia" style="border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer">
             <td style="padding:11px 12px;font-size:14px;color:var(--txt)">${dataFmt}</td>
             <td style="padding:11px 12px;font-size:16px;color:var(--ok);text-align:center;font-family:Orbitron,sans-serif;font-weight:700">${x.pecas.toLocaleString("pt-BR")}</td>
             <td style="padding:11px 12px;font-size:14px;color:var(--faint);text-align:center">${x.horas}</td>
@@ -3412,6 +3457,46 @@ function abrirFuncDetalhe(nomeEnc){
     <div class="modal-actions" style="margin-top:18px"><button type="button" class="btn primary" onclick="closeModal('modalFunc')" style="font-size:15px;padding:12px">Fechar</button></div>`;
   document.getElementById('modalFuncBody').innerHTML=html;
   openModal('modalFunc');
+  if(d.diasList.length) _funcVerDia(d.diasList[0].chave);
+}
+function _funcCorTx(x){ const tx=x.horasMeta>0?Math.round(x.metasOk/x.horasMeta*100):null; return {tx, cor: tx==null?'var(--nc)':(tx>=85?'var(--ok)':tx>=45?'var(--ny)':'var(--danger)')}; }
+function _funcCalMes(ano,mes,porCh,compacto){
+  const ini=new Date(ano,mes,1).getDay(), nd=new Date(ano,mes+1,0).getDate();
+  const h=new Date(); let cel=['D','S','T','Q','Q','S','S'].map(w=>`<div class="fcal-w">${w}</div>`).join('');
+  for(let i=0;i<ini;i++) cel+='<div></div>';
+  let nDias=0;
+  for(let dd=1;dd<=nd;dd++){
+    const ch=ano+'_'+mes+'_'+dd, x=porCh[ch];
+    const hoje=h.getFullYear()===ano&&h.getMonth()===mes&&h.getDate()===dd?' hoje':'';
+    if(!x){ cel+=`<div class="fcal-d${hoje}"><span>${dd}</span></div>`; continue; }
+    nDias++; const {tx,cor}=_funcCorTx(x);
+    cel+=`<button type="button" class="fcal-d on${hoje}" data-ch="${ch}" style="--fc:${cor}" onclick="_funcVerDia('${ch}')" title="${dd}/${mes+1}: ${x.pecas.toLocaleString('pt-BR')} peças em ${x.horas}h${tx!=null?' · '+tx+'% da meta':''}"><span>${dd}</span><b>${x.pecas.toLocaleString('pt-BR')}</b></button>`;
+  }
+  return `<div class="fcal"><div class="fcal-mes">${MESES[mes]} ${ano}<em>${nDias} dia${nDias!==1?'s':''} trabalhado${nDias!==1?'s':''}</em></div><div class="fcal-g${compacto?' mini':''}">${cel}</div></div>`;
+}
+function _funcVerDia(ch,rolar){
+  const x=(window._funcDiaCache||{})[ch], box=document.getElementById('funcDiaDet'); if(!x||!box) return;
+  document.querySelectorAll('#modalFuncBody .fcal-d.sel').forEach(e=>e.classList.remove('sel'));
+  const btn=document.querySelector('#modalFuncBody .fcal-d[data-ch="'+ch+'"]'); if(btn) btn.classList.add('sel');
+  const p=ch.split('_').map(Number), dt=new Date(p[0],p[1],p[2]);
+  const dataFmt=String(p[2]).padStart(2,'0')+'/'+String(p[1]+1).padStart(2,'0')+'/'+p[0];
+  const sem=dt.toLocaleDateString('pt-BR',{weekday:'long'});
+  const itens=(x.itens||[]).slice().sort((a,b)=>a.h.localeCompare(b.h)||a.robo.localeCompare(b.robo));
+  const mx=Math.max(...itens.map(i=>i.val),1), {tx,cor}=_funcCorTx(x);
+  const linhas=itens.map(i=>{ const ok=i.meta>0&&i.val>=i.meta, c=i.meta>0?(ok?'var(--ok)':'var(--danger)'):'var(--nc)';
+    return `<div class="fdet-r">
+      <span class="fdet-h">${i.h}${ehCafe(i.h)?' ☕':''}</span>
+      <span class="fdet-rb">R${esc(i.robo)}${i.cod?` · <em>${esc(i.cod)}</em>`:''}</span>
+      <div class="fdet-bar"><i style="width:${Math.max(Math.round(i.val/mx*100),4)}%;background:${c};box-shadow:0 0 6px ${c}"></i></div>
+      <span class="fdet-v" style="color:${c}">${i.val.toLocaleString('pt-BR')}</span>
+      <span class="fdet-m">${i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:'sem meta'}</span>
+    </div>`; }).join('');
+  box.innerHTML=`<div class="fdet-top" style="--fc:${cor}">
+      <div><div class="fdet-data">${dataFmt}</div><div class="fdet-sem">${sem}</div></div>
+      <div class="fdet-res"><b>${x.pecas.toLocaleString('pt-BR')}</b> peças · <b>${x.horas}</b>h${itens.length?` · das <b>${itens[0].h}</b> às <b>${itens[itens.length-1].h}</b>`:''}${tx!=null?` · metas <b>${x.metasOk}/${x.horasMeta}</b> (${tx}%)`:''}</div>
+    </div>
+    <div class="fdet-list">${linhas||'<div class="fdet-vazio">Sem horas registradas.</div>'}</div>`;
+  if(rolar) box.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
 
 /* ============================================================

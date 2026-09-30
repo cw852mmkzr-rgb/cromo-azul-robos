@@ -911,6 +911,20 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .ap-autor b{font-family:Orbitron,sans-serif;font-size:14px;color:#eaf6ff;letter-spacing:.05em;text-shadow:0 0 12px rgba(0,240,255,.4)}
 .ap-aceite{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--txt);margin-bottom:12px;cursor:pointer;line-height:1.45}
 .ap-aceite input{width:18px;height:18px;margin-top:1px;accent-color:#00f0ff;flex:none}
+.ap-nome-l{display:block;font-size:13px;color:var(--txt);margin:0 0 6px;font-weight:600}
+.ap-nome-l span{display:block;font-weight:400;font-size:11.5px;color:var(--faint);font-family:'Share Tech Mono',monospace;margin-top:2px}
+.ap-nome{width:100%;height:42px;margin-bottom:12px;font-size:14px}
+#apBlind{position:fixed;inset:0;z-index:2000;background:#05060d;display:grid;place-items:center;text-align:center;padding:20px}
+.apb-c{max-width:420px}
+.apb-i{font-size:44px;margin-bottom:10px}
+.apb-t{font-family:Orbitron,sans-serif;font-weight:800;font-size:20px;color:#fff;letter-spacing:.06em}
+.apb-s{margin-top:10px;color:var(--mut);font-size:14px;line-height:1.55}
+.ap-palco,.ap-zoom{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.ap-palco .ap-barra input,.ap-palco .ap-barra .inp{-webkit-user-select:text;user-select:text}
+@media print{
+  body.ap-on *{display:none!important}
+  body.ap-on::after{content:'CONTEÚDO CONFIDENCIAL — a impressão desta apostila não é permitida · CROMO AZUL';display:block!important;font:700 22px Arial,sans-serif;color:#000;text-align:center;margin-top:40vh;padding:0 40px}
+}
 .ap-gate-f{display:flex;gap:8px}.ap-gate-f .inp{flex:1;font-family:'Share Tech Mono',monospace;letter-spacing:.2em;height:44px}
 .ap-err{min-height:18px;margin-top:10px;color:var(--danger);font-family:'Share Tech Mono',monospace;font-size:12.5px}
 .ap-status{margin-top:8px;color:var(--nc);font-family:'Share Tech Mono',monospace;font-size:12.5px}
@@ -4956,6 +4970,8 @@ function viewApostila(){
         <p>Esta apostila é <b>sigilosa</b> e faz parte do patrimônio da empresa. <b>É proibido compartilhar, divulgar, copiar, fotografar, imprimir ou enviar</b> o conteúdo, no todo ou em parte, para qualquer pessoa ou lugar fora da empresa sem autorização.</p>
       </div>
       <div class="ap-autor"><span>Autor e criador</span><b>Técnico LEONARDO FAVARO</b></div>
+      <label class="ap-nome-l" for="apNome">Seu nome completo <span>vai aparecer na marca d'água de todas as páginas</span></label>
+      <input class="inp ap-nome" id="apNome" placeholder="Nome e sobrenome" autocomplete="name" maxlength="60" value="${esc((()=>{ try{ return localStorage.getItem('cromo_apostila_nome')||''; }catch(e){ return ''; } })())}" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('apSenha').focus();}">
       <label class="ap-aceite"><input type="checkbox" id="apAceite" onchange="document.getElementById('apAbrir').disabled=!this.checked||${bloq?'true':'false'}"> Li e entendi que este material é confidencial e não pode ser compartilhado.</label>
       <div class="ap-gate-f"><input type="password" class="inp nocaps" id="apSenha" placeholder="senha da apostila" autocomplete="off" ${bloq ? 'disabled' : ''} onkeydown="if(event.key==='Enter')_apEntrar()">
         <button type="button" class="btn primary" id="apAbrir" onclick="_apEntrar()" disabled>Abrir</button></div>
@@ -4983,11 +4999,11 @@ function viewApostila(){
     </div>`;
 }
 // marca d'água: empresa + "confidencial" + quando e com qual acesso foi aberta (identifica a origem de um print)
-let _apMarcaInfo = '';
+let _apMarcaInfo = '', _apNome = '';
 function _apMarcaTexto(){
   const d = new Date(), z = n => String(n).padStart(2, '0');
   const acesso = isGerente ? 'GESTOR' : (isHost ? 'HOST' : 'VISUALIZADOR');
-  return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()) + ' · ' + acesso;
+  return (_apNome ? _apNome + ' · ' : '') + z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()) + ' · ' + acesso;
 }
 function _apMarca(ctx, W, H){
   const info = _apMarcaInfo || _apMarcaTexto();
@@ -5015,17 +5031,51 @@ function _apMarca(ctx, W, H){
   const fh = Math.round(H * .022), rf = Math.round(fh * .62);
   ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(0, H - fh, W, fh);
   ctx.font = '600 ' + rf + 'px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
-  ctx.fillText('🔒 Material confidencial da CROMO AZUL · proibido compartilhar ou divulgar · aberto em ' + info, W / 2, H - fh / 2);
+  ctx.fillText('🔒 Material confidencial da CROMO AZUL · proibido compartilhar ou divulgar · aberto por ' + info, W / 2, H - fh / 2);
   ctx.restore();
 }
+/* ---- travas contra print / impressão / salvar (não existe bloqueio 100% na web; isto dificulta) ---- */
+function _apAtivo(){ return !!_apSenha && nav.sec === 'painel' && nav.id === 'apostila' && !!document.getElementById('apPalco'); }
+let _apOcultoT = null;
+function _apOcultar(ms){
+  if(!_apAtivo()) return;
+  let b = document.getElementById('apBlind');
+  if(!b){ b = document.createElement('div'); b.id = 'apBlind';
+    b.innerHTML = '<div class="apb-c"><div class="apb-i">🔒</div><div class="apb-t">Conteúdo protegido</div><div class="apb-s">Material confidencial da CROMO AZUL.<br>Volte para esta janela para continuar lendo.</div></div>'; }
+  const pai = document.fullscreenElement || document.body; if(b.parentElement !== pai) pai.appendChild(b);
+  clearTimeout(_apOcultoT); if(ms) _apOcultoT = setTimeout(_apMostrar, ms);
+}
+function _apMostrar(){ if(!document.hasFocus() || document.hidden){ clearTimeout(_apOcultoT); return; } const b = document.getElementById('apBlind'); if(b) b.remove(); }
+window.addEventListener('blur', () => _apOcultar());
+window.addEventListener('focus', () => { clearTimeout(_apOcultoT); _apOcultoT = setTimeout(_apMostrar, 200); });
+document.addEventListener('visibilitychange', () => { if(document.hidden) _apOcultar(); });
+document.addEventListener('keydown', e => {
+  if(!_apAtivo()) return;
+  const k = e.key || '';
+  // tecla Windows / Cmd (Win+Shift+S, Cmd+Shift+4...): esconde antes do recorte abrir
+  if(k === 'Meta' || k === 'OS' || (e.metaKey && e.shiftKey)){ _apOcultar(2500); return; }
+  if((e.ctrlKey || e.metaKey) && /^[psPS]$/.test(k)){ e.preventDefault(); e.stopPropagation(); showToast(k.toLowerCase() === 'p' ? 'Imprimir a apostila não é permitido — material confidencial.' : 'Salvar a apostila não é permitido — material confidencial.', true); }
+}, true);
+document.addEventListener('keyup', e => {
+  if(!_apAtivo() || e.key !== 'PrintScreen') return;
+  _apOcultar(3000);
+  try{ navigator.clipboard && navigator.clipboard.writeText('Conteúdo protegido — material confidencial da CROMO AZUL'); }catch(_){}
+  showToast("Captura de tela não é permitida. Este material é confidencial e tem o seu nome na marca d'água.", true);
+}, true);
+document.addEventListener('contextmenu', e => { if(_apAtivo() && e.target.closest && e.target.closest('.ap-palco,.ap-zoom')) e.preventDefault(); }, true);
+document.addEventListener('dragstart', e => { if(_apAtivo() && e.target.closest && e.target.closest('.ap-palco,.ap-zoom')) e.preventDefault(); }, true);
 async function _apEntrar(){
   const inp = document.getElementById('apSenha'), err = document.getElementById('apErr'); if(!inp) return;
   const b = _apBloqueio(); if(b.ate && b.ate > Date.now()) return;
+  const nm = (document.getElementById('apNome') || {}).value || '';
+  const nome = nm.split(' ').filter(Boolean).join(' ').trim();
+  if(nome.replace(/[^A-Za-zÀ-ÿ]/g, '').length < 3 || nome.split(' ').length < 2){ err.textContent = 'Digite seu nome e sobrenome.'; const n = document.getElementById('apNome'); if(n) n.focus(); return; }
   const ac = document.getElementById('apAceite'); if(ac && !ac.checked){ err.textContent = 'Marque que leu e entendeu o aviso de confidencialidade.'; return; }
   const s = inp.value; if(!s){ err.textContent = 'Digite a senha.'; return; }
   err.textContent = 'Conferindo...';
   try{
     _apInfo = await _apRpc('apostila_info', {p_senha: s});
+    _apNome = nome.toUpperCase(); try{ localStorage.setItem('cromo_apostila_nome', nome); }catch(e){}
     _apSenha = s; _apSalvaBloq({}); _apMarcaInfo = _apMarcaTexto();
     _mainSig = ''; renderMain();
   }catch(e){
@@ -5463,6 +5513,7 @@ const GUIA = [
         '<b>Toque numa página</b> (ou use <b>🔍 Zoom</b>) para ler ampliada. Lá, <b>↔ Largura</b> põe a página na largura da tela para ler rolando, e <b>▣ Inteira</b> mostra ela toda.',
         'Embaixo: número da página, <b>Ir</b> (pula direto para uma página) e <b>⛶ Tela cheia</b>.',
         'O site lembra a página em que você parou.']},
+      {t:'Confidencialidade', passos:['Antes de abrir, a pessoa digita o <b>nome e sobrenome</b> e confirma que leu o aviso. O nome, a data e a hora aparecem na <b>marca d&#39;água</b> de todas as páginas.','Ao sair da janela, apertar Print Screen ou a tecla Windows, as páginas somem. Imprimir, salvar e o botão direito ficam bloqueados.','No celular não dá para bloquear o print. Por isso existe a marca d&#39;água com o nome.']},
       {t:'Trocar a apostila (HOST)', passos:['Com a apostila aberta, use <b>⬆ Trocar apostila</b> e escolha o PDF novo. A antiga continua valendo até o envio terminar.']}
     ]},
   { id:'tv', titulo:'Dashboard TV', ico:'painel', quem:'Todos',

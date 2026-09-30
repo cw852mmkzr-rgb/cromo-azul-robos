@@ -889,6 +889,45 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 #bootStatic.on{animation:dashStatic .5s steps(8)}
 #bootStatic.on::before{animation-duration:.5s}
 @media(prefers-reduced-motion:reduce){#bootScreen,#bootScreen *{animation:none!important}.boot-line{opacity:1}#bootStatic.on,#bootStatic.on::before{animation:none!important;opacity:0}}
+/* Apostila (livro com folha virando) */
+.ap-on .scanlines{display:none}
+.ap-gate{max-width:460px;margin:30px auto;padding:30px 26px;text-align:center}
+.ap-lock{width:64px;height:64px;margin:0 auto 14px;display:grid;place-items:center;border-radius:10px;background:rgba(0,240,255,.07);border:1px solid rgba(0,240,255,.35);box-shadow:0 0 18px -6px var(--nc)}
+.ap-lock svg{width:30px;height:30px;fill:none;stroke:var(--nc);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ap-gate h2{font-family:Orbitron,sans-serif;font-size:18px;color:#fff;letter-spacing:.04em}
+.ap-gate p{color:var(--mut);font-size:14px;margin:8px 0 18px;line-height:1.5}
+.ap-gate-f{display:flex;gap:8px}.ap-gate-f .inp{flex:1;font-family:'Share Tech Mono',monospace;letter-spacing:.2em;height:44px}
+.ap-err{min-height:18px;margin-top:10px;color:var(--danger);font-family:'Share Tech Mono',monospace;font-size:12.5px}
+.ap-status{margin-top:8px;color:var(--nc);font-family:'Share Tech Mono',monospace;font-size:12.5px}
+.ap-up{position:relative;cursor:pointer;margin-top:4px}
+.ap-palco{position:relative;margin-top:6px;padding:26px 64px 16px;border-radius:10px;overflow:hidden;
+  background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(0,240,255,.07),transparent 70%),linear-gradient(180deg,#0b0f1f,#05060d);
+  border:1px solid rgba(0,240,255,.16);box-shadow:inset 0 0 60px rgba(0,0,0,.6)}
+.ap-palco:fullscreen{padding:30px 80px 18px;display:flex;flex-direction:column;justify-content:center;border-radius:0;border:0}
+.ap-livro-wrap{position:relative;min-height:320px;display:flex;justify-content:center;margin:0 auto}
+.ap-livro{width:100%;margin:0 auto;filter:drop-shadow(0 18px 30px rgba(0,0,0,.7))}
+.ap-palco:fullscreen .ap-livro-wrap{flex:1;align-items:center}
+.ap-pg{background:#fff;overflow:hidden}
+.ap-pg img{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;background:#fff}
+.ap-pg img:not([src]){visibility:hidden}
+.ap-num{position:absolute;bottom:6px;right:10px;font:600 10px 'Share Tech Mono',monospace;color:rgba(0,0,0,.35)}
+.ap-carregando{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--nc);font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:.06em}
+.ap-spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(0,240,255,.15);border-top-color:var(--nc);animation:sp .9s linear infinite}
+.ap-seta{position:absolute;top:50%;transform:translateY(-60%);width:46px;height:86px;display:grid;place-items:center;border-radius:8px;border:1px solid rgba(0,240,255,.3);background:rgba(8,12,26,.75);cursor:pointer;z-index:5;transition:background .15s,border-color .15s,box-shadow .15s}
+.ap-seta svg{width:24px;height:24px;fill:none;stroke:var(--nc);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.ap-seta.esq{left:10px}.ap-seta.dir{right:10px}
+@media(hover:hover){.ap-seta:hover{background:rgba(0,240,255,.12);border-color:var(--nc);box-shadow:0 0 16px -4px var(--nc)}}
+.ap-seta:active{transform:translateY(-60%) scale(.95)}
+.ap-seta:focus-visible{outline:2px solid #f9f871;outline-offset:2px}
+.ap-barra{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.ap-pag{font-family:Orbitron,sans-serif;font-weight:700;font-size:13px;color:#eaf6ff;min-width:150px;text-align:center}
+.ap-ir{display:inline-flex;gap:6px}.ap-ir .inp{width:78px;height:32px;padding:4px 8px;font-size:13px}
+.ap-zoom{position:fixed;inset:0;z-index:1300;background:rgba(2,3,10,.94);overflow:auto;display:flex;justify-content:center;padding:54px 12px 24px}
+.ap-zoom-in{display:flex;flex-direction:column;gap:14px;align-items:center;width:min(1400px,100%)}
+.ap-zoom-pg{width:100%;min-height:300px;display:grid;place-items:center;background:#fff;border-radius:4px}
+.ap-zoom-pg canvas{width:100%;height:auto;display:block}
+.ap-zoom-x{position:fixed;top:12px;right:14px;width:40px;height:40px;border-radius:6px;border:1px solid rgba(0,240,255,.4);background:rgba(8,12,26,.9);color:#fff;font-size:18px;cursor:pointer;z-index:2}
+@media(max-width:700px){.ap-palco{padding:16px 8px 12px}.ap-seta{width:34px;height:60px;background:rgba(8,12,26,.55)}.ap-seta.esq{left:4px}.ap-seta.dir{right:4px}.ap-pag{min-width:0;width:100%}}
 /* Guia + botão "?" */
 .help-btn{flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:4px;border:1px solid rgba(0,240,255,.45);background:rgba(0,240,255,.06);color:var(--nc);font-family:Orbitron,sans-serif;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 0 10px -4px var(--nc);transition:background .15s,border-color .15s,color .15s,transform .15s;padding:0}
 @media(hover:hover){.help-btn:hover{background:rgba(255,43,214,.12);border-color:var(--nm);color:#fff;box-shadow:0 0 14px -3px var(--nm)}}
@@ -1425,6 +1464,7 @@ const IC = {
   func:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
 };
 IC.guia = '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7M9 12h5"/>';
+IC.apostila = '<path d="M12 6.5C10.3 5 7.8 4.5 4 4.5v14c3.8 0 6.3.5 8 2 1.7-1.5 4.2-2 8-2v-14c-3.8 0-6.3.5-8 2z"/><path d="M12 6.5v14"/>';
 const PAINEIS = [
   {id:"painel",    nome:"Painel",           sub:"Visão geral",           ico:IC.painel,  built:true},
   {id:"mensal",    nome:"Produção Mensal",  sub:"Total por dia do mês",  ico:IC.mensal,  built:true},
@@ -1437,6 +1477,7 @@ const PAINEIS = [
   {id:"func",      nome:"Funcionários",     sub:"Desempenho da equipe",  ico:IC.func,    built:true},
   {id:"relat",     nome:"Relatórios",       sub:"Período e exportação",   ico:IC.relat,   built:true},
   {id:"ger",       nome:"Gerenciar",        sub:"Configurações do host", ico:IC.ger,     built:true, host:true},
+  {id:"apostila",  nome:"Apostila",         sub:"Treinamento dos robôs", ico:IC.apostila,built:true},
   {id:"guia",      nome:"Guia",             sub:"Como usar o sistema",   ico:IC.guia,    built:true},
 ];
 
@@ -1753,6 +1794,9 @@ function renderMain(){
   if(nav.sec==="robo") sig+=JSON.stringify(robos()[nav.id]||{});
   else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+_ppmModo+_ppmMes+_ppmAno+_ppmDataDia+_ppmDataSemana+_ppmDataIni+_ppmDataFim+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{})+"|R"+_relModo+_relDia+_relSemana+_relIni+_relFim+"|D"+(divisaoAtiva()?1:0)+"|F"+JSON.stringify(funcionarios());
   if(nav.sec==="painel" && nav.id==="guia") sig="painel:guia|"+isHost+"|"+isGerente;
+  document.body.classList.toggle("ap-on", nav.sec==="painel" && nav.id==="apostila"); // sem as linhas de CRT sobre as páginas brancas
+  if(nav.sec==="painel" && nav.id==="apostila") sig="painel:apostila|"+isHost+"|"+isGerente+"|"+(!!_apSenha)+"|"+(_apInfo?_apInfo.versao:0);
+  if(_apFlip && !(nav.sec==="painel" && nav.id==="apostila") && sig!==_mainSig){ try{ _apFlip.destroy(); }catch(e){} _apFlip=null; if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
   if(sig===_mainSig) return; _mainSig=sig;
 
   if(nav.sec==="robo"){ box.innerHTML=viewRobot(nav.id); return; }
@@ -1769,6 +1813,7 @@ function renderMain(){
   else if(p.id==="manut") box.innerHTML=viewManutencao();
   else if(p.id==="func") box.innerHTML=viewFuncionarios();
   else if(p.id==="guia") box.innerHTML=viewGuia();
+  else if(p.id==="apostila"){ if(_apFlip){ try{ _apFlip.destroy(); }catch(e){} _apFlip=null; } box.innerHTML=viewApostila(); if(_apSenha&&_apInfo) setTimeout(_apMontar,0); }
   else if(p.id==="relat"){ if(isHost && !isGerente){ box.innerHTML=pageHead(IC.relat,"Relatórios","Relatório executivo por peça")+`<div id="relHostWrap" class="relhost"></div>`; renderRelatoriosApp(); } else { box.innerHTML=viewRelatBloqueado("relat"); } }
   else box.innerHTML=viewPlaceholder(p);
 }
@@ -4840,6 +4885,200 @@ document.addEventListener('input', e=>{
 
 
 /* ============================================================
+   APOSTILA — leitor tipo livro (folha virando) da apostila de treinamento
+   O PDF fica no banco em partes (tabelas sem acesso direto); a senha da aba
+   é conferida no servidor pelas funções apostila_info / apostila_parte.
+   Envio (só HOST): apostila_enviar, em partes, e só vira a atual no fim.
+   ============================================================ */
+const AP_PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+const AP_PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const AP_FLIP = 'https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js';
+const AP_CHUNK = 700000;           // caracteres base64 por parte
+const AP_MAX_TENT = 3, AP_BLOQ_MS = 5 * 60 * 1000;
+let _apSenha = null, _apInfo = null, _apBytes = null, _apPdf = null, _apFlip = null, _apImgs = {}, _apRatio = 1.414, _apStatus = '', _apErro = '';
+const _apScripts = {};
+function _apScript(src){ return _apScripts[src] || (_apScripts[src] = new Promise((ok, erro) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => { delete _apScripts[src]; erro(new Error('Não consegui carregar ' + src)); }; document.head.appendChild(s); })); }
+async function _apRpc(fn, args){
+  const r = await fetch(SUPABASE_URL + '/rest/v1/rpc/' + fn, {method:'POST', headers:{...HEADERS_SB, 'Content-Type':'application/json'}, body: JSON.stringify(args)});
+  if(!r.ok){ const t = await r.text().catch(() => ''); throw new Error(/senha_invalida/.test(t) ? 'senha' : ('erro ' + r.status + ' ' + t.slice(0, 120))); }
+  return r.json();
+}
+function _apBloqueio(){ try{ const b = JSON.parse(localStorage.getItem('cromo_apostila_bloq') || '{}'); return b; }catch(e){ return {}; } }
+function _apSalvaBloq(b){ try{ localStorage.setItem('cromo_apostila_bloq', JSON.stringify(b)); }catch(e){} }
+function _apPagSalva(){ try{ const o = JSON.parse(localStorage.getItem('cromo_apostila_pag') || '{}'); return (_apInfo && o.v === _apInfo.versao) ? (o.p || 0) : 0; }catch(e){ return 0; } }
+
+function viewApostila(){
+  const head = pageHead(IC.apostila, 'Apostila', 'Apostila de treinamento dos robôs');
+  if(!_apSenha){
+    const b = _apBloqueio(), bloq = b.ate && b.ate > Date.now();
+    return head + `<div class="ap-gate card glass">
+      <div class="ap-lock"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+      <h2>Apostila de treinamento</h2>
+      <p>Conteúdo protegido. Digite a senha da apostila para abrir.</p>
+      <div class="ap-gate-f"><input type="password" class="inp nocaps" id="apSenha" placeholder="senha da apostila" autocomplete="off" ${bloq ? 'disabled' : ''} onkeydown="if(event.key==='Enter')_apEntrar()">
+        <button type="button" class="btn primary" onclick="_apEntrar()" ${bloq ? 'disabled' : ''}>Abrir</button></div>
+      <div class="ap-err" id="apErr">${bloq ? 'Muitas tentativas. Tente de novo em alguns minutos.' : ''}</div>
+    </div>`;
+  }
+  const host = isHost && !isGerente;
+  const enviar = host ? `<label class="btn ghost tiny ap-up" title="Enviar ou trocar o PDF da apostila">⬆ ${_apInfo ? 'Trocar apostila' : 'Enviar apostila (PDF)'}<input type="file" accept="application/pdf" hidden onchange="_apEnviar(this.files[0]);this.value=''"></label>` : '';
+  if(!_apInfo) return head + `<div class="ap-gate card glass"><div class="ap-lock"><svg viewBox="0 0 24 24">${IC.apostila}</svg></div><h2>Nenhuma apostila enviada ainda</h2>
+    <p>${host ? 'Envie o PDF da apostila pelo botão abaixo. Ele fica guardado protegido no banco.' : 'Peça ao HOST para enviar o PDF da apostila.'}</p>${enviar}<div class="ap-err" id="apErr">${esc(_apErro)}</div><div class="ap-status" id="apStatus">${esc(_apStatus)}</div></div>`;
+  return head + `<div class="ap-palco" id="apPalco">
+      <div class="ap-livro-wrap"><div id="apLivro" class="ap-livro"></div>
+        <div class="ap-carregando" id="apCarregando"><div class="ap-spin"></div><span id="apStatus">${esc(_apStatus || 'Abrindo a apostila...')}</span></div></div>
+      <button type="button" class="ap-seta esq" onclick="_apFlip&&_apFlip.flipPrev()" aria-label="Página anterior"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button type="button" class="ap-seta dir" onclick="_apFlip&&_apFlip.flipNext()" aria-label="Próxima página"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <div class="ap-barra">
+        <span class="ap-pag" id="apPag">—</span>
+        <span class="ap-ir"><input type="number" min="1" class="inp nocaps" id="apIrInp" placeholder="pág." onkeydown="if(event.key==='Enter')_apIr()"><button type="button" class="btn ghost tiny" onclick="_apIr()">Ir</button></span>
+        <button type="button" class="btn ghost tiny" onclick="_apZoom()" title="Ver a página grande">🔍 Zoom</button>
+        <button type="button" class="btn ghost tiny" onclick="_apTelaCheia()" title="Tela cheia">⛶ Tela cheia</button>
+        ${enviar}
+      </div>
+      <div class="ap-err" id="apErr">${esc(_apErro)}</div>
+    </div>`;
+}
+async function _apEntrar(){
+  const inp = document.getElementById('apSenha'), err = document.getElementById('apErr'); if(!inp) return;
+  const b = _apBloqueio(); if(b.ate && b.ate > Date.now()) return;
+  const s = inp.value; if(!s){ err.textContent = 'Digite a senha.'; return; }
+  err.textContent = 'Conferindo...';
+  try{
+    _apInfo = await _apRpc('apostila_info', {p_senha: s});
+    _apSenha = s; _apSalvaBloq({});
+    _mainSig = ''; renderMain();
+  }catch(e){
+    if(e.message === 'senha'){
+      const t = (b.t || 0) + 1;
+      if(t >= AP_MAX_TENT){ _apSalvaBloq({ate: Date.now() + AP_BLOQ_MS}); err.textContent = 'Muitas tentativas. Tente de novo em 5 minutos.'; inp.disabled = true; }
+      else { _apSalvaBloq({t}); err.textContent = 'Senha incorreta — ' + (AP_MAX_TENT - t) + (AP_MAX_TENT - t === 1 ? ' tentativa restante' : ' tentativas restantes'); }
+      inp.value = '';
+    } else err.textContent = 'Sem conexão com o banco. Tente de novo.';
+  }
+}
+function _apSetStatus(t){ _apStatus = t; const el = document.getElementById('apStatus'); if(el) el.textContent = t; }
+// monta o livro depois que a tela foi desenhada
+async function _apMontar(){
+  if(!_apSenha || !_apInfo || !document.getElementById('apLivro')) return;
+  try{
+    if(!_apBytes || _apBytes.v !== _apInfo.versao){
+      const partes = [];
+      for(let i = 0; i < _apInfo.partes; i++){ _apSetStatus('Baixando a apostila... ' + Math.round(i / _apInfo.partes * 100) + '%'); partes.push(await _apRpc('apostila_parte', {p_senha: _apSenha, p_i: i})); }
+      const bin = atob(partes.join('')), u8 = new Uint8Array(bin.length);
+      for(let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      _apBytes = {v: _apInfo.versao, u8}; _apPdf = null; _apImgs = {};
+    }
+    _apSetStatus('Preparando as páginas...');
+    await _apScript(AP_PDFJS); await _apScript(AP_FLIP);
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = AP_PDFJS_WORKER;
+    if(!_apPdf) _apPdf = await window.pdfjsLib.getDocument({data: _apBytes.u8.slice()}).promise;
+    const p1 = await _apPdf.getPage(1), vp = p1.getViewport({scale: 1});
+    _apRatio = vp.height / vp.width;
+    _apCriarLivro();
+  }catch(e){ console.error('apostila', e); _apErro = e.message === 'senha' ? 'A senha mudou. Saia e entre de novo na aba.' : 'Não consegui abrir a apostila: ' + e.message; const el = document.getElementById('apErr'); if(el) el.textContent = _apErro; }
+}
+function _apCriarLivro(){
+  const box = document.getElementById('apLivro'); if(!box) return;
+  if(_apFlip){ try{ _apFlip.destroy(); }catch(e){} _apFlip = null; }
+  box.innerHTML = ''; _apAjustaLargura();
+  const n = _apPdf.numPages;
+  for(let i = 0; i < n; i++){ const d = document.createElement('div'); d.className = 'ap-pg'; d.dataset.p = i; if(i === 0 || i === n - 1) d.dataset.density = 'hard';
+    d.innerHTML = `<img alt="Página ${i + 1}" draggable="false"${_apImgs[i] ? ` src="${_apImgs[i]}"` : ''}><span class="ap-num">${i + 1}</span>`; box.appendChild(d); }
+  const W = 560;
+  _apFlip = new St.PageFlip(box, {width: W, height: Math.round(W * _apRatio), size: 'stretch', minWidth: 240, maxWidth: 1100, minHeight: Math.round(240 * _apRatio), maxHeight: Math.round(1100 * _apRatio),
+    showCover: true, usePortrait: true, maxShadowOpacity: .45, mobileScrollSupport: false, flippingTime: 700, drawShadow: true});
+  _apFlip.loadFromHTML(box.querySelectorAll('.ap-pg'));
+  _apFlip.on('flip', () => _apAtualiza());
+  _apFlip.on('changeOrientation', () => _apAtualiza());
+  const salva = Math.min(_apPagSalva(), n - 1); if(salva > 0) _apFlip.turnToPage(salva);
+  const c = document.getElementById('apCarregando'); if(c) c.style.display = 'none';
+  _apAtualiza();
+}
+// o livro cabe na altura da tela (o page-flip só olha a largura)
+function _apAjustaLargura(){ const el = document.getElementById('apLivro'), box = el && el.parentElement; if(!box) return; const alt = window.innerHeight - (document.fullscreenElement ? 120 : 250); box.style.maxWidth = Math.max(320, Math.round(Math.max(260, alt) / _apRatio * (window.innerWidth > 700 ? 2 : 1))) + 'px'; }
+window.addEventListener('resize', _apAjustaLargura);
+function _apAtualiza(){
+  if(!_apFlip || !_apPdf) return;
+  const i = _apFlip.getCurrentPageIndex(), n = _apPdf.numPages, dupla = _apFlip.getOrientation && _apFlip.getOrientation() === 'landscape';
+  const el = document.getElementById('apPag');
+  if(el) el.textContent = (dupla && i > 0 && i < n - 1 ? `Páginas ${i + 1}–${i + 2}` : `Página ${i + 1}`) + ` de ${n}`;
+  try{ localStorage.setItem('cromo_apostila_pag', JSON.stringify({v: _apInfo.versao, p: i})); }catch(e){}
+  for(let k = Math.max(0, i - 2); k <= Math.min(n - 1, i + 5); k++) _apRender(k);
+}
+const _apFila = {};
+async function _apRender(i){
+  if(_apImgs[i] || _apFila[i]) { if(_apImgs[i]) _apPoe(i); return; }
+  _apFila[i] = true;
+  try{
+    const pg = await _apPdf.getPage(i + 1), v0 = pg.getViewport({scale: 1});
+    const alvo = Math.min(1400, Math.max(900, Math.round((window.devicePixelRatio || 1) * 700)));
+    const vp = pg.getViewport({scale: alvo / v0.width});
+    const cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    await pg.render({canvasContext: ctx, viewport: vp}).promise;
+    const blob = await new Promise(ok => cv.toBlob(ok, 'image/jpeg', .88));
+    _apImgs[i] = URL.createObjectURL(blob); _apPoe(i);
+  }catch(e){ console.error('pagina', i, e); }
+  delete _apFila[i];
+}
+// o page-flip clona as páginas no modo retrato: atualiza todas as cópias
+function _apPoe(i){ document.querySelectorAll('.ap-pg[data-p="' + i + '"] img').forEach(im => { if(im.getAttribute('src') !== _apImgs[i]) im.src = _apImgs[i]; }); }
+function _apIr(){
+  const inp = document.getElementById('apIrInp'); if(!inp || !_apFlip) return;
+  const p = parseInt(inp.value); if(!p || p < 1 || p > _apPdf.numPages){ showToast('Página de 1 a ' + _apPdf.numPages, true); return; }
+  _apFlip.flip(p - 1); inp.value = '';
+}
+function _apTelaCheia(){
+  const el = document.getElementById('apPalco'); if(!el) return;
+  if(document.fullscreenElement) document.exitFullscreen(); else if(el.requestFullscreen) el.requestFullscreen().catch(() => showToast('Tela cheia não disponível neste aparelho', true));
+}
+async function _apZoom(){
+  if(!_apFlip || !_apPdf) return;
+  const i = _apFlip.getCurrentPageIndex(), n = _apPdf.numPages, dupla = _apFlip.getOrientation() === 'landscape' && i > 0 && i < n - 1;
+  const pags = dupla ? [i, i + 1] : [i];
+  const ov = document.createElement('div'); ov.className = 'ap-zoom'; ov.innerHTML = `<button type="button" class="ap-zoom-x" aria-label="Fechar">✕</button><div class="ap-zoom-in">${pags.map(p => `<div class="ap-zoom-pg"><div class="ap-spin"></div></div>`).join('')}</div>`;
+  const fechar = () => { ov.remove(); document.removeEventListener('keydown', esc1, true); };
+  const esc1 = e => { if(e.key === 'Escape'){ e.stopPropagation(); fechar(); } };
+  ov.querySelector('.ap-zoom-x').onclick = fechar; ov.addEventListener('click', e => { if(e.target === ov) fechar(); });
+  document.addEventListener('keydown', esc1, true);
+  (document.fullscreenElement || document.body).appendChild(ov);
+  const boxes = ov.querySelectorAll('.ap-zoom-pg');
+  for(let k = 0; k < pags.length; k++){
+    const pg = await _apPdf.getPage(pags[k] + 1), v0 = pg.getViewport({scale: 1}), vp = pg.getViewport({scale: 2000 / v0.width});
+    const cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    await pg.render({canvasContext: ctx, viewport: vp}).promise;
+    if(!ov.isConnected) return; boxes[k].innerHTML = ''; boxes[k].appendChild(cv);
+  }
+}
+async function _apEnviar(f){
+  if(!f || !isHost || isGerente) return;
+  if(f.type !== 'application/pdf' && !/\.pdf$/i.test(f.name)){ showToast('Escolha um arquivo PDF', true); return; }
+  if(f.size > 150 * 1024 * 1024){ showToast('PDF grande demais (máx. 150 MB)', true); return; }
+  if(_apInfo && !confirm('Trocar a apostila atual por "' + f.name + '"?')) return;
+  try{
+    _apErro = ''; _apSetStatus('Lendo o arquivo...');
+    const u8 = new Uint8Array(await f.arrayBuffer());
+    let b64 = ''; for(let i = 0; i < u8.length; i += 0x8000) b64 += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+    b64 = btoa(b64);
+    const total = Math.ceil(b64.length / AP_CHUNK), versao = Date.now();
+    for(let i = 0; i < total; i++){
+      _apSetStatus('Enviando a apostila... ' + Math.round(i / total * 100) + '%');
+      await _apRpc('apostila_enviar', {p_senha: _apSenha, p_versao: versao, p_i: i, p_total: total, p_dados: b64.slice(i * AP_CHUNK, (i + 1) * AP_CHUNK), p_nome: f.name, p_tamanho: f.size});
+    }
+    _apInfo = await _apRpc('apostila_info', {p_senha: _apSenha});
+    _apBytes = {v: _apInfo.versao, u8}; _apPdf = null; _apImgs = {}; _apStatus = '';
+    showToast('Apostila enviada ✓'); _mainSig = ''; renderMain();
+  }catch(e){ console.error('envio apostila', e); _apSetStatus(''); _apErro = 'Não consegui enviar: ' + e.message; const el = document.getElementById('apErr'); if(el) el.textContent = _apErro; }
+}
+document.addEventListener('keydown', e => {
+  if(!_apFlip || !(nav.sec === 'painel' && nav.id === 'apostila') || document.querySelector('.ap-zoom,.modal-bg.open')) return;
+  const t = e.target; if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if(e.key === 'ArrowRight'){ e.preventDefault(); _apFlip.flipNext(); } else if(e.key === 'ArrowLeft'){ e.preventDefault(); _apFlip.flipPrev(); }
+});
+
+/* ============================================================
    GUIA — como usar o sistema (aba "Guia" + botão "?" em cada tela)
    Conteúdo em GUIA; cada tela chama o "?" pelo título (GUIA_TELA).
    ============================================================ */
@@ -5001,6 +5240,17 @@ const GUIA = [
         ['Ritmo por peça / hora','Tempo que cada peça pode levar para bater a meta. O "% do tempo" compara com o tempo/peça cadastrado: acima de 100% a meta está apertada.'],
         ['Histórico de produção','Dia a dia do robô, com seletor de mês.']]}
     ]},
+  { id:'apostila', titulo:'Apostila', ico:'apostila', quem:'Todos, com a senha da apostila (enviar: só HOST)', ir:'apostila',
+    resumo:'A apostila de treinamento dos robôs, para ler como um livro.',
+    blocos:[
+      {t:'Como abrir', passos:['Clique em <b>Apostila</b> no menu.','Digite a <b>senha da apostila</b>. Ela é pedida de novo cada vez que o site é aberto.','Depois de 3 senhas erradas a aba trava por 5 minutos.']},
+      {t:'Como ler', passos:[
+        'Use as setas <b>‹ ›</b> dos lados, as setas do teclado, ou puxe o canto da página com o mouse ou o dedo para virar a folha.',
+        'No computador aparecem duas páginas lado a lado; no celular, uma por vez.',
+        'Embaixo: número da página, <b>Ir</b> (pula direto para uma página), <b>🔍 Zoom</b> (página grande para ler detalhes) e <b>⛶ Tela cheia</b>.',
+        'O site lembra a página em que você parou.']},
+      {t:'Trocar a apostila (HOST)', passos:['Com a apostila aberta, use <b>⬆ Trocar apostila</b> e escolha o PDF novo. A antiga continua valendo até o envio terminar.']}
+    ]},
   { id:'tv', titulo:'Dashboard TV', ico:'painel', quem:'Todos',
     resumo:'Modo de tela cheia para a TV da fábrica.',
     blocos:[
@@ -5019,7 +5269,7 @@ const GUIA = [
         'Pelo WhatsApp só dá para consultar, com uma exceção: abrir e concluir manutenção, com senha.']}
     ]}
 ];
-const GUIA_TELA = {'Painel':'painel','Produção Mensal':'mensal','Meta Diária':'meta','Relatório Mensal':'relmes','Produção por Peça':'ppeca','Relatório Anual':'anual','Catálogo de Peças':'catpeca','Cadastro de Peças':'catpeca','Manutenção':'manut','Funcionários':'func','Relatórios':'relat','Gerenciar':'ger'};
+const GUIA_TELA = {'Painel':'painel','Produção Mensal':'mensal','Meta Diária':'meta','Relatório Mensal':'relmes','Produção por Peça':'ppeca','Relatório Anual':'anual','Catálogo de Peças':'catpeca','Cadastro de Peças':'catpeca','Manutenção':'manut','Funcionários':'func','Relatórios':'relat','Gerenciar':'ger','Apostila':'apostila'};
 let _guiaBusca='';
 function _guiaSecao(s,compacto){
   const bl=s.blocos.map(b=>{

@@ -1557,6 +1557,10 @@ let _ppmModo='mes', _ppmMes=new Date().getMonth(), _ppmAno=new Date().getFullYea
 let _ppmDataDia=_ppHojeStr(), _ppmDataSemana=_ppHojeStr(), _ppmDataIni=_ppHojeStr(), _ppmDataFim=_ppHojeStr();
 
 let _manutFiltro = "pendentes", _manutRobo = "todos", _manutFiltroPrio = "todos";
+let _manutOrdem = (()=>{ try{ return localStorage.getItem('cromo_manu_ordem')||'recentes'; }catch(e){ return 'recentes'; } })();   // recentes | antigas | prioridade | robo
+function manuSetOrdem(v){ _manutOrdem=v; try{ localStorage.setItem('cromo_manu_ordem',v); }catch(e){} _mainSig=''; renderMain(); }
+// momento da abertura: "criado" (ms) ou a data "DD/MM/AAAA"
+function _manutTs(c){ if(c&&c.criado) return +c.criado; const x=String((c&&c.data)||'').match(/([0-9]{1,2})\/([0-9]{1,2})\/([0-9]{2,4})/); if(!x) return 0; let y=+x[3]; if(y<100) y+=2000; return new Date(y,+x[2]-1,+x[1]).getTime(); }
 const MANU_TIPOS = ["Corretiva","Preventiva","Preditiva","Melhoria"];
 const MANU_TIPO_IC = {"Corretiva":"🔧","Preventiva":"🛡","Preditiva":"📊","Melhoria":"⬆"};
 const PRIO_IC = {"Baixa":"🟢","Média":"🟡","Alta":"🟠","Urgente":"🔴"};
@@ -3731,10 +3735,14 @@ function viewManutencao(){
   else if(_manutFiltro==='concluidas') filtrada=filtrada.filter(c=>_isConcluido(c));
   if(_manutRobo!=="todos") filtrada=filtrada.filter(c=>String(c.robo)===_manutRobo);
   if(_manutFiltroPrio!=="todos") filtrada=filtrada.filter(c=>(c.prioridade||"Média")===_manutFiltroPrio);
+  const recente=(a,b)=>_manutTs(b)-_manutTs(a);
   filtrada.sort((a,b)=>{
+    if(_manutOrdem==='recentes') return recente(a,b);
+    if(_manutOrdem==='antigas') return -recente(a,b);
+    if(_manutOrdem==='robo') return (Number(a.robo)-Number(b.robo)) || recente(a,b);
     const da=_isConcluido(a)?1:0, db=_isConcluido(b)?1:0; if(da!==db) return da-db;
     if(!da){ const pa=PRIO_PESO[a.prioridade]??2, pb=PRIO_PESO[b.prioridade]??2; if(pa!==pb) return pa-pb; }
-    return (b.criado||0)-(a.criado||0);
+    return recente(a,b);
   });
 
   // KPI cards (clicáveis)
@@ -3774,6 +3782,9 @@ function viewManutencao(){
     <select onchange="_manutFiltroPrio=this.value;_mainSig='';renderMain()" style="background:rgba(10,14,28,.55);border:1px solid rgba(255,255,255,.08);color:var(--txt);border-radius:10px;padding:7px 10px;font-size:12.5px;font-weight:700;cursor:pointer;outline:none;font-family:'Share Tech Mono',monospace">
       <option value="todos" ${_manutFiltroPrio==='todos'?'selected':''}>⚑ Toda prioridade</option>
       ${Object.keys(PRIO_IC).map(p=>`<option value="${p}" ${p===_manutFiltroPrio?'selected':''}>${PRIO_IC[p]} ${p}</option>`).join('')}
+    </select>
+    <select onchange="manuSetOrdem(this.value)" title="Ordenar a lista" style="background:rgba(10,14,28,.55);border:1px solid rgba(255,255,255,.08);color:var(--txt);border-radius:10px;padding:7px 10px;font-size:12.5px;font-weight:700;cursor:pointer;outline:none;font-family:'Share Tech Mono',monospace">
+      ${[['recentes','↓ Mais recentes'],['antigas','↑ Mais antigas'],['prioridade','⚑ Prioridade'],['robo','🤖 Por robô']].map(([v,l])=>`<option value="${v}" ${_manutOrdem===v?'selected':''}>${l}</option>`).join('')}
     </select>
     ${isHost?`<button type="button" class="btn primary tiny" onclick="openChamado()" style="margin-left:auto">+ Nova manutenção</button>`:''}
   </div>`;

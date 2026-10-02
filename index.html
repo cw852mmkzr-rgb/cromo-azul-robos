@@ -1633,78 +1633,139 @@ function migrar(c){
 }
 async function loadFromAPI(){
   const agora=Date.now();
+  if(_pendente){ saveToAPI(); return; }   // a última gravação falhou: tenta de novo antes de ler (senão a edição se perde)
   if(agora-lastUserAction<2000) return;
-  if(_saveTimer || _salvando) return;   // ainda gravando: ler agora traria o valor antigo de volta
+  if(_saveTimer || _salvandoN) return;   // ainda gravando: ler agora traria o valor antigo de volta
   const a=document.activeElement;
   if(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")){lastUserAction=agora;return;}
   if(document.querySelector('.modal-bg.open')) return;
   if(window._fsAberto && window._fsAberto()){ lastUserAction=agora; return; }
-  if(!dados){ try{const c=localStorage.getItem("cromo_cache"); if(c){dados=migrar(JSON.parse(c))||buildDefault(); render();}}catch(e){} }
+  if(!dados){ try{const c=localStorage.getItem("cromo_cache"); if(c){ const m=migrar(JSON.parse(c)); if(m){ dados=m; _baseSrv=c; render(); } }}catch(e){} }
   try{
     const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),8000);
     const r=await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main&select=conteudo,atualizado_em",{headers:HEADERS_SB,signal:ctrl.signal});
     clearTimeout(to);
+    // resposta de erro NÃO pode virar "banco vazio" (antes recriava o padrão e gravava por cima de tudo)
+    if(!r.ok) throw new Error("HTTP "+r.status);
     const d=await r.json();
-    _verServidor=(d&&d[0]&&d[0].atualizado_em)||_verServidor;
-    const c=(d&&d[0]&&d[0].conteudo)||{};
+    if(!Array.isArray(d) || !d[0]) throw new Error("registro main não encontrado");
+    if(_saveTimer || _salvandoN || Date.now()-lastUserAction<2000) return;   // mexeram enquanto lia
+    const c=d[0].conteudo||{};
     const m=migrar(c);
-    if(m && m.robos && Object.keys(m.robos).length){ dados=m; let js=null; try{ js=JSON.stringify(dados); }catch(e){} _baseSrv=js; try{ if(js) localStorage.setItem("cromo_cache",js); }catch(e){} }
-    else{ dados=buildDefault(); await saveToAPI(); }
-  }catch(e){ if(!dados) dados=buildDefault(); }
+    if(m && m.robos && Object.keys(m.robos).length){
+      _verServidor=d[0].atualizado_em||_verServidor;
+      dados=m; let js=null; try{ js=JSON.stringify(dados); }catch(e){} _baseSrv=js; try{ if(js) localStorage.setItem("cromo_cache",js); }catch(e){}
+    } else if(!Object.keys(c).length){
+      // banco realmente vazio (primeiro uso): cria o padrão
+      _verServidor=d[0].atualizado_em||null;
+      dados=buildDefault(); _baseSrv=null; await saveToAPI();
+    }
+  }catch(e){
+    // sem servidor e sem cópia local: mostra o padrão, mas guarda ele como "base" —
+    // assim, ao gravar, só o que a pessoa mudou vai para o banco (nunca o padrão inteiro)
+    if(!dados){ dados=buildDefault(); try{ _baseSrv=JSON.stringify(dados); }catch(x){} }
+  }
   render();
   if(document.getElementById("dashScreen").style.display==="flex") renderDash();
 }
 // Versão do registro que ESTA aba viu por último. Serve para detectar que outra
 // aba (ou outro aparelho) gravou no meio do caminho.
 let _verServidor=null;
-// Cópia (JSON) do que esta aba recebeu/gravou por último. Na junção, o que estava
-// aqui e foi apagado nesta aba continua apagado (antes o número apagado voltava).
-let _baseSrv=null, _salvando=false;
+// Cópia (JSON) do que esta aba recebeu/gravou por último = a "base" da junção.
+// Com ela dá para saber o que FOI mexido nesta aba e o que foi mexido em outro lugar.
+let _baseSrv=null, _salvandoN=0, _pendente=false, _filaSave=Promise.resolve();
 // compara versões pelo instante (o banco devolve "+00:00" e o navegador manda "Z")
 function _mesmaVersao(a,b){ const x=Date.parse(a), y=Date.parse(b); return (isNaN(x)||isNaN(y)) ? a===b : x===y; }
 
-// Junta o que o servidor tem com o que esta aba tem, SEM apagar nada que só
-// exista no servidor. É o que evita uma aba antiga zerar dias lançados em outra.
+// Junção de 3 vias: servidor (srv) x esta aba (loc), usando a base (o que esta aba viu por último).
+//  - o que só esta aba mudou/apagou -> vale esta aba
+//  - o que só o outro mudou/apagou/criou -> vale o servidor (aba antiga não desfaz o que outro lançou)
+//  - os dois mudaram o mesmo campo -> vale esta aba (quem está salvando agora)
 function _mesclar(srv, loc, base){
-  if(Array.isArray(loc) || Array.isArray(srv)) return loc;
-  if(!srv || typeof srv!=="object") return loc;
-  if(!loc || typeof loc!=="object") return loc===undefined ? srv : loc;
+  const J=JSON.stringify;
+  if(base!==undefined && J(loc)===J(base)) return srv;   // aqui ninguém mexeu: fica o do servidor (inclusive apagado)
+  if(srv===undefined) return loc;
+  if(Array.isArray(loc) || Array.isArray(srv)) return _mesclarLista(srv, loc, base);
+  if(!srv || typeof srv!=="object" || !loc || typeof loc!=="object") return loc;
   const b=(base && typeof base==="object" && !Array.isArray(base)) ? base : {};
   const out={...srv};
-  Object.keys(loc).forEach(k=>{ out[k]=_mesclar(srv[k], loc[k], b[k]); });
-  // apagado nesta aba (estava na base, não está mais aqui) e ninguém mexeu no servidor -> fica apagado
-  Object.keys(b).forEach(k=>{ if(!(k in loc) && (k in srv) && JSON.stringify(srv[k])===JSON.stringify(b[k])) delete out[k]; });
+  Object.keys(loc).forEach(k=>{ const v=_mesclar(srv[k], loc[k], b[k]); if(v===undefined) delete out[k]; else out[k]=v; });
+  // apagado nesta aba e ninguém mexeu no servidor -> fica apagado
+  Object.keys(b).forEach(k=>{ if(!(k in loc) && (k in srv) && J(srv[k])===J(b[k])) delete out[k]; });
+  return out;
+}
+// Listas: chamados (têm id) juntam item a item; listas simples (nomes, alertas,
+// histórico de eletrodo) somam o que o outro incluiu e tiram o que foi removido.
+function _mesclarLista(srv, loc, base){
+  if(!Array.isArray(srv) || !Array.isArray(loc)) return loc;
+  const J=JSON.stringify, b=Array.isArray(base)?base:null;
+  const comId=a=>a.every(x=>x && typeof x==="object" && x.id!=null);
+  if(comId(srv) && comId(loc) && (!b || comId(b)) && (srv.length || loc.length)){
+    const S=new Map(srv.map(x=>[String(x.id),x])), L=new Set(loc.map(x=>String(x.id))), B=new Map((b||[]).map(x=>[String(x.id),x]));
+    const out=[];
+    loc.forEach(x=>{ const id=String(x.id), sv=S.get(id), bb=B.get(id);
+      if(!sv){ if(bb && J(bb)===J(x)) return; out.push(x); return; }        // apagado lá e intocado aqui -> sai
+      out.push(bb && J(bb)===J(x) ? sv : x); });                              // só o outro mexeu -> versão do servidor
+    srv.forEach(sv=>{ const id=String(sv.id); if(!L.has(id) && !B.has(id)) out.push(sv); });   // criado lá -> entra
+    return out;
+  }
+  if(!b) return loc;
+  const Bs=new Set(b.map(x=>J(x))), Ss=new Set(srv.map(x=>J(x))), Ls=new Set(loc.map(x=>J(x)));
+  const out=loc.filter(x=>{ const k=J(x); return !(Bs.has(k) && !Ss.has(k)); });   // removido lá -> sai
+  srv.forEach(x=>{ const k=J(x); if(!Ls.has(k) && !Bs.has(k)){ out.push(x); Ls.add(k); } });   // incluído lá -> entra
   return out;
 }
 
-async function saveToAPI(){
-  _salvando=true;
-  try{
-    // quem mexeu no registro desde a última vez que esta aba leu?
-    let conflito=false;
-    try{
-      const rv=await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main&select=conteudo,atualizado_em",{headers:HEADERS_SB});
-      const dv=await rv.json();
-      const srvVer=(dv&&dv[0]&&dv[0].atualizado_em)||null;
-      if(_verServidor && srvVer && !_mesmaVersao(srvVer,_verServidor)){
-        const srvCont=(dv&&dv[0]&&dv[0].conteudo)||null;
-        let base=null; try{ base=_baseSrv?JSON.parse(_baseSrv):null; }catch(e){}
-        if(srvCont){ dados=_mesclar(srvCont, dados, base); conflito=true; }
-      }
-    }catch(e){ /* sem rede pra conferir: segue e salva o que temos */ }
-
-    const agoraISO=new Date().toISOString();
-    await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main",{method:"PATCH",headers:HEADERS_SB,
-      body:JSON.stringify({conteudo:dados,atualizado_em:agoraISO})});
-    _verServidor=agoraISO;
-    try{ _baseSrv=JSON.stringify(dados); localStorage.setItem("cromo_cache",_baseSrv); }catch(e){}
-    const now=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
-    const sl=document.getElementById("savedLabel"); if(sl) sl.textContent="salvo "+now;
-    if(conflito){ _mainSig=""; render&&render(); }  // junta em silêncio (o aviso aparecia toda hora)
-  }catch(e){ showToast("Erro ao salvar",true); }
-  finally{ _salvando=false; }
+// Gravações vão em fila (uma de cada vez). Devolve true/false (deu certo?).
+function saveToAPI(){
+  _salvandoN++;
+  const p=_filaSave.then(_gravar).finally(()=>{ _salvandoN--; });
+  _filaSave=p.catch(()=>{});
+  return p;
 }
-function saveDebounced(){ clearTimeout(_saveTimer); _saveTimer=setTimeout(()=>{ _saveTimer=null; saveToAPI().then(()=>showToast("Salvo",false,true)); },700); }
+async function _gravar(){
+  try{
+    let conflito=false;
+    for(let tent=0; tent<4; tent++){
+      // quem mexeu no registro desde a última vez que esta aba leu/gravou?
+      const rv=await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main&select=conteudo,atualizado_em",{headers:HEADERS_SB});
+      if(!rv.ok) throw new Error("HTTP "+rv.status);
+      const dv=await rv.json(); const row=Array.isArray(dv)&&dv[0]; if(!row) throw new Error("registro main não encontrado");
+      const srvVer=row.atualizado_em||null;
+      if(!_verServidor || !srvVer || !_mesmaVersao(srvVer,_verServidor)){
+        const srvCont=row.conteudo;
+        if(srvCont && srvCont.robos){ let base=null; try{ base=_baseSrv?JSON.parse(_baseSrv):null; }catch(e){} dados=_mesclar(srvCont, dados, base); conflito=true; }
+      }
+      // grava só se ninguém gravou entre a leitura acima e agora; se gravou, lê e junta de novo
+      const agoraISO=new Date().toISOString();
+      const filtro=srvVer ? "&atualizado_em=eq."+encodeURIComponent(srvVer) : "&atualizado_em=is.null";
+      const r=await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main"+filtro+"&select=id",{method:"PATCH",headers:{...HEADERS_SB,"Prefer":"return=representation"},
+        body:JSON.stringify({conteudo:dados,atualizado_em:agoraISO})});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const linhas=await r.json();
+      if(Array.isArray(linhas) && linhas.length){
+        _verServidor=agoraISO; _pendente=false;
+        try{ _baseSrv=JSON.stringify(dados); localStorage.setItem("cromo_cache",_baseSrv); }catch(e){}
+        const now=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+        const sl=document.getElementById("savedLabel"); if(sl) sl.textContent="salvo "+now;
+        if(conflito){ _mainSig=""; render&&render(); }  // junta em silêncio
+        return true;
+      }
+    }
+    throw new Error("registro mudando sem parar");
+  }catch(e){
+    if(!_pendente) showToast("Erro ao salvar — vou tentar de novo",true);
+    _pendente=true;
+    const sl=document.getElementById("savedLabel"); if(sl) sl.textContent="⚠ não salvo";
+    return false;
+  }
+}
+function saveDebounced(){ clearTimeout(_saveTimer); _saveTimer=setTimeout(()=>{ _saveTimer=null; saveToAPI().then(ok=>ok&&showToast("Salvo",false,true)); },700); }
+// trocou de aba / bloqueou o celular / vai fechar: grava na hora o que estava esperando
+function _gravaJa(){ if(_saveTimer){ clearTimeout(_saveTimer); _saveTimer=null; saveToAPI(); } }
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") _gravaJa(); });
+window.addEventListener("pagehide",_gravaJa);
+window.addEventListener("beforeunload",e=>{ if(_saveTimer || _salvandoN || _pendente){ _gravaJa(); e.preventDefault(); e.returnValue=""; } });
 
 /* ============================================================
    LOGIN / MODOS
@@ -2204,7 +2265,7 @@ function registrarLimpeza(k){
   c.historico_limpeza.push({data:agora,responsavel:resp.trim()||'—',obs:obs.trim()});
   c.ultima_limpeza=agora;
   _mainSig=""; renderMain();
-  saveToAPI().then(()=>showToast("Limpeza registrada ✓",false,true));
+  saveToAPI().then(ok=>ok&&showToast("Limpeza registrada ✓",false,true));
 }
 function removerHistLimpeza(k,idx){
   if(!isHost) return;
@@ -2244,7 +2305,7 @@ function registrarTrocaEletrodo(k){
   c.historico_eletrodo.push({data:agora,eletrodo:c.eletrodo,tipo:c.tipo_eletrodo||'',pecas_feitas:pecas});
   c.ultima_troca=agora;
   _mainSig=""; renderMain();
-  saveToAPI().then(()=>showToast(`Troca registrada ✓ — ${pecas.toLocaleString("pt-BR")} peças`,false,true));
+  saveToAPI().then(ok=>ok&&showToast(`Troca registrada ✓ — ${pecas.toLocaleString("pt-BR")} peças`,false,true));
 }
 function removerHistEletrodo(k,idx){
   if(!isHost) return;
@@ -2268,7 +2329,7 @@ function handleImgUpload(file){
     if(!robos()[k]) return;
     robos()[k].img_peca=compressed;
     _mainSig=""; renderMain();
-    saveToAPI().then(()=>showToast("Imagem salva ✓",false,true));
+    saveToAPI().then(ok=>ok&&showToast("Imagem salva ✓",false,true));
   };
   img.src=url;
 }
@@ -2368,7 +2429,7 @@ function registrarTroca(k){ if(!isHost) return; const c=robos()[k];
   const agora=new Date().toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
   c.ultima_troca=agora; if(!Array.isArray(c.historico_eletrodo)) c.historico_eletrodo=[];
   c.historico_eletrodo.push({data:agora,eletrodo:c.eletrodo||"",tipo:c.tipo_eletrodo||""});
-  _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Troca registrada",false,true)); }
+  _mainSig=""; renderMain(); saveToAPI().then(ok=>ok&&showToast("Troca registrada",false,true)); }
 
 /* ---------- Cálculos de produção ---------- */
 function totalRoboDia(a,m,d,robo){ const md=prod().metas_dias[chaveData(a,m,d)]; if(!md||!md[robo]) return 0;
@@ -2581,7 +2642,7 @@ function setPontos(chave,robo,v){ if(!isHost) return;
 }
 function toggleDivisao(){ if(!isHost) return;
   cfg().divisao_pontos = divisaoAtiva() ? false : true;
-  _mainSig=""; renderMain(); saveToAPI().then(()=>showToast(divisaoAtiva()?"Divisão de pontos ATIVADA":"Divisão de pontos DESATIVADA",false,true));
+  _mainSig=""; renderMain(); saveToAPI().then(ok=>ok&&showToast(divisaoAtiva()?"Divisão de pontos ATIVADA":"Divisão de pontos DESATIVADA",false,true));
 }
 function copiarDiaAnterior(){
   if(!isHost){ showToast("Entre como HOST para copiar",true); return; }
@@ -2627,7 +2688,7 @@ function copiarDiaAnterior(){
     }
   });
   _mainSig=""; renderMain();
-  saveToAPI().then(()=>showToast("Copiado de "+dataAntTxt+" ✓",false,true));
+  saveToAPI().then(ok=>ok&&showToast("Copiado de "+dataAntTxt+" ✓",false,true));
 }
 
 // Limpa o código e os pontos do dia que está na tela (não mexe na produção lançada).
@@ -2643,7 +2704,7 @@ function limparCodDia(){
     if(Object.keys(rd).length===0) delete dia[String(r)]; });
   if(Object.keys(dia).length===0) delete prod().metas_dias[chave];
   _mainSig=""; renderMain();
-  saveToAPI().then(()=>showToast("Código e pontos limpos ✓",false,true));
+  saveToAPI().then(ok=>ok&&showToast("Código e pontos limpos ✓",false,true));
 }
 let _rmTimer=null; function renderMainSoon(){ clearTimeout(_rmTimer); _rmTimer=setTimeout(()=>{ if(!document.querySelector('#main input:focus')){ _mainSig=""; renderMain(); } },1200); }
 
@@ -3410,11 +3471,11 @@ function savePeca(){ if(!isHost) return;
     gabarito:g("pkGabarito"), responsavel:g("pkResp"), programador:g("pkProgramador"),
     descricao:g("pkDesc"), foto:_pecaFoto||""
   };
-  closeModal("modalPeca"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Peça salva",false,true));
+  closeModal("modalPeca"); _mainSig=""; renderMain(); saveToAPI().then(ok=>ok&&showToast("Peça salva",false,true));
 }
 function deletePeca(cod){ if(!isHost) return;
   if(!confirm('Excluir a peça '+cod+'?')) return;
-  delete pecasObj()[cod]; closeModal("modalPeca"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Peça excluída",false,true));
+  delete pecasObj()[cod]; closeModal("modalPeca"); _mainSig=""; renderMain(); saveToAPI().then(ok=>ok&&showToast("Peça excluída",false,true));
 }
 
 /* ============================================================
@@ -3426,7 +3487,7 @@ function addFuncionario(){ if(!isHost) return;
   const n=nome.trim(); if(!n){ showToast("Informe um nome",true); return; }
   const lista=funcionarios();
   if(lista.some(x=>x.toLowerCase()===n.toLowerCase())){ showToast("Esse funcionário já existe",true); return; }
-  lista.push(n); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Funcionário adicionado ✓",false,true));
+  lista.push(n); _mainSig=""; renderMain(); saveToAPI().then(ok=>ok&&showToast("Funcionário adicionado ✓",false,true));
 }
 function renomearFuncionario(nomeAntigo){ if(!isHost) return;
   const novo=prompt("Novo nome:",nomeAntigo); if(novo===null) return;
@@ -3439,12 +3500,12 @@ function renomearFuncionario(nomeAntigo){ if(!isHost) return;
   Object.values(md).forEach(dia=>Object.values(dia).forEach(rd=>{
     if(rd && typeof rd==='object') Object.keys(rd).forEach(k=>{ if(k.startsWith('func_') && rd[k]===nomeAntigo) rd[k]=n; });
   }));
-  _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Nome atualizado ✓",false,true));
+  _mainSig=""; renderMain(); saveToAPI().then(ok=>ok&&showToast("Nome atualizado ✓",false,true));
 }
 function removerFuncionario(nome){ if(!isHost) return;
   if(!confirm('Remover "'+nome+'"? Os apontamentos já feitos mantêm o nome no histórico.')) return;
   const lista=funcionarios(); const i=lista.indexOf(nome); if(i>=0) lista.splice(i,1);
-  _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Funcionário removido",false,true));
+  _mainSig=""; renderMain(); saveToAPI().then(ok=>ok&&showToast("Funcionário removido",false,true));
 }
 // Agrega desempenho por funcionário no período (ano, mes; mes=null => ano inteiro)
 function desempenhoFunc(ano,mes){
@@ -3782,15 +3843,15 @@ function viewGerenciar(){
 function dashModOpt(n,titulo,desc,cls){ const cur=dashModelo(), on=(cur===n); const disabled=cls==='soon';
   return `<button type="button" class="dash-mod ${on?'on':''} ${cls||''}" ${disabled?'disabled':''} onclick="setDashModelo(${n})">
     <div class="dm-num">${n}</div><div class="dm-body"><div class="dm-t">${titulo}${on?' <span class="dm-badge">atual</span>':''}</div><div class="dm-d">${desc}</div></div></button>`; }
-function setDashModelo(n){ if(!isHost) return; cfg().dash_modelo=n; _mainSig=""; _dashSigMain=""; renderMain(); saveToAPI().then(()=>showToast("Dashboard: Modelo "+n+" ativado",false,true)); }
+function setDashModelo(n){ if(!isHost) return; cfg().dash_modelo=n; _mainSig=""; _dashSigMain=""; renderMain(); saveToAPI().then(ok=>ok&&showToast("Dashboard: Modelo "+n+" ativado",false,true)); }
 
 function gerMetric(k,v,cor){ return `<div class="card glass" style="padding:16px 18px"><div style="font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--faint);font-weight:600">${k}</div><div style="font-family:'Space Grotesk';font-size:28px;font-weight:700;color:${cor};margin-top:4px">${v.toLocaleString("pt-BR")}</div></div>`; }
 function salvarSenhaHost(){ if(!isHost) return; const v=document.getElementById("gerSenha").value.trim();
   if(v==="") delete cfg().senha; else cfg().senha=v; _senhaHost=v;
-  saveToAPI().then(()=>showToast(v?"Senha do host salva":"Senha do host removida",false,true)); }
+  saveToAPI().then(ok=>ok&&showToast(v?"Senha do host salva":"Senha do host removida",false,true)); }
 function limparProducao(){ if(!isHost) return;
   if(!confirm("Apagar TODOS os apontamentos de produção? As células e peças permanecem. Não pode ser desfeito.")) return;
-  prod().metas_dias={}; _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Produção apagada",false,true)); }
+  prod().metas_dias={}; _mainSig=""; renderMain(); saveToAPI().then(ok=>ok&&showToast("Produção apagada",false,true)); }
 
 /* ============================================================
    MANUTENÇÃO — chamados por robô
@@ -3971,7 +4032,7 @@ function saveChamado(){ if(!isHost) return;
   let novo=null;
   if(_chamEdit){ const c=chamados().find(x=>x.id===_chamEdit); if(c) Object.assign(c,obj); }
   else { obj.id="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); obj.criado=Date.now(); obj.status="Aberto"; chamados().push(obj); novo=obj; }
-  closeModal("modalChamado"); _mainSig=""; renderMain(); saveToAPI().then(()=>{ showToast("Manutenção salva",false,true); if(novo) _avisarManuWhats(novo,false); });
+  closeModal("modalChamado"); _mainSig=""; renderMain(); saveToAPI().then(ok=>{ if(!ok) return; showToast("Manutenção salva",false,true); if(novo) _avisarManuWhats(novo,false); });
 }
 function concluirChamado(id){ if(!isHost) return;
   const c=chamados().find(x=>x.id===id); if(!c) return;
@@ -3986,19 +4047,19 @@ function concluirChamado(id){ if(!isHost) return;
   c.pecas_trocadas=pecas.trim();
   c.tempo_parada=tempo.trim();
   c.realizado_por=por.trim();
-  _mainSig=""; renderMain(); saveToAPI().then(()=>{ showToast("Manutenção concluída ✓",false,true); _avisarManuWhats(c,true); });
+  _mainSig=""; renderMain(); saveToAPI().then(ok=>{ if(!ok) return; showToast("Manutenção concluída ✓",false,true); _avisarManuWhats(c,true); });
 }
 function reabrirChamado(id){ if(!isHost) return;
   const c=chamados().find(x=>x.id===id); if(!c) return;
   if(!confirm("Reabrir esta manutenção?")) return;
   c.status="Aberto"; delete c.concluido_em; delete c.data_conclusao; delete c.como_foi; delete c.pecas_trocadas; delete c.tempo_parada; delete c.realizado_por;
-  _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Manutenção reaberta",false,true));
+  _mainSig=""; renderMain(); saveToAPI().then(ok=>ok&&showToast("Manutenção reaberta",false,true));
 }
 function setChamadoStatus(id,s){ if(!isHost) return; const c=chamados().find(x=>x.id===id); if(!c) return;
   c.status=s; if(s==="Concluído") c.concluido_em=Date.now(); _mainSig=""; renderMain(); saveDebounced(); }
 function deleteChamado(id){ if(!isHost) return; id=id||_chamEdit; if(!id) return;
   if(!confirm("Excluir esta manutenção?")) return;
-  dados.manutencao.chamados=chamados().filter(x=>x.id!==id); closeModal("modalChamado"); _mainSig=""; renderMain(); saveToAPI().then(()=>showToast("Manutenção excluída",false,true)); }
+  dados.manutencao.chamados=chamados().filter(x=>x.id!==id); closeModal("modalChamado"); _mainSig=""; renderMain(); saveToAPI().then(ok=>ok&&showToast("Manutenção excluída",false,true)); }
 
 /* ============================================================
    MAPA DOS ROBÔS — chão de fábrica
@@ -4626,12 +4687,12 @@ function createCell(){
   const nc=novaCelula(Number(num)); nc.nome=document.getElementById("acNome").value.trim()||("Robô FANUC "+num);
   nc.modelo=document.getElementById("acModelo").value.trim();
   robos()[num]=nc; nav={sec:"robo",id:num}; closeModal("modalAddCell"); _mainSig="";
-  render(); saveToAPI().then(()=>showToast("Célula criada",false,true));
+  render(); saveToAPI().then(ok=>ok&&showToast("Célula criada",false,true));
 }
 function removeCell(k){ if(!isHost) return;
   if(!confirm("Excluir a célula "+(robos()[k]?.nome||k)+"? Esta ação não pode ser desfeita.")) return;
   delete robos()[k]; nav={sec:"painel",id:"mensal"}; _mainSig="";
-  render(); saveToAPI().then(()=>showToast("Célula excluída",false,true));
+  render(); saveToAPI().then(ok=>ok&&showToast("Célula excluída",false,true));
 }
 
 /* ============================================================
@@ -4647,11 +4708,11 @@ async function restaurarBackup(ev){ const file=ev.target.files[0]; ev.target.val
   try{ const novo=migrar(JSON.parse(await file.text()));
     if(!novo||!novo.robos){ showToast("Arquivo inválido",true); return; }
     if(!confirm("Restaurar backup? Isso sobrescreve todos os dados atuais.")) return;
-    dados=novo; _mainSig=""; render(); await saveToAPI(); showToast("Backup restaurado",false,true); closeModal("modalConfig");
+    dados=novo; _mainSig=""; render(); if(await saveToAPI()) showToast("Backup restaurado",false,true); closeModal("modalConfig");
   }catch(e){ showToast("Erro ao ler o arquivo",true); }
 }
 async function restaurarPadrao(){ if(!confirm("Restaurar as 6 células padrão (800–805)?\n\nIsso apaga TODOS os dados (produção incluída).")) return;
-  dados=buildDefault(); nav={sec:"painel",id:"mensal"}; _mainSig=""; render(); await saveToAPI(); showToast("Padrão restaurado",false,true); closeModal("modalConfig"); }
+  dados=buildDefault(); nav={sec:"painel",id:"mensal"}; _mainSig=""; render(); if(await saveToAPI()) showToast("Padrão restaurado",false,true); closeModal("modalConfig"); }
 function openConfig(){ openModal("modalConfig"); }
 
 /* ============================================================

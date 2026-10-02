@@ -1689,7 +1689,7 @@ async function saveToAPI(){
     try{localStorage.setItem("cromo_cache",JSON.stringify(dados))}catch(e){}
     const now=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
     const sl=document.getElementById("savedLabel"); if(sl) sl.textContent="salvo "+now;
-    if(conflito){ showToast("Outra aba tinha alterado os dados — juntei as duas versões",true); _mainSig=""; render&&render(); }
+    if(conflito){ _mainSig=""; render&&render(); }  // junta em silêncio (o aviso aparecia toda hora)
   }catch(e){ showToast("Erro ao salvar",true); }
 }
 function saveDebounced(){ clearTimeout(_saveTimer); _saveTimer=setTimeout(()=>{saveToAPI().then(()=>showToast("Salvo",false,true))},700); }

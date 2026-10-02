@@ -1634,6 +1634,7 @@ function migrar(c){
 async function loadFromAPI(){
   const agora=Date.now();
   if(agora-lastUserAction<2000) return;
+  if(_saveTimer || _salvando) return;   // ainda gravando: ler agora traria o valor antigo de volta
   const a=document.activeElement;
   if(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")){lastUserAction=agora;return;}
   if(document.querySelector('.modal-bg.open')) return;
@@ -1647,7 +1648,7 @@ async function loadFromAPI(){
     _verServidor=(d&&d[0]&&d[0].atualizado_em)||_verServidor;
     const c=(d&&d[0]&&d[0].conteudo)||{};
     const m=migrar(c);
-    if(m && m.robos && Object.keys(m.robos).length){ dados=m; try{localStorage.setItem("cromo_cache",JSON.stringify(dados))}catch(e){} }
+    if(m && m.robos && Object.keys(m.robos).length){ dados=m; let js=null; try{ js=JSON.stringify(dados); }catch(e){} _baseSrv=js; try{ if(js) localStorage.setItem("cromo_cache",js); }catch(e){} }
     else{ dados=buildDefault(); await saveToAPI(); }
   }catch(e){ if(!dados) dados=buildDefault(); }
   render();
@@ -1656,19 +1657,28 @@ async function loadFromAPI(){
 // Versão do registro que ESTA aba viu por último. Serve para detectar que outra
 // aba (ou outro aparelho) gravou no meio do caminho.
 let _verServidor=null;
+// Cópia (JSON) do que esta aba recebeu/gravou por último. Na junção, o que estava
+// aqui e foi apagado nesta aba continua apagado (antes o número apagado voltava).
+let _baseSrv=null, _salvando=false;
+// compara versões pelo instante (o banco devolve "+00:00" e o navegador manda "Z")
+function _mesmaVersao(a,b){ const x=Date.parse(a), y=Date.parse(b); return (isNaN(x)||isNaN(y)) ? a===b : x===y; }
 
 // Junta o que o servidor tem com o que esta aba tem, SEM apagar nada que só
 // exista no servidor. É o que evita uma aba antiga zerar dias lançados em outra.
-function _mesclar(srv, loc){
+function _mesclar(srv, loc, base){
   if(Array.isArray(loc) || Array.isArray(srv)) return loc;
   if(!srv || typeof srv!=="object") return loc;
   if(!loc || typeof loc!=="object") return loc===undefined ? srv : loc;
+  const b=(base && typeof base==="object" && !Array.isArray(base)) ? base : {};
   const out={...srv};
-  Object.keys(loc).forEach(k=>{ out[k]=_mesclar(srv[k], loc[k]); });
+  Object.keys(loc).forEach(k=>{ out[k]=_mesclar(srv[k], loc[k], b[k]); });
+  // apagado nesta aba (estava na base, não está mais aqui) e ninguém mexeu no servidor -> fica apagado
+  Object.keys(b).forEach(k=>{ if(!(k in loc) && (k in srv) && JSON.stringify(srv[k])===JSON.stringify(b[k])) delete out[k]; });
   return out;
 }
 
 async function saveToAPI(){
+  _salvando=true;
   try{
     // quem mexeu no registro desde a última vez que esta aba leu?
     let conflito=false;
@@ -1676,9 +1686,10 @@ async function saveToAPI(){
       const rv=await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main&select=conteudo,atualizado_em",{headers:HEADERS_SB});
       const dv=await rv.json();
       const srvVer=(dv&&dv[0]&&dv[0].atualizado_em)||null;
-      if(_verServidor && srvVer && srvVer!==_verServidor){
+      if(_verServidor && srvVer && !_mesmaVersao(srvVer,_verServidor)){
         const srvCont=(dv&&dv[0]&&dv[0].conteudo)||null;
-        if(srvCont){ dados=_mesclar(srvCont, dados); conflito=true; }
+        let base=null; try{ base=_baseSrv?JSON.parse(_baseSrv):null; }catch(e){}
+        if(srvCont){ dados=_mesclar(srvCont, dados, base); conflito=true; }
       }
     }catch(e){ /* sem rede pra conferir: segue e salva o que temos */ }
 
@@ -1686,13 +1697,14 @@ async function saveToAPI(){
     await fetch(SUPABASE_URL+"/rest/v1/dados?id=eq.main",{method:"PATCH",headers:HEADERS_SB,
       body:JSON.stringify({conteudo:dados,atualizado_em:agoraISO})});
     _verServidor=agoraISO;
-    try{localStorage.setItem("cromo_cache",JSON.stringify(dados))}catch(e){}
+    try{ _baseSrv=JSON.stringify(dados); localStorage.setItem("cromo_cache",_baseSrv); }catch(e){}
     const now=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
     const sl=document.getElementById("savedLabel"); if(sl) sl.textContent="salvo "+now;
     if(conflito){ _mainSig=""; render&&render(); }  // junta em silêncio (o aviso aparecia toda hora)
   }catch(e){ showToast("Erro ao salvar",true); }
+  finally{ _salvando=false; }
 }
-function saveDebounced(){ clearTimeout(_saveTimer); _saveTimer=setTimeout(()=>{saveToAPI().then(()=>showToast("Salvo",false,true))},700); }
+function saveDebounced(){ clearTimeout(_saveTimer); _saveTimer=setTimeout(()=>{ _saveTimer=null; saveToAPI().then(()=>showToast("Salvo",false,true)); },700); }
 
 /* ============================================================
    LOGIN / MODOS

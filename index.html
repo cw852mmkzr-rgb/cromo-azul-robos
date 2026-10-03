@@ -637,6 +637,38 @@ table.meta-t td.hcell .fhtag{font-size:10px;font-weight:600;color:var(--nc);font
 @keyframes dashBar{0%{transform:translateY(-30px)}100%{transform:translateY(30px)}}
 @media(prefers-reduced-motion:reduce){.dash-main.glitching,.dash-main.glitching .dash-robo,.dash-main.glitching .dash-geral,.dash-static.on,.dash-static.on::before{animation:none}}
 
+/* ===== Dashboard na TV: cabe sempre na tela + modo leve para TV/aparelho fraco ===== */
+#dashScreen{top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#05060d}
+body.dash-on{background-attachment:scroll}
+body.dash-on .scanlines{display:none}
+.dash-fit{display:flex;align-items:center;justify-content:center;gap:clamp(20px,5vw,80px);transform-origin:center center;flex-shrink:0;position:relative}
+.dash-robo .dash-info{max-height:none;overflow:visible}
+.dash-sweep{height:100%;top:0;background:linear-gradient(90deg,transparent,var(--cor),transparent) no-repeat 0 0/100% 2px;animation:sweepT 5s linear infinite;will-change:transform}
+@keyframes sweepT{from{transform:translateY(0)}to{transform:translateY(100%)}}
+.dash-geral{display:flex;align-items:center;justify-content:center;overflow:hidden}
+.dash-geral>.dash-fit{display:block;width:max-content;min-width:100%}
+@media(min-width:601px){
+  .dash-clock{font-size:min(8.5vw,12vh);letter-spacing:.2em}
+  .dash-head h1{font-size:min(2.2vw,4vh)}
+  .dash-horas{overflow:hidden;gap:min(.45vw,8px)}
+  .dash-hc{flex:1 1 0;min-width:0;padding:min(1vh,8px) min(.5vw,10px)}
+  .dash-hc .hl{font-size:min(1.25vw,2.4vh);white-space:nowrap}
+  .dash-hc .hv{font-size:min(1.85vw,4.2vh);white-space:nowrap}
+  .dash-hc.tot{flex:1.8 1 0}
+  .dash-footer-title{font-size:min(1vw,1.9vh);margin-bottom:min(1vh,8px)}
+  .dash-footer{padding:min(1.2vh,10px) min(1.6vw,20px)}
+}
+@media(max-width:760px){.dash-fit{flex-direction:column;gap:12px}}
+@media(max-width:600px){.dash-fit{transform:none!important}}
+/* modo leve: tira o que mais pesa na TV (brilho em cima de animação, ruído, sobreposições) */
+body.dash-leve .dash-robo-svg svg{filter:none!important}
+body.dash-leve .dash-sweep,body.dash-leve .dash-static,body.dash-leve .hud-ring,body.dash-leve .dash-robo::before{display:none!important}
+body.dash-leve .dash-rn,body.dash-leve .rb-halo,body.dash-leve .rb-led,body.dash-leve .rb3-led,body.dash-leve .rb3-earL,body.dash-leve .rb3-earR{animation:none!important}
+body.dash-leve .dash-main.glitching,body.dash-leve .dash-main.glitching *{animation:none!important;filter:none!important}
+body.dash-leve .dash-prod-n,body.dash-leve .dash-pct{text-shadow:none}
+body.dash-leve .dash-bar i,body.dash-leve .dash-dots i.on,body.dash-leve .dash-hc.at{box-shadow:none}
+body.dash-leve #dashScreen{padding:1.2vh 1.2vw}
+
 /* ===== Modelos do Dashboard (Gerenciar) ===== */
 .dash-mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .dash-mod{display:flex;align-items:center;gap:12px;text-align:left;padding:13px 14px;border:1px solid var(--glass-bd2);background:rgba(255,255,255,.03);border-radius:8px;color:var(--txt);cursor:pointer;transition:.18s;font-family:inherit}
@@ -1919,7 +1951,7 @@ function logout(){
    NAVEGAÇÃO / RENDER PRINCIPAL
    ============================================================ */
 function goto(sec,id){ nav={sec,id}; _mainSig=""; window._evSig=""; closeSidebar(); renderNav(); renderMain(); }
-function render(){ renderNav(); renderMain(); }
+function render(){ if(document.body.classList.contains("dash-on")) return; renderNav(); renderMain(); }
 
 function renderNav(){
   const box=document.getElementById("navList"); if(!box) return;
@@ -4730,13 +4762,44 @@ function dashHoraAtual(){ const h=new Date().getHours(), all=[...HORAS_DIA,...HO
   for(let i=all.length-1;i>=0;i--){ if(parseInt(all[i])<h) return all[i]; } return all[0]; }
 function dashRobos(){ return Object.keys(robos()).sort((a,b)=>Number(a)-Number(b)); }
 
+// Encaixa o conteúdo do slide no espaço livre (TV com tela "pequena" em CSS cortava embaixo/dos lados)
+function dashFit(){
+  const main=document.getElementById("dashMain"), fit=main&&main.querySelector(".dash-fit"); if(!fit) return;
+  fit.style.transform="";
+  if(window.innerWidth<=600) return;
+  const W=main.clientWidth-24, H=main.clientHeight-16, w=fit.offsetWidth, h=fit.offsetHeight;
+  if(!w||!h||W<=0||H<=0) return;
+  const esc=Math.min(1, W/w, H/h);
+  if(esc<0.995) fit.style.transform="scale("+esc.toFixed(3)+")";
+}
+window.addEventListener("resize",()=>{ if(document.body.classList.contains("dash-on")) dashFit(); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(document.body.classList.contains("dash-on")) dashFit(); });
+// Modo leve: TV (pelo navegador), ?leve=1 na URL, ou aparelho que não aguenta (mede os quadros por segundo)
+function _dashEhTV(){ return /SmartTV|SMART-TV|Tizen|Web0S|webOS|NetCast|BRAVIA|HbbTV|AFT[A-Z]|CrKey|GoogleTV|Android ?TV|Viera|VIDAA|Hisense|NETTV|Roku|TV Safari/i.test(navigator.userAgent||""); }
+function _dashLeveInicial(){
+  const q=new URLSearchParams(location.search).get("leve");
+  if(q==="1") return true; if(q==="0"){ try{ localStorage.removeItem("cromo_dash_leve"); }catch(e){} return false; }
+  try{ if(localStorage.getItem("cromo_dash_leve")==="1") return true; }catch(e){}
+  return _dashEhTV();
+}
+function _dashMedeFps(){
+  if(document.body.classList.contains("dash-leve") || new URLSearchParams(location.search).get("leve")==="0") return;
+  if(document.visibilityState!=="visible") return;
+  let n=0, t0=0; const fim=1600+3000;
+  const passo=t=>{ if(!document.body.classList.contains("dash-on") || document.visibilityState!=="visible") return;   // aba escondida: não mede (o navegador segura os quadros)
+    if(!t0) t0=t; if(t-t0>1600) n++;
+    if(t-t0<fim) return requestAnimationFrame(passo);
+    const fps=n/3; if(fps<40){ document.body.classList.add("dash-leve"); try{ localStorage.setItem("cromo_dash_leve","1"); }catch(e){} dashFit(); } };
+  requestAnimationFrame(passo);
+}
 function startDashboard(){ isHost=false;
+  document.body.classList.add("dash-on"); if(_dashLeveInicial()) document.body.classList.add("dash-leve"); setTimeout(_dashMedeFps,500);
   document.getElementById("loginScreen").style.display="none"; document.getElementById("app").style.display="none";
   document.getElementById("dashScreen").style.display="flex";
   _dashIdx=0; _dashGeral=false; _dashSeq=[]; _dashSigMain=""; _dashSigFoot="";
   document.getElementById("dashMain").innerHTML=`<div class="dash-loading"><div class="dash-spin"></div><div>CARREGANDO PRODUÇÃO…</div></div>`;
   lastUserAction=0; loadFromAPI(); if(dados) renderDash();
-  clearInterval(dashTimer); dashTimer=setInterval(loadFromAPI,3000);
+  clearInterval(dashTimer); dashTimer=setInterval(loadFromAPI,document.body.classList.contains("dash-leve")?6000:3000);
   tickClock(); clearInterval(dashClockTimer); dashClockTimer=setInterval(tickClock,1000);
   dashScheduleNext();
 }
@@ -4745,7 +4808,7 @@ function dashScheduleNext(){
   const delay = _dashGeral ? 60000 : 5000; // Geral: 1 minuto · Robô: 5 segundos
   dashSlideTimer = setTimeout(dashNextSlide, delay);
 }
-function exitDashboard(){ [dashTimer,dashClockTimer].forEach(t=>clearInterval(t)); clearTimeout(dashSlideTimer);
+function exitDashboard(){ [dashTimer,dashClockTimer].forEach(t=>clearInterval(t)); clearTimeout(dashSlideTimer); document.body.classList.remove("dash-on","dash-leve");
   document.getElementById("dashScreen").style.display="none"; document.getElementById("loginScreen").style.display="flex"; }
 function tickClock(){ const n=new Date(); const ce=document.getElementById("dashClock"), de=document.getElementById("dashDate");
   if(ce) ce.textContent=n.toLocaleTimeString("pt-BR");
@@ -4778,6 +4841,7 @@ function dashZap(){ try{
 
 
 function dashGlitch(){
+  if(document.body.classList.contains("dash-leve")) return;
   const scr=document.getElementById('dashScreen'), main=document.getElementById('dashMain'); if(!scr||!main) return;
   let ov=document.getElementById('dashStatic');
   if(!ov){ ov=document.createElement('div'); ov.id='dashStatic'; ov.className='dash-static'; scr.appendChild(ov); }
@@ -4959,7 +5023,7 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
   const sig=`R|${k}|${hora}|${prodH}|${meta}|${rd.cod||''}|${_dashIdx}|${_dashSeq.length}|M${dashModelo()}|C${cafe?1:0}`; if(sig===_dashSigMain) return; _dashSigMain=sig;
   const dots=_dashSeq.map((_,i)=>`<i class="${i===_dashIdx?'on':''}"></i>`).join('')+`<i class="g"></i>`;
   main.innerHTML=`<div class="dash-robo" data-modelo="${dashModelo()}" style="--cor:${cor}"><div class="dash-sweep"></div>
-    <div class="dash-robo-svg">${dashRoboSVG(cor)}</div>
+    <div class="dash-fit"><div class="dash-robo-svg">${dashRoboSVG(cor)}</div>
     <div class="dash-info">
       <div><div class="dash-rn">ROBÔ ${esc(k)}</div><div class="dash-nome">${esc(c.nome||'')}</div><div class="dash-cod">⚙ ${esc(rd.cod||c.codigo_peca||'—')}</div></div>
       <div class="dash-box"><div class="dash-prod-h">PRODUÇÃO ${hora}</div><div class="dash-prod-n">${prodH>0?prodH:'—'}</div>
@@ -4969,7 +5033,7 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
       ${meta>0&&prodH>0?`<div class="dash-eff"><div class="dash-pct-wrap"><svg class="hud-ring" viewBox="0 0 200 120" preserveAspectRatio="none"><ellipse class="r1" cx="100" cy="60" rx="96" ry="54"/><ellipse class="r2" cx="100" cy="60" rx="86" ry="46"/></svg><div class="dash-pct">${pct}%</div></div><div class="dash-eff-l">EFICIÊNCIA DA HORA</div>
         <div class="dash-bar"><i style="transform:scaleX(${Math.min(pct,100)/100})"></i></div></div>`:''}
       <div class="dash-dots">${dots}</div>
-    </div></div>`; }
+    </div></div></div>`; dashFit(); }
 
 function dashRenderGeral(){ const main=document.getElementById("dashMain"); if(!main) return;
   const dd=dashDados(), hora=dashHoraAtual(), horas=[...HORAS_DIA,...HORAS_NOITE], rb=dashRobos();
@@ -4984,10 +5048,10 @@ function dashRenderGeral(){ const main=document.getElementById("dashMain"); if(!
     return `<tr><td class="rn">${esc(k)}</td><td class="cd">${esc(rd.cod||'—')}</td><td class="mt">${meta||'—'}</td>${cells}<td class="tt">${tr>0?tr.toLocaleString("pt-BR"):'—'}</td></tr>`; }).join('');
   const heads=horas.map(h=>`<th class="${h===hora?'at':''}${ehCafe(h)?' cafe':''}">${h}${ehCafe(h)?' ☕':''}</th>`).join('');
   const tot=horas.map(h=>{ const t=rb.reduce((s,k)=>s+parseCelVal((dd[k]||{})[campoH(h)]).num,0); return `<td>${t>0?t:'—'}</td>`; }).join('');
-  main.innerHTML=`<div class="dash-geral"><div class="dash-geral-t">📊 VISÃO GERAL — PRODUÇÃO DO DIA · HORA ATUAL: <b>${hora}</b></div>
+  main.innerHTML=`<div class="dash-geral"><div class="dash-fit"><div class="dash-geral-t">📊 VISÃO GERAL — PRODUÇÃO DO DIA · HORA ATUAL: <b>${hora}</b></div>
     <table class="dash-tbl"><thead><tr><th style="text-align:left">Robô</th><th style="text-align:left">Peça</th><th class="mt">Meta/h</th>${heads}<th class="tt">Total</th></tr></thead>
     <tbody>${linhas}</tbody><tfoot><tr><td colspan="3">TOTAL GERAL</td>${tot}<td class="tt">${totalGeral.toLocaleString("pt-BR")}</td></tr></tfoot></table>
-    <div class="dash-dots">${rb.map(()=>`<i></i>`).join('')}<i class="on g"></i></div></div>`; }
+    <div class="dash-dots">${rb.map(()=>`<i></i>`).join('')}<i class="on g"></i></div></div></div>`; dashFit(); }
 
 function dashRenderFooter(){ const f=document.getElementById("dashHoras"); if(!f) return;
   const dd=dashDados(), hora=dashHoraAtual(), horas=[...HORAS_DIA,...HORAS_NOITE], rb=dashRobos();

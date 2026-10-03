@@ -638,9 +638,10 @@ table.meta-t td.hcell .fhtag{font-size:10px;font-weight:600;color:var(--nc);font
 @media(prefers-reduced-motion:reduce){.dash-main.glitching,.dash-main.glitching .dash-robo,.dash-main.glitching .dash-geral,.dash-static.on,.dash-static.on::before{animation:none}}
 
 /* ===== Dashboard na TV: cabe sempre na tela + modo leve para TV/aparelho fraco ===== */
-#dashScreen{top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:#05060d}
+#dashScreen{top:0;left:0;right:0;bottom:0;width:100%;height:100%;background-color:#05060d;
+  background-image:radial-gradient(1100px 560px at 82% -8%,rgba(255,43,214,.10),transparent 60%),radial-gradient(950px 520px at -5% 108%,rgba(0,240,255,.11),transparent 55%),linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:100% 100%,100% 100%,44px 44px,44px 44px}
 body.dash-on{background-attachment:scroll}
-body.dash-on .scanlines{display:none}
 .dash-fit{display:flex;align-items:center;justify-content:center;gap:clamp(20px,5vw,80px);transform-origin:center center;flex-shrink:0;position:relative}
 .dash-robo .dash-info{max-height:none;overflow:visible}
 .dash-sweep{height:100%;top:0;background:linear-gradient(90deg,transparent,var(--cor),transparent) no-repeat 0 0/100% 2px;animation:sweepT 5s linear infinite;will-change:transform}
@@ -662,12 +663,35 @@ body.dash-on .scanlines{display:none}
 @media(max-width:600px){.dash-fit{transform:none!important}}
 /* modo leve: tira o que mais pesa na TV (brilho em cima de animação, ruído, sobreposições) */
 body.dash-leve .dash-robo-svg svg{filter:none!important}
-body.dash-leve .dash-sweep,body.dash-leve .dash-static,body.dash-leve .hud-ring,body.dash-leve .dash-robo::before{display:none!important}
+body.dash-leve .dash-sweep,body.dash-leve .dash-static,body.dash-leve .hud-ring,body.dash-leve .hud-spin,body.dash-leve .dash-robo::before,body.dash-leve .scanlines{display:none!important}
 body.dash-leve .dash-rn,body.dash-leve .rb-halo,body.dash-leve .rb-led,body.dash-leve .rb3-led,body.dash-leve .rb3-earL,body.dash-leve .rb3-earR{animation:none!important}
 body.dash-leve .dash-main.glitching,body.dash-leve .dash-main.glitching *{animation:none!important;filter:none!important}
 body.dash-leve .dash-prod-n,body.dash-leve .dash-pct{text-shadow:none}
 body.dash-leve .dash-bar i,body.dash-leve .dash-dots i.on,body.dash-leve .dash-hc.at{box-shadow:none}
 body.dash-leve #dashScreen{padding:1.2vh 1.2vw}
+/* ===== Modo TV: os MESMOS efeitos, feitos só com transform/opacity (a placa de vídeo faz sozinha, sem travar) ===== */
+.hud-spin{display:none}
+/* brilho do robô: halo pulsando atrás (antes era um drop-shadow recalculado a cada quadro da animação) */
+.dash-robo-svg{position:relative}
+body.dash-tv .dash-robo-svg svg{filter:none!important;position:relative}
+body.dash-tv .dash-robo-svg::before{content:"";position:absolute;left:-16%;right:-16%;top:-16%;bottom:-16%;background:radial-gradient(closest-side,var(--cor),transparent);opacity:.16;animation:dashHalo 2.2s ease-in-out infinite alternate;will-change:opacity;pointer-events:none}
+@keyframes dashHalo{to{opacity:.34}}
+/* anéis do % girando por transform */
+body.dash-tv svg.hud-ring{display:none}
+body.dash-tv .hud-spin{display:block;position:absolute;left:50%;top:50%;width:100%;padding-top:100%;transform:translate(-50%,-50%) scaleY(.52);pointer-events:none}
+.hud-spin i{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;border:2px dashed var(--cor);opacity:.5;animation:hudGira 7s linear infinite;will-change:transform}
+.hud-spin i+i{left:9%;top:9%;right:9%;bottom:9%;opacity:.28;border-style:dotted;animation-duration:10s;animation-direction:reverse}
+@keyframes hudGira{to{transform:rotate(360deg)}}
+body.dash-tv .scanlines{will-change:transform}
+body.dash-tv .dash-sweep{will-change:transform}
+/* glitch da troca de slide: tremida + RGB separado só nos textos + chiado pré-desenhado andando */
+body.dash-tv .dash-main.glitching{will-change:transform}
+body.dash-tv .dash-main.glitching .dash-robo,body.dash-tv .dash-main.glitching .dash-geral{animation:none}
+body.dash-tv .dash-main.glitching .dash-rn,body.dash-tv .dash-main.glitching .dash-prod-n,body.dash-tv .dash-main.glitching .dash-pct,body.dash-tv .dash-main.glitching .dash-cod,body.dash-tv .dash-main.glitching .dash-geral-t,body.dash-tv .dash-main.glitching .dash-tbl{animation:rgbSplit .28s steps(4)}
+@keyframes rgbSplit{25%{text-shadow:3px 0 #ff2bd6,-3px 0 #00f0ff}50%{text-shadow:-4px 0 #ff2bd6,4px 0 #00f0ff}75%{text-shadow:2px 0 #00f0ff,-2px 0 #ff2bd6}}
+body.dash-tv .dash-static{mix-blend-mode:normal;background-image:var(--ruido,none);background-size:256px 256px;left:-80px;right:-80px;top:-80px;bottom:-80px;will-change:transform,opacity}
+body.dash-tv .dash-static.on{animation:ruidoTV .3s steps(6)}
+@keyframes ruidoTV{0%{opacity:.55;transform:translate(0,0)}25%{opacity:.8;transform:translate(-44px,24px)}50%{opacity:.35;transform:translate(32px,-36px)}75%{opacity:.65;transform:translate(-24px,42px)}100%{opacity:0;transform:translate(0,0)}}
 
 /* ===== Modelos do Dashboard (Gerenciar) ===== */
 .dash-mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
@@ -4776,30 +4800,39 @@ window.addEventListener("resize",()=>{ if(document.body.classList.contains("dash
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(document.body.classList.contains("dash-on")) dashFit(); });
 // Modo leve: TV (pelo navegador), ?leve=1 na URL, ou aparelho que não aguenta (mede os quadros por segundo)
 function _dashEhTV(){ return /SmartTV|SMART-TV|Tizen|Web0S|webOS|NetCast|BRAVIA|HbbTV|AFT[A-Z]|CrKey|GoogleTV|Android ?TV|Viera|VIDAA|Hisense|NETTV|Roku|TV Safari/i.test(navigator.userAgent||""); }
-function _dashLeveInicial(){
+// "tv" = efeitos otimizados (padrão em TV ou aparelho lento) · "leve" = sem efeitos (só com ?leve=1)
+function _dashModo(){
   const q=new URLSearchParams(location.search).get("leve");
-  if(q==="1") return true; if(q==="0"){ try{ localStorage.removeItem("cromo_dash_leve"); }catch(e){} return false; }
-  try{ if(localStorage.getItem("cromo_dash_leve")==="1") return true; }catch(e){}
-  return _dashEhTV();
+  try{ localStorage.removeItem("cromo_dash_leve"); }catch(e){}   // modo antigo, que tirava os efeitos
+  if(q==="1") return "leve";
+  if(q==="0"){ try{ localStorage.removeItem("cromo_dash_tv"); }catch(e){} return ""; }
+  try{ if(localStorage.getItem("cromo_dash_tv")==="1") return "tv"; }catch(e){}
+  return _dashEhTV() ? "tv" : "";
 }
+// chiado pré-desenhado uma vez (antes era um filtro de ruído recalculado na hora)
+function _dashRuido(){ if(window._dashRuidoOk) return;
+  try{ const c=document.createElement("canvas"); c.width=c.height=128; const x=c.getContext("2d"), im=x.createImageData(128,128);
+    for(let i=0;i<im.data.length;i+=4){ const v=Math.random()*255|0; im.data[i]=im.data[i+1]=im.data[i+2]=v; im.data[i+3]=Math.random()<.55?95:0; }
+    x.putImageData(im,0,0); document.body.style.setProperty("--ruido","url("+c.toDataURL()+")"); window._dashRuidoOk=1; }catch(e){} }
 function _dashMedeFps(){
-  if(document.body.classList.contains("dash-leve") || new URLSearchParams(location.search).get("leve")==="0") return;
+  if(document.body.classList.contains("dash-tv") || new URLSearchParams(location.search).get("leve")==="0") return;
   if(document.visibilityState!=="visible") return;
   let n=0, t0=0; const fim=1600+3000;
   const passo=t=>{ if(!document.body.classList.contains("dash-on") || document.visibilityState!=="visible") return;   // aba escondida: não mede (o navegador segura os quadros)
     if(!t0) t0=t; if(t-t0>1600) n++;
     if(t-t0<fim) return requestAnimationFrame(passo);
-    const fps=n/3; if(fps<40){ document.body.classList.add("dash-leve"); try{ localStorage.setItem("cromo_dash_leve","1"); }catch(e){} dashFit(); } };
+    const fps=n/3; if(fps<40){ document.body.classList.add("dash-tv"); try{ localStorage.setItem("cromo_dash_tv","1"); }catch(e){} dashFit(); } };
   requestAnimationFrame(passo);
 }
 function startDashboard(){ isHost=false;
-  document.body.classList.add("dash-on"); if(_dashLeveInicial()) document.body.classList.add("dash-leve"); setTimeout(_dashMedeFps,500);
+  document.body.classList.add("dash-on"); const md=_dashModo(); if(md) document.body.classList.add("dash-tv"); if(md==="leve") document.body.classList.add("dash-leve");
+  _dashRuido(); setTimeout(_dashMedeFps,500);
   document.getElementById("loginScreen").style.display="none"; document.getElementById("app").style.display="none";
   document.getElementById("dashScreen").style.display="flex";
   _dashIdx=0; _dashGeral=false; _dashSeq=[]; _dashSigMain=""; _dashSigFoot="";
   document.getElementById("dashMain").innerHTML=`<div class="dash-loading"><div class="dash-spin"></div><div>CARREGANDO PRODUÇÃO…</div></div>`;
   lastUserAction=0; loadFromAPI(); if(dados) renderDash();
-  clearInterval(dashTimer); dashTimer=setInterval(loadFromAPI,document.body.classList.contains("dash-leve")?6000:3000);
+  clearInterval(dashTimer); dashTimer=setInterval(loadFromAPI,document.body.classList.contains("dash-tv")?6000:3000);
   tickClock(); clearInterval(dashClockTimer); dashClockTimer=setInterval(tickClock,1000);
   dashScheduleNext();
 }
@@ -4808,7 +4841,7 @@ function dashScheduleNext(){
   const delay = _dashGeral ? 60000 : 5000; // Geral: 1 minuto · Robô: 5 segundos
   dashSlideTimer = setTimeout(dashNextSlide, delay);
 }
-function exitDashboard(){ [dashTimer,dashClockTimer].forEach(t=>clearInterval(t)); clearTimeout(dashSlideTimer); document.body.classList.remove("dash-on","dash-leve");
+function exitDashboard(){ [dashTimer,dashClockTimer].forEach(t=>clearInterval(t)); clearTimeout(dashSlideTimer); document.body.classList.remove("dash-on","dash-tv","dash-leve");
   document.getElementById("dashScreen").style.display="none"; document.getElementById("loginScreen").style.display="flex"; }
 function tickClock(){ const n=new Date(); const ce=document.getElementById("dashClock"), de=document.getElementById("dashDate");
   if(ce) ce.textContent=n.toLocaleTimeString("pt-BR");
@@ -5030,7 +5063,7 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
         ${meta>0?`<div class="dash-meta-txt">META${cafe?' (CAFÉ)':''}: <b>${metaEf}</b> PEÇAS/HORA</div>`:''}
         ${meta>0&&prodH>0&&!bateu&&faltam>0?`<div class="dash-meta-txt fail">FALTOU ${faltam} PEÇA${faltam===1?'':'S'}</div>`:''}
         ${cafe?`<div class="dash-meta-txt" style="color:var(--ny);font-weight:700">☕ META REDUZIDA — PARADA DE ${CAFE_PARADA_MIN} MIN</div>`:''}</div>
-      ${meta>0&&prodH>0?`<div class="dash-eff"><div class="dash-pct-wrap"><svg class="hud-ring" viewBox="0 0 200 120" preserveAspectRatio="none"><ellipse class="r1" cx="100" cy="60" rx="96" ry="54"/><ellipse class="r2" cx="100" cy="60" rx="86" ry="46"/></svg><div class="dash-pct">${pct}%</div></div><div class="dash-eff-l">EFICIÊNCIA DA HORA</div>
+      ${meta>0&&prodH>0?`<div class="dash-eff"><div class="dash-pct-wrap"><svg class="hud-ring" viewBox="0 0 200 120" preserveAspectRatio="none"><ellipse class="r1" cx="100" cy="60" rx="96" ry="54"/><ellipse class="r2" cx="100" cy="60" rx="86" ry="46"/></svg><div class="hud-spin"><i></i><i></i></div><div class="dash-pct">${pct}%</div></div><div class="dash-eff-l">EFICIÊNCIA DA HORA</div>
         <div class="dash-bar"><i style="transform:scaleX(${Math.min(pct,100)/100})"></i></div></div>`:''}
       <div class="dash-dots">${dots}</div>
     </div></div></div>`; dashFit(); }

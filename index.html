@@ -1650,7 +1650,8 @@ let _manutFiltro = "pendentes", _manutRobo = "todos", _manutFiltroPrio = "todos"
 let _manutOrdem = (()=>{ try{ return localStorage.getItem('cromo_manu_ordem')||'recentes'; }catch(e){ return 'recentes'; } })();   // recentes | antigas | prioridade | robo
 function manuSetOrdem(v){ _manutOrdem=v; try{ localStorage.setItem('cromo_manu_ordem',v); }catch(e){} _mainSig=''; renderMain(); }
 // momento da abertura: "criado" (ms) ou a data "DD/MM/AAAA"
-function _manutTs(c){ if(c&&c.criado) return +c.criado; const x=String((c&&c.data)||'').match(/([0-9]{1,2})\/([0-9]{1,2})\/([0-9]{2,4})/); if(!x) return 0; let y=+x[3]; if(y<100) y+=2000; return new Date(y,+x[2]-1,+x[1]).getTime(); }
+// concluída = vale o momento da conclusão; aberta = o da abertura
+function _manutTs(c){ if(c&&_isConcluido(c)){ if(c.concluido_em) return +c.concluido_em; if(c.data_conclusao){ const z=String(c.data_conclusao).match(/([0-9]{1,2})\/([0-9]{1,2})\/([0-9]{2,4})/); if(z){ let y=+z[3]; if(y<100) y+=2000; return new Date(y,+z[2]-1,+z[1]).getTime(); } } } if(c&&c.criado) return +c.criado; const x=String((c&&c.data)||'').match(/([0-9]{1,2})\/([0-9]{1,2})\/([0-9]{2,4})/); if(!x) return 0; let y=+x[3]; if(y<100) y+=2000; return new Date(y,+x[2]-1,+x[1]).getTime(); }
 const MANU_TIPOS = ["Corretiva","Preventiva","Preditiva","Melhoria"];
 const MANU_TIPO_IC = {"Corretiva":"🔧","Preventiva":"🛡","Preditiva":"📊","Melhoria":"⬆"};
 const PRIO_IC = {"Baixa":"🟢","Média":"🟡","Alta":"🟠","Urgente":"🔴"};

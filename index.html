@@ -502,6 +502,8 @@ table.meta-t td.hcell .fhtag{font-size:10px;font-weight:600;color:var(--nc);font
 .dash-rn{font-family:'Orbitron',sans-serif;font-weight:800;font-size:clamp(22px,4.6vh,52px);color:#fff;letter-spacing:.06em;text-shadow:0 0 18px color-mix(in srgb,var(--cor) 60%,transparent)}
 .dash-nome{font-family:'Share Tech Mono',monospace;font-size:clamp(13px,1.6vw,18px);color:var(--mut);letter-spacing:.14em;text-transform:uppercase}
 .dash-cod{font-family:'Orbitron',sans-serif;font-size:clamp(16px,2.4vw,30px);color:var(--ny);font-weight:700;text-shadow:0 0 10px rgba(249,248,113,.5);margin-top:4px}
+.dash-cli{font-family:'Share Tech Mono',monospace;font-size:clamp(13px,1.9vw,24px);letter-spacing:.2em;color:var(--mut);margin-top:6px;text-transform:uppercase}
+.dash-cli b{color:#fff;font-weight:700;text-shadow:0 0 10px rgba(0,240,255,.35)}
 .dash-box{border:1px solid color-mix(in srgb,var(--cor) 45%,transparent);background:rgba(10,14,28,.7);padding:clamp(10px,2.6vh,36px) clamp(20px,5vw,90px);clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cor) 20%,transparent),0 0 30px -10px var(--cor)}
 .dash-prod-h{font-family:'Share Tech Mono',monospace;font-size:clamp(11px,1.6vw,22px);letter-spacing:.2em;color:var(--mut)}
 .dash-prod-n{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(44px,15vh,180px);line-height:1;color:var(--cor);text-shadow:0 0 30px color-mix(in srgb,var(--cor) 70%,transparent)}
@@ -5048,18 +5050,25 @@ function dashRoboSVG3(cor){ return `<svg viewBox="0 0 180 224" style="overflow:v
 function dashModelo(){ return (dados&&dados.config&&dados.config.dash_modelo)||1; }
 function dashRoboSVG(cor){ const m=dashModelo(); if(m===2) return dashRoboSVG2(cor); if(m===3) return dashRoboSVG3(cor); return dashRoboSVG1(cor); }
 
+// Cliente da peça: cadastro de peças (código exato ou sem diferença de maiúsculas); senão o do robô
+function dashClientePeca(cod, c){
+  const p = pecasObj(), k = String(cod||'').trim(); let reg = p[k];
+  if(!reg && k){ const kk = Object.keys(p).find(x => x.trim().toUpperCase() === k.toUpperCase()); if(kk) reg = p[kk]; }
+  const cli = String((reg && reg.cliente) || (c && c.cliente) || '').trim();
+  return cli && cli !== '—' ? cli : '';
+}
 function dashRenderRobo(k){ const main=document.getElementById("dashMain"); const c=robos()[k]; if(!main||!c) return;
   const rd=dashDados()[k]||{}, hora=dashHoraAtual();
   const meta=metaRoboEm(k, dashChave()), prodH=parseCelVal(rd[campoH(hora)]).num;
   const cafe=ehCafe(hora); const metaEf=metaHora(meta,hora);
   const pct=metaEf>0?Math.round(prodH/metaEf*100):0, bateu=metaEf>0&&prodH>=metaEf, faltam=metaEf>0?Math.max(metaEf-prodH,0):0;
   const cor=cafe?DASH_CAFE:((prodH===0&&meta===0)?DASH_NONE:bateu?DASH_OK:DASH_FAIL);
-  const sig=`R|${k}|${hora}|${prodH}|${meta}|${rd.cod||''}|${_dashIdx}|${_dashSeq.length}|M${dashModelo()}|C${cafe?1:0}`; if(sig===_dashSigMain) return; _dashSigMain=sig;
+  const sig=`R|${k}|${hora}|${prodH}|${meta}|${rd.cod||''}|${dashClientePeca(rd.cod||c.codigo_peca, c)}|${_dashIdx}|${_dashSeq.length}|M${dashModelo()}|C${cafe?1:0}`; if(sig===_dashSigMain) return; _dashSigMain=sig;
   const dots=_dashSeq.map((_,i)=>`<i class="${i===_dashIdx?'on':''}"></i>`).join('')+`<i class="g"></i>`;
   main.innerHTML=`<div class="dash-robo" data-modelo="${dashModelo()}" style="--cor:${cor}"><div class="dash-sweep"></div>
     <div class="dash-fit"><div class="dash-robo-svg">${dashRoboSVG(cor)}</div>
     <div class="dash-info">
-      <div><div class="dash-rn">ROBÔ ${esc(k)}</div><div class="dash-nome">${esc(c.nome||'')}</div><div class="dash-cod">⚙ ${esc(rd.cod||c.codigo_peca||'—')}</div></div>
+      <div><div class="dash-rn">ROBÔ ${esc(k)}</div><div class="dash-nome">${esc(c.nome||'')}</div><div class="dash-cod">⚙ ${esc(rd.cod||c.codigo_peca||'—')}</div>${(()=>{ const cli=dashClientePeca(rd.cod||c.codigo_peca, c); return cli?`<div class="dash-cli">CLIENTE: <b>${esc(cli)}</b></div>`:''; })()}</div>
       <div class="dash-box"><div class="dash-prod-h">PRODUÇÃO ${hora}</div><div class="dash-prod-n">${prodH>0?prodH:'—'}</div>
         ${meta>0?`<div class="dash-meta-txt">META${cafe?' (CAFÉ)':''}: <b>${metaEf}</b> PEÇAS/HORA</div>`:''}
         ${meta>0&&prodH>0&&!bateu&&faltam>0?`<div class="dash-meta-txt fail">FALTOU ${faltam} PEÇA${faltam===1?'':'S'}</div>`:''}

@@ -662,7 +662,13 @@ body.dash-on{background-attachment:scroll}
   .dash-footer{padding:min(1.2vh,10px) min(1.6vw,20px)}
 }
 @media(max-width:760px){.dash-fit{flex-direction:column;gap:12px}}
-@media(max-width:600px){.dash-fit{transform:none!important}}
+/* Dashboard no celular: sem título, data e relógio (só as informações) e altura real da tela, pro rodapé não cortar */
+@media(max-width:700px){
+  #dashScreen{height:100dvh;bottom:auto}
+  #dashScreen .dash-head{position:absolute;top:6px;left:6px;z-index:20;padding:0;margin:0;border:0;background:transparent}
+  #dashScreen .dash-head h1,#dashScreen .dash-date,#dashScreen .dash-clock{display:none!important}
+  #dashScreen .dash-footer{padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
+}
 /* modo leve: tira o que mais pesa na TV (brilho em cima de animação, ruído, sobreposições) */
 body.dash-leve .dash-robo-svg svg{filter:none!important}
 body.dash-leve .dash-sweep,body.dash-leve .dash-static,body.dash-leve .hud-ring,body.dash-leve .hud-spin,body.dash-leve .dash-robo::before,body.dash-leve .scanlines{display:none!important}
@@ -4793,7 +4799,6 @@ function dashRobos(){ return Object.keys(robos()).sort((a,b)=>Number(a)-Number(b
 function dashFit(){
   const main=document.getElementById("dashMain"), fit=main&&main.querySelector(".dash-fit"); if(!fit) return;
   fit.style.transform="";
-  if(window.innerWidth<=600) return;
   const W=main.clientWidth-24, H=main.clientHeight-16, w=fit.offsetWidth, h=fit.offsetHeight;
   if(!w||!h||W<=0||H<=0) return;
   const esc=Math.min(1, W/w, H/h);

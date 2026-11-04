@@ -1347,6 +1347,18 @@ body.ap-on #app{zoom:1}
   .tb-title{min-width:0;overflow:hidden;text-overflow:ellipsis}
   .topbar .mode-badge{font-size:9px;padding:4px 7px;letter-spacing:.04em}
 }
+/* ===== TV box / Chromecast (04/11/2026) ===== */
+.dash-tvbtns{display:flex;gap:8px;align-items:center;margin-left:14px}
+/* a camada de chiado é mais larga que a tela e deixava o dashboard rolar pro lado (botão de voltar sumia no celular/TV) */
+#dashScreen{overflow-x:hidden}
+.is-tv .dash-cast-btn{display:none}             /* na própria TV não faz sentido transmitir */
+.cast-passos{margin:0 0 14px;padding-left:20px;font-size:14px;line-height:1.55;color:var(--txt)}
+.cast-passos li{margin-bottom:7px}
+.cast-link{display:flex;gap:8px;align-items:center}
+.cast-link .inp{flex:1;min-width:0}
+/* controle remoto: o item selecionado fica bem marcado */
+.is-tv :focus{outline:3px solid #f9f871!important;outline-offset:3px;box-shadow:0 0 0 6px rgba(249,248,113,.18),0 0 22px -4px #f9f871!important}
+.is-tv .nav-item:focus{background:rgba(249,248,113,.08)}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1425,6 +1437,10 @@ body.ap-on #app{zoom:1}
     <h1>Cromo Azul</h1>
     <div class="dash-date" id="dashDate"></div>
     <div class="dash-clock" id="dashClock">--:--:--</div>
+    <div class="dash-tvbtns">
+      <button type="button" class="icon-btn dash-cast-btn" onclick="dashTransmitir()" title="Transmitir para a TV (Chromecast / Google TV)"><svg viewBox="0 0 24 24"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8"/><path d="M2 16a5 5 0 0 1 4 4"/><path d="M2 20h.01"/></svg></button>
+      <button type="button" class="icon-btn" onclick="dashTelaCheia()" title="Tela cheia"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button>
+    </div>
   </div>
   <div class="dash-main" id="dashMain"></div>
   <div class="dash-footer">
@@ -1550,6 +1566,22 @@ body.ap-on #app{zoom:1}
 </div>
 
 <!-- MODAL: Detalhe do funcionário -->
+<div class="modal-bg" id="modalCast" onclick="if(event.target===this)closeModal('modalCast')">
+  <div class="modal glass cast-modal" role="dialog" aria-modal="true" aria-labelledby="castTit" style="max-width:560px;width:96%">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">
+      <h2 id="castTit">📺 Mostrar o dashboard na TV</h2>
+      <button type="button" class="icon-btn" onclick="closeModal('modalCast')" title="Fechar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <p class="hint" id="castMotivo">Este navegador não abre a lista de TVs direto. Use um destes caminhos:</p>
+    <ol class="cast-passos">
+      <li><b>Android (Chrome):</b> menu <b>⋮</b> → <b>Transmitir…</b> → escolha a TV.</li>
+      <li><b>iPhone / iPad:</b> Central de Controle → <b>Espelhar Tela</b> → escolha a TV.</li>
+      <li><b>Computador (Chrome ou Edge):</b> menu <b>⋮</b> → <b>Transmitir, salvar e compartilhar</b> → <b>Transmitir…</b></li>
+      <li><b>TV box Android / Google TV / Smart TV:</b> abra o link abaixo no navegador da própria TV — ele já entra direto no dashboard e funciona com o controle remoto.</li>
+    </ol>
+    <div class="cast-link"><input class="inp nocaps" id="castUrl" readonly onclick="this.select()"><button type="button" class="btn primary tiny" onclick="dashCopiarLinkTV()">Copiar link</button></div>
+  </div>
+</div>
 <div class="modal-bg" id="modalGuia" onclick="if(event.target===this)closeModal('modalGuia')">
   <div class="modal glass" id="modalGuiaBody" style="max-width:720px;width:96%"></div>
 </div>
@@ -1571,9 +1603,19 @@ const GESTOR_PW    = "eli299";   // acesso Gestor: edita tudo, sem backup/restau
 // Escala automática da interface pela largura da janela (ver CSS "Escala automática").
 // 1400px de largura = tamanho normal; monitor grande aumenta (até 1,6x), notebook pequeno reduz um pouco (até 0,9x).
 // Celular/tablet (até 860px) usa o layout próprio, sem escala.
+// TV box Android / Google TV / Chromecast: aparelho de TV (pelo navegador) ou sem toque e sem mouse (só controle remoto).
+// O link com ?tv=1 também liga o modo TV nesta aba.
+function _ehTV(){
+  if(/SmartTV|SMART-TV|Tizen|Web0S|webOS|NetCast|BRAVIA|HbbTV|AFT[A-Z]|CrKey|GoogleTV|Android ?TV|Viera|VIDAA|Hisense|NETTV|Roku|TV Safari/i.test(navigator.userAgent||"")) return true;
+  try{ if(sessionStorage.getItem("cromo_tv")==="1") return true; }catch(_){}
+  try{ return (navigator.maxTouchPoints||0)===0 && !!window.matchMedia && !window.matchMedia("(any-pointer: fine)").matches; }catch(_){ return false; }
+}
+try{ if(new URLSearchParams(location.search).get("tv")==="1") sessionStorage.setItem("cromo_tv","1"); }catch(_){}
 function _uiEscala(){
-  const w = window.innerWidth;
-  const z = w <= 860 ? 1 : Math.min(1.6, Math.max(0.9, w / 1400));
+  const w = window.innerWidth, h = window.innerHeight;
+  // na TV a tela é vista de longe e o navegador costuma informar 960×540: encaixa como um 1280×720
+  const z = _ehTV() ? Math.min(2, Math.max(0.75, Math.min(w / 1280, h / 720)))
+          : w <= 860 ? 1 : Math.min(1.6, Math.max(0.9, w / 1400));
   const v = z.toFixed(3);
   if(document.documentElement.style.getPropertyValue('--uiz') !== v) document.documentElement.style.setProperty('--uiz', v);
 }
@@ -1581,6 +1623,66 @@ function _uiZ(){ return parseFloat(getComputedStyle(document.documentElement).ge
 _uiEscala();
 let _uiEscalaT = null;
 window.addEventListener('resize', () => { clearTimeout(_uiEscalaT); _uiEscalaT = setTimeout(_uiEscala, 120); });
+
+// ── Controle remoto (TV box): setas andam entre os itens clicáveis, OK/Enter clica ──
+// Só liga em aparelho de TV; no computador as setas continuam rolando a página normalmente.
+const _TV_FOCO = 'button,a[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
+function _tvMarcaClicaveis(){
+  // itens com onclick que não são botão (menu lateral, cards...) viram focáveis pelo controle
+  document.querySelectorAll('[onclick]:not(button):not(a):not(input):not(select):not(textarea):not([tabindex]):not(.modal-bg):not(.ppd-ov)').forEach(el=>{
+    el.setAttribute('tabindex','0'); if(!el.getAttribute('role')) el.setAttribute('role','button');
+  });
+}
+function _tvCamada(){
+  // só navega dentro do que está por cima: lista suspensa, janela aberta, dashboard ou o app
+  return document.querySelector('.fs-pop') || document.querySelector('.modal-bg.open .modal') || document.querySelector('.ppd-ov.open')
+    || (document.getElementById('dashScreen').style.display==='flex' ? document.getElementById('dashScreen') : null)
+    || (getComputedStyle(document.getElementById('loginScreen')).display!=='none' ? document.getElementById('loginScreen') : null)
+    || document.getElementById('app');
+}
+function _tvMover(dir){
+  const camada = _tvCamada(); if(!camada) return false;
+  const vis = e => { if(e.disabled) return false; const r=e.getBoundingClientRect(); return r.width>0 && r.height>0 && getComputedStyle(e).visibility!=='hidden'; };
+  const cands = [...camada.querySelectorAll(_TV_FOCO)].filter(vis);
+  if(!cands.length) return false;
+  const atual = document.activeElement;
+  if(!atual || atual===document.body || !camada.contains(atual)){ cands[0].focus(); return true; }
+  const a = atual.getBoundingClientRect(), ax = a.left+a.width/2, ay = a.top+a.height/2;
+  let melhor = null, nota = Infinity;
+  cands.forEach(c=>{
+    if(c===atual || atual.contains(c)) return;
+    const r = c.getBoundingClientRect(), cx = r.left+r.width/2, cy = r.top+r.height/2;
+    const dx = cx-ax, dy = cy-ay;
+    const prim = dir==='down'?dy : dir==='up'?-dy : dir==='right'?dx : -dx;
+    const sec = (dir==='down'||dir==='up') ? Math.abs(dx) : Math.abs(dy);
+    if(prim <= 4) return;
+    const n = prim + sec*2.2;
+    if(n < nota){ nota = n; melhor = c; }
+  });
+  if(!melhor) return false;
+  melhor.focus({preventScroll:true});
+  melhor.scrollIntoView({block:'nearest', inline:'nearest'});
+  return true;
+}
+if(_ehTV()){
+  document.documentElement.classList.add('is-tv');
+  const _tvObs = new MutationObserver(()=>{ clearTimeout(_tvObs._t); _tvObs._t = setTimeout(_tvMarcaClicaveis, 80); });
+  const _tvIni = ()=>{ _tvMarcaClicaveis(); _tvObs.observe(document.body, {childList:true, subtree:true}); };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', _tvIni); else _tvIni();
+  document.addEventListener('keydown', e=>{
+    const el = document.activeElement;
+    const DIR = {ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right'}[e.key];
+    if(DIR){
+      if(document.querySelector('.fs-pop')) return;                      // a lista suspensa tem as próprias setas
+      if(el && (el.tagName==='SELECT' || (el.tagName==='TEXTAREA') || (el.tagName==='INPUT' && (DIR==='left'||DIR==='right') && el.value))) return;
+      if(_tvMover(DIR)) e.preventDefault();
+      return;
+    }
+    if((e.key==='Enter' || e.key===' ') && el && el.getAttribute && el.getAttribute('role')==='button' && el.tagName!=='BUTTON'){
+      e.preventDefault(); el.click();
+    }
+  });
+}
 const HEADERS_SB = { "apikey":SUPABASE_KEY, "Authorization":"Bearer "+SUPABASE_KEY, "Content-Type":"application/json", "Prefer":"return=minimal" };
 
 const ROBOS = [800,801,802,803,804,805];
@@ -4887,12 +4989,49 @@ function startDashboard(){ isHost=false;
   tickClock(); clearInterval(dashClockTimer); dashClockTimer=setInterval(tickClock,1000);
   dashScheduleNext();
 }
+// ── Transmitir para a TV ──
+// Chrome/Edge: abre a lista de TVs (Chromecast/Google TV) e manda o link ?tv=1, que entra direto no dashboard.
+// Sem TV na rede ou navegador sem suporte (iPhone, Firefox...): mostra o passo a passo e o link.
+function _dashLinkTV(){ return location.origin + location.pathname + '?tv=1'; }
+async function dashTransmitir(){
+  if('PresentationRequest' in window){
+    try{
+      const conn = await new PresentationRequest([_dashLinkTV()]).start();
+      showToast('📺 Transmitindo o dashboard para a TV',false,true);
+      conn.onterminate = ()=>showToast('Transmissão encerrada');
+      return;
+    }catch(e){
+      if(e && e.name==='AbortError') return; // fechou a lista de TVs sem escolher
+      _dashAjudaCast(e && e.name==='NotFoundError' ? 'Nenhuma TV foi encontrada na rede. Confira se a TV e este aparelho estão no mesmo Wi-Fi, ou use um destes caminhos:' : '');
+      return;
+    }
+  }
+  _dashAjudaCast('');
+}
+function _dashAjudaCast(motivo){
+  const i=document.getElementById('castUrl'); if(i) i.value=_dashLinkTV();
+  const p=document.getElementById('castMotivo'); if(p) p.textContent = motivo || 'Este navegador não abre a lista de TVs direto. Use um destes caminhos:';
+  openModal('modalCast');
+}
+function dashCopiarLinkTV(){
+  const url=_dashLinkTV(), i=document.getElementById('castUrl');
+  const viaInput=()=>{ if(i){ i.select(); try{ document.execCommand('copy'); }catch(_){} } showToast('Link copiado ✓',false,true); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(()=>showToast('Link copiado ✓',false,true)).catch(viaInput); else viaInput();
+}
+function dashTelaCheia(){
+  try{
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>showToast('Tela cheia não disponível neste aparelho',true));
+  }catch(_){ showToast('Tela cheia não disponível neste aparelho',true); }
+}
 function dashScheduleNext(){
   clearTimeout(dashSlideTimer);
   const delay = _dashGeral ? 60000 : 5000; // Geral: 1 minuto · Robô: 5 segundos
   dashSlideTimer = setTimeout(dashNextSlide, delay);
 }
 function exitDashboard(){ [dashTimer,dashClockTimer].forEach(t=>clearInterval(t)); clearTimeout(dashSlideTimer); document.body.classList.remove("dash-on","dash-tv","dash-leve");
+  // tira o ?tv=1 do endereço pra não voltar ao dashboard se recarregar depois de sair
+  try{ const u=new URL(location.href); if(u.searchParams.has("tv")){ u.searchParams.delete("tv"); history.replaceState(null,"",u.toString()); } }catch(_){}
   document.getElementById("dashScreen").style.display="none"; document.getElementById("loginScreen").style.display="flex"; }
 function tickClock(){ const n=new Date(); const ce=document.getElementById("dashClock"), de=document.getElementById("dashDate");
   if(ce) ce.textContent=n.toLocaleTimeString("pt-BR");
@@ -5183,6 +5322,8 @@ document.addEventListener('input', e=>{
 /* ---------- BOOT: sequência de carregamento cyberpunk ---------- */
 (function bootSequence(){
   const scr=document.getElementById('bootScreen'); if(!scr) return;
+  // link da TV (?tv=1): pula a abertura e o login e vai direto para o Dashboard TV
+  try{ if(new URLSearchParams(location.search).get('tv')==='1'){ scr.style.display='none'; setTimeout(function(){ startDashboard(); },0); return; } }catch(_){}
   const logEl=document.getElementById('bootLog'), barEl=document.getElementById('bootBar'),
         pctEl=document.getElementById('bootPct'), stEl=document.getElementById('bootState');
   const PASSOS=[

@@ -1318,6 +1318,23 @@ select.fs-native{position:absolute!important;opacity:0!important;pointer-events:
 }
 @keyframes fsUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.fs-pop,.fs-ov,.fsel .fs-car svg{animation:none!important;transition:none!important}}
+/* ===== Escala automática pela tela (04/11/2026) =====
+   --uiz vem do JS (_uiEscala) pela largura da janela: tela grande aumenta, notebook pequeno reduz um pouco.
+   Com zoom, vh/vw também crescem — por isso as alturas baseadas na tela dividem pela escala.
+   Login e Dashboard TV ficam de fora (já se ajustam sozinhos); Apostila também (o livro calcula o próprio tamanho). */
+#app,.modal-bg,#toastWrap,.fs-pop,.ppd-ov{zoom:var(--uiz,1)}
+body.ap-on #app{zoom:1}
+#app{min-height:calc(100vh / var(--uiz,1))}
+.sidebar{max-height:calc(100vh / var(--uiz,1) - 96px)}
+.empty{min-height:calc(52vh / var(--uiz,1))}
+.modal{max-height:calc(88vh / var(--uiz,1))}
+.ppd-card{max-height:calc(90vh / var(--uiz,1))}
+.fs-pop{max-width:min(360px,calc(100vw / var(--uiz,1) - 16px))}
+/* cartões dos robôs no Painel: em notebook os 6 lado a lado estouravam a largura da página */
+.pn-robos{grid-template-columns:repeat(6,minmax(0,1fr))}
+.pn-rc{min-width:0}
+@media(max-width:1250px){.pn-robos{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){.pn-robos{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1538,6 +1555,20 @@ const SUPABASE_URL = "https://zgetqjplwueeychpnshv.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnZXRxanBsd3VlZXljaHBuc2h2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODg2NzcsImV4cCI6MjEwNDQ2NDY3N30.WeW_TDh5nwgjAKc2YDja0pBftzeMuP4iad79wEoUDwQ";
 const ADMIN_PW     = "cromo3102";
 const GESTOR_PW    = "eli299";   // acesso Gestor: edita tudo, sem backup/restaurar e sem aba Gerenciar
+
+// Escala automática da interface pela largura da janela (ver CSS "Escala automática").
+// 1400px de largura = tamanho normal; monitor grande aumenta (até 1,6x), notebook pequeno reduz um pouco (até 0,9x).
+// Celular/tablet (até 860px) usa o layout próprio, sem escala.
+function _uiEscala(){
+  const w = window.innerWidth;
+  const z = w <= 860 ? 1 : Math.min(1.6, Math.max(0.9, w / 1400));
+  const v = z.toFixed(3);
+  if(document.documentElement.style.getPropertyValue('--uiz') !== v) document.documentElement.style.setProperty('--uiz', v);
+}
+function _uiZ(){ return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--uiz')) || 1; }
+_uiEscala();
+let _uiEscalaT = null;
+window.addEventListener('resize', () => { clearTimeout(_uiEscalaT); _uiEscalaT = setTimeout(_uiEscala, 120); });
 const HEADERS_SB = { "apikey":SUPABASE_KEY, "Authorization":"Bearer "+SUPABASE_KEY, "Content-Type":"application/json", "Prefer":"return=minimal" };
 
 const ROBOS = [800,801,802,803,804,805];
@@ -5952,14 +5983,16 @@ function _ajudaBtn(id){ return `<button type="button" class="help-btn" onclick="
     if(!aberto || aberto.ov) return;
     const {btn, pop} = aberto, r = btn.getBoundingClientRect();
     if(!btn.isConnected || (r.width === 0 && r.height === 0)) return fechar();
-    const w = Math.max(r.width, aberto.cols >= 7 ? 290 : aberto.cols === 3 ? 320 : 170);
-    pop.style.width = Math.min(w, window.innerWidth - 16) + 'px';
-    const ph = pop.offsetHeight, baixo = window.innerHeight - r.bottom - 8, cima = r.top - 8;
+    // a lista também usa a escala automática (zoom): as medidas na tela dividem por ela ao gravar no style
+    const z = _uiZ();
+    const w = Math.max(r.width, (aberto.cols >= 7 ? 290 : aberto.cols === 3 ? 320 : 170) * z);
+    pop.style.width = Math.min(w, window.innerWidth - 16) / z + 'px';
+    const pr = pop.getBoundingClientRect(), ph = pr.height, pw = pr.width, baixo = window.innerHeight - r.bottom - 8, cima = r.top - 8;
     const up = ph > baixo && cima > baixo;
     pop.classList.toggle('up', up);
-    pop.style.top = (up ? Math.max(8, r.top - ph - 6) : r.bottom + 6) + 'px';
-    let left = r.left; if(left + pop.offsetWidth > window.innerWidth - 8) left = window.innerWidth - 8 - pop.offsetWidth;
-    pop.style.left = Math.max(8, left) + 'px';
+    pop.style.top = (up ? Math.max(8, r.top - ph - 6) : r.bottom + 6) / z + 'px';
+    let left = r.left; if(left + pw > window.innerWidth - 8) left = window.innerWidth - 8 - pw;
+    pop.style.left = Math.max(8, left) / z + 'px';
   }
   function marcar(i, rolar){
     if(!aberto) return;

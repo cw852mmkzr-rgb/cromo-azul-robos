@@ -1351,6 +1351,22 @@ body.ap-on #app{zoom:1}
 .dash-tvbtns{display:flex;gap:8px;align-items:center;margin-left:14px}
 /* a camada de chiado é mais larga que a tela e deixava o dashboard rolar pro lado (botão de voltar sumia no celular/TV) */
 #dashScreen{overflow-x:hidden}
+/* Meta Diária no celular: colunas compactas (antes Meta/Cód/Pts ocupavam a tela toda e as horas ficavam pra fora) */
+@media(max-width:700px){
+  table.mtable{min-width:0;font-size:14px}
+  table.mtable th,table.mtable td{padding:8px 5px}
+  table.mtable thead th{font-size:12px}
+  table.meta-t td.rlab,table.meta-t th.rlab{min-width:50px;font-size:15px}
+  table.meta-t th.cmeta,table.meta-t td.cmeta{min-width:40px}
+  table.meta-t th.ccod,table.meta-t td.ccod{min-width:62px}
+  table.meta-t th.cpts,table.meta-t td.cpts{min-width:38px}
+  table.mtable input{width:54px;padding:8px 2px;font-size:17px}
+  table.meta-t input.minp{width:42px}
+  table.meta-t input.cinp{width:62px}
+  table.meta-t input.pinp{width:40px}
+  table.meta-t input.fhinp{width:72px}
+  .mtable td.robocell{padding:4px 3px}
+}
 .is-tv .dash-cast-btn{display:none}             /* na própria TV não faz sentido transmitir */
 .cast-passos{margin:0 0 14px;padding-left:20px;font-size:14px;line-height:1.55;color:var(--txt)}
 .cast-passos li{margin-bottom:7px}
@@ -1614,8 +1630,9 @@ try{ if(new URLSearchParams(location.search).get("tv")==="1") sessionStorage.set
 function _uiEscala(){
   const w = window.innerWidth, h = window.innerHeight;
   // na TV a tela é vista de longe e o navegador costuma informar 960×540: encaixa como um 1280×720
-  const z = _ehTV() ? Math.min(2, Math.max(0.75, Math.min(w / 1280, h / 720)))
-          : w <= 860 ? 1 : Math.min(1.6, Math.max(0.9, w / 1400));
+  const z = w <= 860 ? 1   // celular/tablet em pé: layout próprio, sem escala (TV box nunca é tão estreita)
+          : _ehTV() ? Math.min(2, Math.max(0.75, Math.min(w / 1280, h / 720)))
+          : Math.min(1.6, Math.max(0.9, w / 1400));
   const v = z.toFixed(3);
   if(document.documentElement.style.getPropertyValue('--uiz') !== v) document.documentElement.style.setProperty('--uiz', v);
 }
@@ -2168,7 +2185,7 @@ function renderMain(){
   const p=PAINEIS.find(x=>x.id===nav.id)||PAINEIS[0];
   if(p.id==="painel") box.innerHTML=viewPainel();
   else if(p.id==="mensal") box.innerHTML=viewMensal();
-  else if(p.id==="meta") box.innerHTML=viewMeta();
+  else if(p.id==="meta"){ box.innerHTML=viewMeta(); _metaEncaixa(); }
   else if(p.id==="relmes") box.innerHTML=viewRelMensal();
   else if(p.id==="anual") box.innerHTML=viewRelAnual();
   else if(p.id==="ppeca") box.innerHTML=viewProducaoPeca();
@@ -2776,6 +2793,18 @@ function setCod(chave,robo,v){ if(!isHost) return;
   }
   _mainSig=""; saveDebounced(); renderMainSoon();
 }
+// Meta Diária: na TV e no computador (sem toque) a tabela encolhe para caber inteira na largura,
+// porque rolar pro lado com controle remoto é ruim. No celular continua rolando, com a coluna do robô fixa.
+function _metaEncaixa(){
+  if((navigator.maxTouchPoints||0) > 0) return;
+  document.querySelectorAll('#main .mtable-wrap').forEach(w=>{
+    const t = w.querySelector('table.mtable'); if(!t) return;
+    t.style.zoom = '';
+    const precisa = t.scrollWidth, cabe = w.clientWidth;
+    if(precisa > cabe + 1) t.style.zoom = Math.max(0.6, (cabe - 2) / precisa).toFixed(3);
+  });
+}
+window.addEventListener('resize', ()=>{ clearTimeout(_metaEncaixa._t); _metaEncaixa._t = setTimeout(_metaEncaixa, 160); });
 function metaTable(chave,md,horas){
   const rb=robos();
   const temFunc=funcionarios().length>0;

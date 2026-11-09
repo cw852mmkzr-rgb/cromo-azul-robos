@@ -452,6 +452,12 @@ table.meta-t td.hcell .fhtag{font-size:10px;font-weight:600;color:var(--nc);font
 .pn-big{font-family:'Orbitron',sans-serif;font-weight:800;font-size:46px;line-height:1;color:var(--nc);text-shadow:0 0 22px rgba(0,240,255,.55);letter-spacing:.02em}
 .pn-lbl{font-family:'Share Tech Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--nc)}
 .pn-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--mut);margin-top:7px}
+.pn-hoje{position:relative}
+.pn-mes{position:absolute;top:14px;right:16px;text-align:right;font-family:'Share Tech Mono',monospace;line-height:1.25;padding:6px 10px;border:1px solid rgba(0,240,255,.22);border-radius:6px;background:rgba(0,240,255,.05)}
+.pn-mes span{display:block;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.pn-mes b{display:block;font-family:'Orbitron',sans-serif;font-size:17px;color:var(--nc);letter-spacing:.02em}
+.pn-mes i{display:block;font-style:normal;font-size:9.5px;color:var(--faint)}
+@media(max-width:520px){.pn-mes{position:static;display:inline-block;text-align:left;margin-bottom:10px}}
 .pn-alert{display:flex;align-items:center;gap:11px;font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:700;margin-top:14px;letter-spacing:.02em}
 .pn-alert .dot{font-size:17px}
 .pn-robos{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
@@ -2671,9 +2677,20 @@ function viewPainel(){
   for(let d=1;d<=ndias;d++){ const t=totalDia(A,M,d); totalMes+=t; if(d<=D) serie.push(t); }
   const hojeT=totalDia(A,M,D);
   const dcp=serie.filter(t=>t>0).length; const media=dcp?Math.round(totalMes/dcp):0;
-  // sparkline (últimos até 14 dias)
-  const jan=serie.slice(Math.max(0,serie.length-14)); const maxv=Math.max(1,...jan);
-  const pts=jan.length>1?jan.map((v,i)=>`${(i/(jan.length-1)*320).toFixed(0)},${(40-(v/maxv)*34).toFixed(1)}`).join(' '):`0,38 320,38`;
+  // produção de hoje hora a hora (todos os robôs) — gráfico de barras do card principal
+  const mdHoje=prod().metas_dias[chaveData(A,M,D)]||{};
+  const horasT=[...HORAS_DIA,...HORAS_NOITE].map(h=>({h, t:ROBOS.reduce((s,r)=>s+parseCelVal((mdHoje[String(r)]||{})[campoH(h)]).num,0)}));
+  let ultIdx=-1; horasT.forEach((x,i)=>{ if(x.t>0) ultIdx=i; });
+  const horasVis=horasT.slice(0, Math.max(HORAS_DIA.length, ultIdx+1)); // turno dia sempre; noite só se tiver produção
+  const maxH=Math.max(1,...horasVis.map(x=>x.t)), bw=320/horasVis.length;
+  const barras=horasVis.map((x,i)=>{ const hgt=x.t>0?Math.max(2,(x.t/maxH)*40):0; return `<rect x="${(i*bw+bw*.18).toFixed(1)}" y="${(42-hgt).toFixed(1)}" width="${(bw*.64).toFixed(1)}" height="${hgt.toFixed(1)}" rx="1.5" fill="#ff2bd6"><title>${x.h} · ${x.t.toLocaleString("pt-BR")} pç</title></rect>`; }).join('')
+    + horasVis.map((x,i)=> i%2===0 ? `<text x="${(i*bw+bw/2).toFixed(1)}" y="54" text-anchor="middle" font-size="8" fill="#7a86a8" font-family="Share Tech Mono,monospace">${x.h.slice(0,2)}h</text>` : '').join('');
+  const ultHora=ultIdx>=0?horasT[ultIdx]:null;
+  // último dia antes de hoje que teve produção (na segunda mostra a sexta, não o domingo zerado)
+  let antD=null, antT=0;
+  for(let i=1;i<=14;i++){ const dd=new Date(A,M,D-i), t=totalDia(dd.getFullYear(),dd.getMonth(),dd.getDate()); if(t>0){ antD=dd; antT=t; break; } }
+  const antTxt = antD ? ((Math.round((new Date(A,M,D)-antD)/864e5)===1?'ONTEM':['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][antD.getDay()]+' '+String(antD.getDate()).padStart(2,'0')+'/'+String(antD.getMonth()+1).padStart(2,'0'))+' '+antT.toLocaleString("pt-BR")) : '';
+  const robosAtivos=ROBOS.filter(r=>totalRoboDia(A,M,D,String(r))>0).length;
   // meta do dia: soma das metas/hora dos robôs × 10h dia, descontando a parada do café
   const metaDia=ROBOS.reduce((s,r)=>{ const m=metaRoboHoje(r); return s+Math.max(0,m*10-cafeDescontoRobo(m)); },0);
   const pct=metaDia?Math.min(100,Math.round(hojeT/metaDia*100)):0;
@@ -2691,9 +2708,11 @@ function viewPainel(){
   }).join("");
   return pageHead(IC.painel,"Painel","Visão geral · "+MESES[M]+" "+A)
     + `<div class="bento">
-        <div class="card glass"><div class="pn-lbl">Produção do mês</div><div class="pn-big">${totalMes.toLocaleString("pt-BR")}</div>
-          <div class="pn-sub">MÉDIA ${media.toLocaleString("pt-BR")}/DIA · ${dcp} DIAS ATIVOS</div>
-          <svg viewBox="0 0 320 44" width="100%" height="42" preserveAspectRatio="none" style="margin-top:12px"><polyline points="${pts}" fill="none" stroke="#ff2bd6" stroke-width="2.5" style="filter:drop-shadow(0 0 5px rgba(255,43,214,.8))"/></svg></div>
+        <div class="card glass pn-hoje">
+          <div class="pn-mes" title="Produção do mês de ${MESES[M]}"><span>${MESES[M].slice(0,3)}</span><b>${totalMes.toLocaleString("pt-BR")}</b><i>méd. ${media.toLocaleString("pt-BR")}/dia · ${dcp} dia${dcp!==1?'s':''}</i></div>
+          <div class="pn-lbl">Produção de hoje</div><div class="pn-big">${hojeT.toLocaleString("pt-BR")}</div>
+          <div class="pn-sub">${ultHora?`ÚLTIMA HORA ${ultHora.h} · ${ultHora.t.toLocaleString("pt-BR")} PÇ`:'SEM APONTAMENTO AINDA'} · ${robosAtivos} ROBÔ${robosAtivos!==1?'S':''}${antTxt?' · '+antTxt:''}</div>
+          <svg viewBox="0 0 320 58" width="100%" height="62" preserveAspectRatio="none" style="margin-top:10px;filter:drop-shadow(0 0 4px rgba(255,43,214,.55))">${barras}</svg></div>
         <div class="card glass" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center"><div class="pn-lbl">Meta do dia</div>
           <svg viewBox="0 0 90 90" width="90" height="90" style="margin-top:8px"><circle cx="45" cy="45" r="37" fill="none" stroke="#16233c" stroke-width="8"/><circle cx="45" cy="45" r="37" fill="none" stroke="#00f0ff" stroke-width="8" stroke-linecap="round" stroke-dasharray="${dash}" stroke-dashoffset="${off}" transform="rotate(-90 45 45)" style="filter:drop-shadow(0 0 6px rgba(0,240,255,.9))"/></svg>
           <div class="pn-big" style="font-size:26px;margin-top:8px">${pct}%</div><div class="pn-sub">${hojeT.toLocaleString("pt-BR")} / ${metaDia.toLocaleString("pt-BR")} PÇ HOJE</div></div>
@@ -5851,7 +5870,7 @@ const GUIA = [
     resumo:'Visão geral do mês e de hoje, logo que você entra.',
     blocos:[
       {t:'O que mostra', defs:[
-        ['Produção do mês','Total de peças do mês, com a média por dia e o gráfico dos últimos 14 dias.'],
+        ['Produção de hoje','Total de peças de hoje, com a produção hora a hora, a última hora lançada e quanto foi feito ontem. No canto, o total do mês com a média por dia.'],
         ['Meta do dia','Quanto da meta de hoje já foi feito. A meta soma a meta/hora de cada robô nas 10 horas do turno dia, já descontando a parada do café.'],
         ['Alertas','Robôs que não estão "Produzindo" e manutenções abertas. "Tudo operando" quando não há nada.'],
         ['Robôs · produção de hoje','Um cartão por robô com o status e as peças de hoje. Clique para abrir o robô.']]}

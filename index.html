@@ -411,6 +411,7 @@ table.meta-t th.rlab{background:#0b1120}
 table.meta-t th.cmeta,table.meta-t td.cmeta{color:var(--blue);min-width:68px;font-family:'Share Tech Mono',monospace}
 table.meta-t th.ccod,table.meta-t td.ccod{color:var(--warn);min-width:106px;font-family:'Share Tech Mono',monospace}
 table.meta-t th.cpts,table.meta-t td.cpts{color:var(--ny);min-width:104px;font-family:'Share Tech Mono',monospace}
+table.meta-t.sem-pts .cpts{display:none}
 table.meta-t input.minp{width:66px;color:var(--blue)}
 table.meta-t input.cinp{width:98px;color:var(--warn);text-align:center}
 table.meta-t input.pinp{width:96px;color:var(--ny);text-align:center}
@@ -2758,7 +2759,7 @@ function viewMeta(){
   const totNoite=ROBOS.reduce((s,r)=>s+HORAS_NOITE.reduce((a,h)=>a+parseCelVal((md[r]||{})[campoH(h)]).num,0),0);
   const diasOpts=(()=>{let o="";for(let d=1;d<=ndias;d++)o+=`<option value="${d}" ${d===selDia?'selected':''}>${d}</option>`;return o;})();
 
-  let head=pageHead(IC.meta,"Meta Diária","Apontar produção por hora / robô", isHost?`<button type="button" class="btn ${divisaoAtiva()?'primary':'ghost'} tiny" onclick="toggleDivisao()" title="Divide o valor digitado pela quantidade de pontos de solda (coluna PTS)">➗ Divisão pts: ${divisaoAtiva()?'ON':'OFF'}</button> <button type="button" class="btn ghost tiny" onclick="copiarDiaAnterior()" title="Copia os códigos e pontos do dia anterior mais recente com dados (pede confirmação)">📋 Copiar dia anterior</button> <button type="button" class="btn ghost tiny" onclick="limparCodDia()" title="Limpa a meta, o código e os pontos do dia selecionado (não apaga a produção lançada)">🧹 Limpar meta/cód/pts</button>`:'')
+  let head=pageHead(IC.meta,"Meta Diária","Apontar produção por hora / robô", isHost?`${PTS_VISIVEL?`<button type="button" class="btn ${divisaoAtiva()?'primary':'ghost'} tiny" onclick="toggleDivisao()" title="Divide o valor digitado pela quantidade de pontos de solda (coluna PTS)">➗ Divisão pts: ${divisaoAtiva()?'ON':'OFF'}</button> `:''}<button type="button" class="btn ghost tiny" onclick="copiarDiaAnterior()" title="Copia os códigos e pontos do dia anterior mais recente com dados (pede confirmação)">📋 Copiar dia anterior</button> <button type="button" class="btn ghost tiny" onclick="limparCodDia()" title="Limpa a meta, o código e os pontos do dia selecionado (não apaga a produção lançada)">🧹 Limpar meta/cód</button>`:'')
     + `<div class="selrow card glass">
         <div class="sel"><label>Dia</label><select onchange="setPeriodo('dia',+this.value)">${diasOpts}</select></div>
         <div class="sel"><label>Mês</label><select onchange="setPeriodo('mes',+this.value)">${MESES.map((m,i)=>`<option value="${i}" ${i===selMes?'selected':''}>${m}</option>`).join("")}</select></div>
@@ -2828,7 +2829,7 @@ function metaTable(chave,md,horas){
   const rb=robos();
   const temFunc=funcionarios().length>0;
   // cabeçalho: ROBÔ | META | CÓD | PTS | horas... | TOTAL   (robôs nas linhas — igual ao Células)
-  let h=`<div class="mtable-wrap"><table class="mtable meta-t"><thead><tr>`
+  let h=`<div class="mtable-wrap"><table class="mtable meta-t${PTS_VISIVEL?'':' sem-pts'}"><thead><tr>`
     + `<th class="rlab">Robô</th><th class="cmeta">Meta</th><th class="ccod">Cód</th><th class="cpts">Pts</th>`
     + horas.map(hr=>`<th class="hora${ehCafe(hr)?" cafe":""}">${hr}${ehCafe(hr)?" ☕":""}</th>`).join("")
     + `<th>Total</th></tr></thead><tbody>`;
@@ -2869,7 +2870,10 @@ function metaTable(chave,md,horas){
   h+=`<td class="tot" style="color:var(--cyan)">${gt.toLocaleString("pt-BR")}</td></tr></tfoot></table></div>`;
   return h;
 }
-function divisaoAtiva(){ return !(dados&&dados.config&&dados.config.divisao_pontos===false); }
+// 09/11/2026: a coluna PTS e a divisão por pontos não são mais usadas. Com false, a coluna e o botão somem e
+// NADA é dividido (mesmo nos robôs que ainda têm pontos gravados). Para voltar, é só trocar para true.
+const PTS_VISIVEL = false;
+function divisaoAtiva(){ if(!PTS_VISIVEL) return false; return !(dados&&dados.config&&dados.config.divisao_pontos===false); }
 function setMeta(chave,robo,campo,v,el){
   if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
@@ -5888,7 +5892,7 @@ const GUIA = [
     blocos:[
       {t:'Como apontar', passos:[
         'Escolha o <b>Dia</b>, o <b>Mês</b> e o <b>Ano</b>.',
-        'Em cada robô, preencha a <b>Meta</b> (peças por hora), o <b>Cód</b> (código da peça) e, se precisar, os <b>PTS</b> (pontos de solda).',
+        'Em cada robô, preencha a <b>Meta</b> (peças por hora) e o <b>Cód</b> (código da peça).',
         'Digite as peças de cada hora na coluna da hora. O turno dia vai de 08:00 às 17:00 e o turno noite, de 18:00 às 22:00.',
         'Depois de digitar as peças de uma hora, aparece embaixo o campo "quem fez?": escreva ou escolha o funcionário da lista. É isso que alimenta a tela Funcionários.']},
       {t:'Cores e símbolos', defs:[
@@ -5897,9 +5901,8 @@ const GUIA = [
         ['# no fim','Marca um ajuste técnico (ex.: 45#). Conta normal nos totais, só fica sinalizado.'],
         ['☕ 09:00','Hora do café: a meta é reduzida porque a máquina roda só 35 dos 60 minutos (25 min de parada).']]},
       {t:'Botões do topo', defs:[
-        ['➗ Divisão pts','Ligado: o valor digitado é dividido pelos pontos de solda (PTS) daquele robô.'],
         ['📋 Copiar dia anterior','Copia meta, código e pontos do último dia com dados. Pede confirmação e não mexe na produção.'],
-        ['🧹 Limpar meta/cód/pts','Apaga meta, código e pontos do dia escolhido. A produção lançada fica.']]},
+        ['🧹 Limpar meta/cód','Apaga meta, código e pontos do dia escolhido. A produção lançada fica.']]},
       {t:'Dica', passos:['Um dia novo abre em branco. Use "Copiar dia anterior" para não redigitar metas e códigos.']}
     ]},
   { id:'relmes', titulo:'Relatório Mensal', ico:'relmes', quem:'Todos', ir:'relmes',

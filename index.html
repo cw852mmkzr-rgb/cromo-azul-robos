@@ -1404,6 +1404,24 @@ body.ap-on #app{zoom:1}
   .tb-title{min-width:0;overflow:hidden;text-overflow:ellipsis}
   .topbar .mode-badge{font-size:9px;padding:4px 7px;letter-spacing:.04em}
 }
+/* ===== Zoom por aparelho (10/11/2026) ===== */
+.zoom-wrap{position:relative;display:inline-flex}
+.zoom-btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 12px;border-radius:8px;border:1px solid var(--glass-bd2);background:rgba(0,240,255,.05);color:var(--nc);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:12.5px;letter-spacing:.04em;white-space:nowrap;transition:background .18s ease,border-color .18s ease}
+.zoom-btn:hover{background:rgba(0,240,255,.12);border-color:rgba(0,240,255,.5)}
+.zoom-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.zoom-btn b{font-weight:600}
+.zoom-pop{position:absolute;top:calc(100% + 8px);right:0;z-index:85;width:270px;padding:14px;border-radius:8px;border:1px solid rgba(0,240,255,.35);box-shadow:0 18px 40px rgba(2,6,23,.75);background:#080b18!important;backdrop-filter:none!important}
+.zoom-pop[hidden]{display:none}
+.zp-t{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:10px}
+.zp-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.zp-row button{width:48px;height:42px;border-radius:8px;border:1px solid rgba(0,240,255,.4);background:rgba(0,240,255,.08);color:var(--nc);font-size:24px;font-weight:700;cursor:pointer;line-height:1}
+.zp-row button:hover{background:rgba(0,240,255,.18)}
+.zp-row b{font-family:'Orbitron',sans-serif;font-size:24px;color:var(--txt)}
+.zp-auto{margin-top:10px;width:100%;padding:10px;border-radius:8px;border:1px solid var(--glass-bd2);background:transparent;color:var(--txt);font-family:inherit;font-size:13px;cursor:pointer}
+.zp-auto.on{border-color:rgba(0,255,174,.6);color:#00ffae;background:rgba(0,255,174,.08)}
+.zp-dica{margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:10.5px;color:var(--faint);line-height:1.5}
+@media(max-width:520px){.zoom-btn b{display:none}.zoom-btn{padding:0 9px}.zoom-pop{position:fixed;top:74px;left:12px;right:12px;width:auto}.tb-title span{display:none}}
+@media(max-width:430px){.topbar .tb-logo{display:none}}
 /* ===== TV box / Chromecast (04/11/2026) ===== */
 .dash-tvbtns{display:flex;gap:8px;align-items:center;margin-left:14px}
 /* a camada de chiado é mais larga que a tela e deixava o dashboard rolar pro lado (botão de voltar sumia no celular/TV) */
@@ -1530,6 +1548,15 @@ body.ap-on #app{zoom:1}
     <div class="tb-title">Cromo Azul<span>Células Robóticas</span></div>
     <div class="tb-spacer"></div>
     <span class="saved-label" id="savedLabel"></span>
+    <span class="zoom-wrap">
+      <button type="button" class="zoom-btn" id="zoomBtn" onclick="zoomMenu(event)" title="Tamanho da tela neste aparelho"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M8 11h6M11 8v6"/></svg><b id="zoomPct">Auto 100%</b></button>
+      <div class="zoom-pop glass" id="zoomPop" hidden>
+        <div class="zp-t">Tamanho da tela · só neste aparelho</div>
+        <div class="zp-row"><button type="button" onclick="zoomAjustar(-0.05)" aria-label="Diminuir">−</button><b id="zoomPct2">100%</b><button type="button" onclick="zoomAjustar(0.05)" aria-label="Aumentar">+</button></div>
+        <button type="button" class="zp-auto" id="zoomAutoBtn" onclick="zoomAutomatico()">⤢ Automático — ajusta à tela</button>
+        <div class="zp-dica">Atalhos: Ctrl + &nbsp;·&nbsp; Ctrl − &nbsp;·&nbsp; Ctrl + rodinha &nbsp;·&nbsp; Ctrl 0 = automático</div>
+      </div>
+    </span>
     <span class="mode-badge" id="modeBadge">Visualizador</span>
     <button type="button" class="icon-btn" id="btnConfig" onclick="openConfig()" title="Backup" style="display:none"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
     <button type="button" class="icon-btn" onclick="logout()" title="Sair"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
@@ -1684,16 +1711,64 @@ function _ehTV(){
   try{ return (navigator.maxTouchPoints||0)===0 && !!window.matchMedia && !window.matchMedia("(any-pointer: fine)").matches; }catch(_){ return false; }
 }
 try{ if(new URLSearchParams(location.search).get("tv")==="1") sessionStorage.setItem("cromo_tv","1"); }catch(_){}
-function _uiEscala(){
+// Escala automática pelo tamanho da tela
+function _zoomAuto(){
   const w = window.innerWidth, h = window.innerHeight;
   // na TV a tela é vista de longe e o navegador costuma informar 960×540: encaixa como um 1280×720
-  const z = w <= 860 ? 1   // celular/tablet em pé: layout próprio, sem escala (TV box nunca é tão estreita)
-          : _ehTV() ? Math.min(2, Math.max(0.75, Math.min(w / 1280, h / 720)))
-          : Math.min(1.6, Math.max(0.9, w / 1400));
+  return w <= 860 ? 1   // celular/tablet em pé: layout próprio, sem escala (TV box nunca é tão estreita)
+       : _ehTV() ? Math.min(2, Math.max(0.75, Math.min(w / 1280, h / 720)))
+       : Math.min(1.6, Math.max(0.9, w / 1400));
+}
+// Zoom escolhido NESTE aparelho (10/11/2026). O zoom do navegador (Ctrl +) vale por endereço e a Cromo e a
+// Tremps estão no mesmo endereço (github.io): dar zoom numa mudava a outra. Este fica só neste site e aparelho.
+const ZOOM_KEY = 'cromo_zoom_aparelho';
+function _zoomManual(){ try{ const v = parseFloat(localStorage.getItem(ZOOM_KEY)); return (v >= 0.5 && v <= 2.5) ? v : null; }catch(_){ return null; } }
+function _uiEscala(){
+  const m = _zoomManual();
+  const z = m != null ? m : _zoomAuto();
   const v = z.toFixed(3);
   if(document.documentElement.style.getPropertyValue('--uiz') !== v) document.documentElement.style.setProperty('--uiz', v);
+  _zoomBotao();
 }
 function _uiZ(){ return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--uiz')) || 1; }
+function _zoomBotao(){
+  const m = _zoomManual(), z = m != null ? m : _zoomAuto(), pct = Math.round(z*100) + '%';
+  const b = document.getElementById('zoomPct'), b2 = document.getElementById('zoomPct2'), a = document.getElementById('zoomAutoBtn');
+  if(b) b.textContent = (m == null ? 'Auto ' : '') + pct;
+  if(b2) b2.textContent = pct;
+  if(a) a.classList.toggle('on', m == null);
+}
+function zoomAjustar(passo){
+  let n = Math.round((_uiZ() + passo) * 20) / 20;      // de 5 em 5%
+  n = Math.min(2.5, Math.max(0.5, n));
+  try{ localStorage.setItem(ZOOM_KEY, String(n)); }catch(_){}
+  _uiEscala();
+}
+function zoomAutomatico(){ try{ localStorage.removeItem(ZOOM_KEY); }catch(_){} _uiEscala(); }
+function zoomMenu(ev){
+  if(ev) ev.stopPropagation();
+  const p = document.getElementById('zoomPop'); if(!p) return;
+  p.hidden = !p.hidden; _zoomBotao();
+}
+document.addEventListener('click', e => { const p = document.getElementById('zoomPop'); if(p && !p.hidden && !e.target.closest('.zoom-wrap')) p.hidden = true; });
+// Atalhos: Ctrl + / Ctrl − e Ctrl + rodinha mexem no zoom DO SITE (não no do navegador, que vazaria para o outro site).
+// Ctrl 0 volta ao automático e deixa o navegador zerar o zoom dele também.
+function _appVisivel(){ const a = document.getElementById('app'); return !!a && getComputedStyle(a).display !== 'none' && !document.body.classList.contains('ap-on'); }
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ const p = document.getElementById('zoomPop'); if(p) p.hidden = true; }
+  if(!(e.ctrlKey || e.metaKey) || e.altKey || !_appVisivel()) return;
+  if(e.key === '+' || e.key === '=' || e.code === 'NumpadAdd'){ e.preventDefault(); zoomAjustar(0.05); }
+  else if(e.key === '-' || e.key === '_' || e.code === 'NumpadSubtract'){ e.preventDefault(); zoomAjustar(-0.05); }
+  else if(e.key === '0' || e.code === 'Numpad0'){ zoomAutomatico(); }
+});
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _zoomBotao); else _zoomBotao();
+let _zoomRodaT = 0;
+window.addEventListener('wheel', e => {
+  if(!e.ctrlKey || !_appVisivel() || (e.target.closest && e.target.closest('.ap-palco,.ap-zoom'))) return;
+  e.preventDefault();
+  const agora = Date.now(); if(agora - _zoomRodaT < 90) return; _zoomRodaT = agora;
+  zoomAjustar(e.deltaY < 0 ? 0.05 : -0.05);
+}, {passive:false});
 _uiEscala();
 let _uiEscalaT = null;
 window.addEventListener('resize', () => { clearTimeout(_uiEscalaT); _uiEscalaT = setTimeout(_uiEscala, 120); });

@@ -1418,6 +1418,13 @@ body.ap-on #app{zoom:1}
 .nav-meta .s{font-size:9.5px}
 @media(max-width:860px){.sidebar{width:240px}}
 .ui-estreito .sidebar{width:230px}
+/* O menu NÃO cresce com o zoom do site (o zoom é para o conteúdo): desfaz a escala só nele.
+   Como fica sem zoom, as medidas ligadas à barra do topo (que tem zoom) multiplicam pela escala. */
+@media(min-width:861px){.sidebar{width:210px;zoom:calc(1 / var(--uiz,1));top:calc(88px * var(--uiz,1));max-height:calc(100vh - 96px * var(--uiz,1))}}
+/* Painéis numa linha só (o subtítulo aparece ao parar o mouse em cima) */
+.nav-pn .nav-meta .s{display:none}
+.nav-pn{padding:7px 8px}
+.nav-pn .nav-ico{width:24px;height:24px}
 .empty{min-height:calc(52vh / var(--uiz,1))}
 .modal{max-height:calc(88vh / var(--uiz,1))}
 .ppd-card{max-height:calc(90vh / var(--uiz,1))}
@@ -2325,7 +2332,7 @@ function renderNav(){
     if(p.host&&!isHost) return;
     if(p.id==="ger"&&isGerente) return;
     const on=nav.sec==="painel"&&nav.id===p.id;
-    h+=`<div class="nav-item ${on?'active':''}" onclick="goto('painel','${p.id}')">
+    h+=`<div class="nav-item nav-pn ${on?'active':''}" title="${p.sub}" onclick="goto('painel','${p.id}')">
       <div class="nav-ico"><svg viewBox="0 0 24 24">${p.ico}</svg></div>
       <div class="nav-meta"><div class="n">${p.nome}</div><div class="s">${p.sub}</div></div></div>`;
   });

@@ -2780,9 +2780,9 @@ function viewPainel(){
   const medalha=i=>['🥇','🥈','🥉'][i]||(i+1)+'º';
   const rankHtml = !rk.length ? `<div class="pn2-vazio">Nenhum funcionário marcado nas horas ainda.<br><span>Na Meta Diária, escolha "quem fez?" em cada hora para aparecer aqui.</span></div>`
     : `<table class="pn2-rank"><thead><tr><th></th><th>Funcionário</th><th>Robô</th><th class="r">Horas</th><th class="r">Peças</th><th class="r">Metas</th><th>% da meta</th></tr></thead><tbody>${
-      rk.slice(0,10).map((f,i)=>`<tr class="${i<3?'top':''}"><td class="pos">${medalha(i)}</td><td class="nm">${esc(f.nome)}</td><td class="rb">${[...f.robos].sort().join(' · ')}</td><td class="r">${f.horas}</td><td class="r pc">${fmt(f.pecas)}</td><td class="r">${f.hMeta?f.ok+'/'+f.hMeta:'—'}</td>
+      rk.slice(0,3).map((f,i)=>`<tr class="${i<3?'top':''}"><td class="pos">${medalha(i)}</td><td class="nm">${esc(f.nome)}</td><td class="rb">${[...f.robos].sort().join(' · ')}</td><td class="r">${f.horas}</td><td class="r pc">${fmt(f.pecas)}</td><td class="r">${f.hMeta?f.ok+'/'+f.hMeta:'—'}</td>
         <td><div class="pn2-pct"><div class="tr"><i style="width:${Math.min(100,f.pct||0)}%;background:${corPct(f.pct)}"></i></div><b style="color:${corPct(f.pct)}">${f.pct==null?'—':f.pct+'%'}</b></div></td></tr>`).join('')
-    }</tbody></table>${rk.length>10?`<div class="pn2-mais">+ ${rk.length-10} funcionário${rk.length-10>1?'s':''}</div>`:''}`;
+    }</tbody></table>${rk.length>3?`<div class="pn2-mais">top 3 de ${rk.length} funcionários no dia</div>`:''}`;
 
   // alertas
   const alerta=Object.keys(robos()).sort((a,b)=>a-b).filter(k=>(robos()[k].status||"")!=="Produzindo");
@@ -2835,7 +2835,7 @@ function viewPainel(){
       </div>
       <div class="pn2-row">
         <div class="card glass pn2-graf">
-          <div class="pn2-graf-h"><div class="pn-lbl" style="font-size:14px">🏆 Ranking de funcionários · ${rkDe==='hoje'?'hoje':esc(rkDe)}</div>
+          <div class="pn2-graf-h"><div class="pn-lbl" style="font-size:14px">🏆 Top 3 funcionários · ${rkDe==='hoje'?'hoje':esc(rkDe)}</div>
             ${rkDe!=='hoje'?`<div class="pn2-aviso">hoje ainda sem funcionário marcado — mostrando ${esc(rkDe)}</div>`:''}</div>
           ${rankHtml}
         </div>
@@ -6001,7 +6001,7 @@ const GUIA = [
         ['Meta do dia','Quanto da meta de hoje já foi feito e quanto falta. A meta soma a meta/hora de cada robô nas 10 horas do turno dia, já descontando a parada do café. O "ritmo" compara o que foi feito com a meta das horas que já passaram — a cor (verde/amarelo/vermelho) segue o ritmo.'],
         ['Dia anterior','O último dia com produção (na segunda é a sexta): total e quanto da meta daquele dia foi atingido.'],
         ['Média diária','Média de peças por dia no mês (dias parados não contam), total do mês e quanto hoje já representa da média.'],
-        ['Ranking de funcionários','Quem foi marcado em cada hora na Meta Diária ("quem fez?"), do melhor para o pior pelo % da meta (peças ÷ meta das horas que trabalhou). Mostra robô, horas, peças e metas batidas. Se hoje ainda não tem ninguém marcado, mostra o dia anterior.'],
+        ['Top 3 funcionários','Os 3 melhores entre quem foi marcado em cada hora na Meta Diária ("quem fez?"), pelo % da meta (peças ÷ meta das horas que trabalhou). Mostra robô, horas, peças e metas batidas. Se hoje ainda não tem ninguém marcado, mostra o dia anterior.'],
         ['Alertas','Robôs que não estão "Produzindo" e manutenções abertas. "Tudo operando" quando não há nada.'],
         ['Robôs · produção de hoje','Um cartão por robô com o status, as peças de hoje e as do dia anterior. Clique para abrir o robô.']]}
     ]},

@@ -1408,6 +1408,16 @@ select.fs-native{position:absolute!important;opacity:0!important;pointer-events:
 body.ap-on #app{zoom:1}
 #app{min-height:calc(100vh / var(--uiz,1))}
 .sidebar{max-height:calc(100vh / var(--uiz,1) - 96px)}
+/* Menu lateral mais estreito e compacto (10/11/2026) — sobra mais espaço para o conteúdo */
+.sidebar{width:212px;padding:8px}
+.side-sec{font-size:9.5px;padding:10px 6px 5px}
+.nav-item{gap:8px;padding:6px 8px;border-radius:8px;margin-bottom:1px}
+.nav-ico{width:26px;height:26px}
+.nav-ico svg{width:14px;height:14px}
+.nav-meta .n{font-size:11.5px;letter-spacing:0}
+.nav-meta .s{font-size:9.5px}
+@media(max-width:860px){.sidebar{width:240px}}
+.ui-estreito .sidebar{width:230px}
 .empty{min-height:calc(52vh / var(--uiz,1))}
 .modal{max-height:calc(88vh / var(--uiz,1))}
 .ppd-card{max-height:calc(90vh / var(--uiz,1))}

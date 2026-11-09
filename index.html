@@ -429,6 +429,8 @@ table.meta-t input.fhinp[hidden]{display:none}
 table.meta-t input.fhinp::placeholder{color:var(--faint);opacity:.7}
 table.meta-t input.fhinp.has{border-style:solid;border-color:rgba(0,240,255,.5);box-shadow:0 0 8px -3px var(--nc)}
 table.meta-t input.fhinp:focus{border-color:var(--nc);box-shadow:0 0 0 2px rgba(0,240,255,.18)}
+table.meta-t td.hcell .njtag{font-size:11px;color:var(--purple);font-family:'Share Tech Mono',monospace;margin-top:5px;white-space:nowrap}
+table.meta-t td.hcell .njtag b{color:var(--txt)}
 table.meta-t td.hcell .fhtag{font-size:10px;font-weight:600;color:var(--nc);font-family:'Share Tech Mono',monospace;margin-top:4px;opacity:.85;white-space:nowrap}
 /* grade de dias / barras */
 .daycell{border-radius:6px}
@@ -1891,7 +1893,17 @@ const CAFE_PARADA_MIN = 25;   // minutos de parada na hora do café (produz só 
 function ehCafe(h){ return HORAS_CAFE.includes(h); }
 function ehCafeCampo(campo){ return HORAS_CAFE.some(h=>campoH(h)===campo); }
 // meta efetiva da hora: na parada do café a meta cai proporcional ao tempo produtivo
-function metaHora(meta,h){ meta=parseInt(meta)||0; if(meta<=0) return 0; return ehCafe(h) ? Math.max(1,Math.round(meta*(60-CAFE_PARADA_MIN)/60)) : meta; }
+// Turno da noite: o contador só zera no fim, então ninguém lança 18:00–21:00 e tudo vai às 22:00.
+// Com 18:00–21:00 vazias, a 22:00 vale as 4 horas do turno: meta ×4, conta como 4 horas
+// (4 metas batidas ou não, pela média = valor ÷ 4). Se alguém lançar hora a hora, volta ao normal.
+const HORA_FECHA_NOITE = "22:00";
+const HORAS_NOITE_JUNTA = 4;
+function noiteJunta(rd){ return !rd || !HORAS_NOITE.some(x=>x!==HORA_FECHA_NOITE && parseCelVal(rd[campoH(x)]||'').num>0); }
+// quantas horas de trabalho aquela célula representa (1, ou 4 na 22:00 do turno da noite juntado)
+function horasDaCelula(h,rd){ return (h===HORA_FECHA_NOITE && noiteJunta(rd)) ? HORAS_NOITE_JUNTA : 1; }
+function metaHora(meta,h,rd){ meta=parseInt(meta)||0; if(meta<=0) return 0;
+  if(HORAS_NOITE.includes(h) && noiteJunta(rd)) return h===HORA_FECHA_NOITE ? meta*HORAS_NOITE_JUNTA : 0;
+  return ehCafe(h) ? Math.max(1,Math.round(meta*(60-CAFE_PARADA_MIN)/60)) : meta; }
 // Meta/hora de um robô num dia: vale SO a meta lançada naquele dia.
 // Dia sem meta = sem meta (0): o dashboard mostra "—" e a célula não ganha cor.
 function metaRoboEm(robo, chaveDia){
@@ -1906,7 +1918,7 @@ function metaRoboEm(robo, chaveDia){
 }
 // Meta/hora "de agora" (dia de hoje) — para telas que não olham um dia específico.
 function metaRoboHoje(robo){ const h=new Date(); return metaRoboEm(robo, chaveData(h.getFullYear(),h.getMonth(),h.getDate())); }
-function metaHoraCampo(meta,campo){ meta=parseInt(meta)||0; if(meta<=0) return 0; return ehCafeCampo(campo) ? Math.max(1,Math.round(meta*(60-CAFE_PARADA_MIN)/60)) : meta; }
+function metaHoraCampo(meta,campo,rd){ const h=[...HORAS_DIA,...HORAS_NOITE].find(x=>campoH(x)===campo); return metaHora(meta,h||'',rd); }
 // peças descontadas da meta do dia de um robô por causa da(s) parada(s) do café
 function cafeDescontoRobo(meta){ meta=parseInt(meta)||0; if(meta<=0) return 0; return HORAS_CAFE.reduce((s,h)=>s+(meta-metaHora(meta,h)),0); }
 const DASH_CAFE = "#ffcf5c";
@@ -2590,7 +2602,7 @@ function renderHistoricoRobo(k){
   const acum=registros.reduce((s,r)=>s+r.totalGeral,0);
   const media=Math.round(acum/registros.length);
   const melhor=registros.reduce((b,r)=>r.totalGeral>b.totalGeral?r:b,registros[0]);
-  const meta=metaRoboHoje(k); const metaDia=Math.max(0,meta*(HORAS_DIA.length+HORAS_NOITE.length)-cafeDescontoRobo(meta));
+  const meta=metaRoboHoje(k); const metaDia=Math.max(0,meta*(HORAS_DIA.length+HORAS_NOITE_JUNTA)-cafeDescontoRobo(meta));
   const linhas=registros.map(r=>{
     const pct=Math.round(r.totalGeral/maxTot*100);
     const atingiu=metaDia>0 && r.totalGeral>=metaDia;
@@ -2856,7 +2868,7 @@ function viewPainel(){
   const doDia=(a,m,d)=>{
     const ch=chaveData(a,m,d), md=prod().metas_dias[ch]||{};
     const horas=HORAS.map(h=>({h, t:ROBOS.reduce((s,r)=>s+parseCelVal((md[String(r)]||{})[campoH(h)]).num,0),
-      meta:ROBOS.reduce((s,r)=>s+metaHora(metaRoboEm(r,ch),h),0)}));
+      meta:ROBOS.reduce((s,r)=>s+metaHora(metaRoboEm(r,ch),h,md[String(r)]),0)}));
     const meta=ROBOS.reduce((s,r)=>{ const m=metaRoboEm(r,ch); return s+Math.max(0,m*HORAS_DIA.length-cafeDescontoRobo(m)); },0);
     return {horas, total:horas.reduce((s,x)=>s+x.t,0), meta};
   };
@@ -2889,8 +2901,9 @@ function viewPainel(){
       HORAS.forEach(hr=>{ const campo=campoH(hr), val=parseCelVal(rd[campo]||'').num; if(val<=0) return;
         const nome=String(rd["func_"+campo]||'').trim(); if(!nome) return;
         const o=res[nome]||(res[nome]={nome,pecas:0,horas:0,ok:0,hMeta:0,metaSoma:0,pecasM:0,robos:new Set()});
-        o.pecas+=val; o.horas++; o.robos.add(rk);
-        const mh=metaHora(meta,hr); if(mh>0){ o.hMeta++; o.metaSoma+=mh; o.pecasM+=val; if(val>=mh) o.ok++; }
+        const n=horasDaCelula(hr,rd);
+        o.pecas+=val; o.horas+=n; o.robos.add(rk);
+        const mh=metaHora(meta,hr,rd); if(mh>0){ o.hMeta+=n; o.metaSoma+=mh; o.pecasM+=val; if(val>=mh) o.ok+=n; }
       }); });
     return Object.values(res).map(o=>({...o, pct:o.metaSoma?Math.round(o.pecasM/o.metaSoma*100):null}))
       .sort((x,y)=>(y.pct==null?-1:y.pct)-(x.pct==null?-1:x.pct) || y.ok-x.ok || y.pecas-x.pecas);
@@ -3093,15 +3106,18 @@ function metaTable(chave,md,horas){
                : `<td class="cpts" style="color:var(--ny)">${pts!==''?esc(String(pts)):'—'}</td>`;
     // horas — quando a hora tem valor, mostra também o seletor de funcionário
     horas.forEach(hr=>{ const campo=campoH(hr); const raw=rd[campo]||""; const pv=parseCelVal(raw); linTot+=pv.num;
-      const cafe=ehCafe(hr); const func=rd["func_"+campo]||""; const metaEf=metaHora(meta,hr);
+      const cafe=ehCafe(hr); const func=rd["func_"+campo]||""; const metaEf=metaHora(meta,hr,rd);
       let cls=""; if(raw!==""){ cls= pv.adj?"adj":(metaEf>0?(pv.num>=metaEf?"ok":"low"):""); }
-      const cafeTit = (cafe&&meta>0) ? ` title="☕ Meta reduzida do café: ${metaEf} peças (parada de ${CAFE_PARADA_MIN} min)"` : "";
+      const nJ=horasDaCelula(hr,rd);
+      const cafeTit = (cafe&&meta>0) ? ` title="☕ Meta reduzida do café: ${metaEf} peças (parada de ${CAFE_PARADA_MIN} min)"`
+        : (nJ>1 ? ` title="🌙 Turno da noite junto: a 22:00 vale ${nJ} horas${meta>0?' — meta '+metaEf+' peças ('+meta+'/h × '+nJ+')':''}"` : "");
+      const njTag = (nJ>1 && raw!=="" && pv.num>0) ? `<div class="njtag">${nJ}h · média <b>${(Math.round(pv.num/nJ*10)/10).toLocaleString('pt-BR')}</b>/h${metaEf>0?' · meta '+metaEf:''}</div>` : "";
       if(isHost){
         h+=`<td class="hcell${cafe?' cafe-td':''}"${cafeTit}><input class="${cls}" value="${esc(raw)}" oninput="onMetaInput(this)" onchange="setMeta('${chave}','${r}','${campo}',this.value,this)">`
           + (temFunc ? `<input class="fhinp${func?' has':''}" list="funcDatalist" value="${esc(func)}" placeholder="quem fez?" onchange="setFuncHora('${chave}','${r}','${campo}',this.value,this)" ${raw===""?'hidden':''}>` : "")
-          + `</td>`;
+          + njTag + `</td>`;
       } else {
-        h+=`<td class="hcell ${cls}${cafe?' cafe-td':''}"${cafeTit} style="font-weight:600;color:${pv.adj?'var(--blue)':(raw===''?'var(--faint)':(metaEf>0?(pv.num>=metaEf?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}${raw!==""&&func?`<div class="fhtag">${esc(func)}</div>`:""}</td>`;
+        h+=`<td class="hcell ${cls}${cafe?' cafe-td':''}"${cafeTit} style="font-weight:600;color:${pv.adj?'var(--blue)':(raw===''?'var(--faint)':(metaEf>0?(pv.num>=metaEf?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}${raw!==""&&func?`<div class="fhtag">${esc(func)}</div>`:""}${njTag}</td>`;
       }
     });
     h+=`<td class="tot">${linTot.toLocaleString("pt-BR")}</td></tr>`;
@@ -3131,7 +3147,7 @@ function setMeta(chave,robo,campo,v,el){
     }
   }
   if(v==="") delete rd[campo]; else rd[campo]=v;
-  if(el){ const meta=metaHoraCampo(rd.meta, campo), pv=parseCelVal(v);
+  if(el){ const meta=metaHoraCampo(rd.meta, campo, rd), pv=parseCelVal(v);
     el.className = v===''?'':(pv.adj?'adj':(meta>0?(pv.num>=meta?'ok':'low'):'')); }
   _mainSig=""; saveDebounced(); renderMainSoon();
 }
@@ -3435,8 +3451,8 @@ function viewRelMensal(){
       // cada dia vale pela meta daquele dia
       const meta=metaRoboEm(robo, chaveData(anoSel,mesIdx,d));
       if(meta<=0) return;
-      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v<=0) return; const metaEf=metaHora(meta,h);
-        if(v>=metaEf) atingiu++; else naoAtingiu++;
+      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v<=0) return; const metaEf=metaHora(meta,h,rd); if(metaEf<=0) return;
+        const n=horasDaCelula(h,rd); if(v>=metaEf) atingiu+=n; else naoAtingiu+=n;
       });
     });
     if(atingiu===0 && naoAtingiu===0) return null;
@@ -4026,11 +4042,11 @@ function desempenhoFunc(ano,mes){
       [...HORAS_DIA,...HORAS_NOITE].forEach(hr=>{ const campo=campoH(hr);
         const val=parseCelVal(rd[campo]||'').num; if(val<=0) return;
         const nome=rd["func_"+campo]; if(!nome) return;
-        const o=garante(nome);
-        o.pecas+=val; o.horas+=1; o.dias.add(chave); o.robos.add(rk);
+        const o=garante(nome), n=horasDaCelula(hr,rd);
+        o.pecas+=val; o.horas+=n; o.dias.add(chave); o.robos.add(rk);
         o.diaPecas[chave]=(o.diaPecas[chave]||0)+val;
-        const metaEf=metaHora(meta,hr);
-        if(metaEf>0){ o.horasMeta+=1; if(val>=metaEf) o.metasOk+=1; }
+        const metaEf=metaHora(meta,hr,rd);
+        if(metaEf>0){ o.horasMeta+=n; if(val>=metaEf) o.metasOk+=n; }
       });
     });
   });
@@ -4168,14 +4184,15 @@ function desempenhoFuncDetalhe(nome,ano,mes){
       [...HORAS_DIA,...HORAS_NOITE].forEach(hr=>{ const campo=campoH(hr);
         if(rd["func_"+campo]!==nome) return;
         const val=parseCelVal(rd[campo]||'').num; if(val<=0) return;
-        pecas+=val; horas+=1;
-        porRobo[rk].pecas+=val; porRobo[rk].horas+=1;
+        const n=horasDaCelula(hr,rd);
+        pecas+=val; horas+=n;
+        porRobo[rk].pecas+=val; porRobo[rk].horas+=n;
         if(!porDia[chave]) porDia[chave]={pecas:0,horas:0,metasOk:0,horasMeta:0,itens:[]};
-        porDia[chave].pecas+=val; porDia[chave].horas+=1;
-        const metaEf=metaHora(meta,hr);
-        porDia[chave].itens.push({h:hr, robo:rk, val, meta:metaEf, cod:String(rd.cod||'').trim()});
-        if(metaEf>0){ horasMeta+=1; porRobo[rk].horasMeta+=1; porDia[chave].horasMeta+=1;
-          if(val>=metaEf){ metasOk+=1; porRobo[rk].metasOk+=1; porDia[chave].metasOk+=1; } }
+        porDia[chave].pecas+=val; porDia[chave].horas+=n;
+        const metaEf=metaHora(meta,hr,rd);
+        porDia[chave].itens.push({h:hr, robo:rk, val, meta:metaEf, n, cod:String(rd.cod||'').trim()});
+        if(metaEf>0){ horasMeta+=n; porRobo[rk].horasMeta+=n; porDia[chave].horasMeta+=n;
+          if(val>=metaEf){ metasOk+=n; porRobo[rk].metasOk+=n; porDia[chave].metasOk+=n; } }
       });
     });
   });
@@ -4293,7 +4310,7 @@ function _funcVerDia(ch,rolar){
       <span class="fdet-rb">R${esc(i.robo)}${i.cod?` · <em>${esc(i.cod)}</em>`:''}</span>
       <div class="fdet-bar"><i style="width:${Math.max(Math.round(i.val/mx*100),4)}%;background:${c};box-shadow:0 0 6px ${c}"></i></div>
       <span class="fdet-v" style="color:${c}">${i.val.toLocaleString('pt-BR')}</span>
-      <span class="fdet-m">${i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:'sem meta'}</span>
+      <span class="fdet-m">${i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:'sem meta'}${i.n>1?' · '+i.n+'h (média '+(Math.round(i.val/i.n*10)/10).toLocaleString('pt-BR')+'/h)':''}</span>
     </div>`; }).join('');
   box.innerHTML=`<div class="fdet-top" style="--fc:${cor}">
       <div><div class="fdet-data">${dataFmt}</div><div class="fdet-sem">${sem}</div></div>
@@ -5542,9 +5559,9 @@ function dashClientePeca(cod, c){
 function dashRenderRobo(k){ const main=document.getElementById("dashMain"); const c=robos()[k]; if(!main||!c) return;
   const rd=dashDados()[k]||{}, hora=dashHoraAtual();
   const meta=metaRoboEm(k, dashChave()), prodH=parseCelVal(rd[campoH(hora)]).num;
-  const cafe=ehCafe(hora); const metaEf=metaHora(meta,hora);
+  const cafe=ehCafe(hora); const metaEf=metaHora(meta,hora,rd); const nJ=horasDaCelula(hora,rd);
   const pct=metaEf>0?Math.round(prodH/metaEf*100):0, bateu=metaEf>0&&prodH>=metaEf, faltam=metaEf>0?Math.max(metaEf-prodH,0):0;
-  const cor=cafe?DASH_CAFE:((prodH===0&&meta===0)?DASH_NONE:bateu?DASH_OK:DASH_FAIL);
+  const cor=cafe?DASH_CAFE:((prodH===0&&(meta===0||metaEf===0))?DASH_NONE:bateu?DASH_OK:DASH_FAIL);
   const sig=`R|${k}|${hora}|${prodH}|${meta}|${rd.cod||''}|${dashClientePeca(rd.cod||c.codigo_peca, c)}|${_dashIdx}|${_dashSeq.length}|M${dashModelo()}|C${cafe?1:0}`; if(sig===_dashSigMain) return; _dashSigMain=sig;
   const dots=_dashSeq.map((_,i)=>`<i class="${i===_dashIdx?'on':''}"></i>`).join('')+`<i class="g"></i>`;
   main.innerHTML=`<div class="dash-robo" data-modelo="${dashModelo()}" style="--cor:${cor}"><div class="dash-sweep"></div>
@@ -5552,7 +5569,7 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
     <div class="dash-info">
       <div><div class="dash-rn">ROBÔ ${esc(k)}</div><div class="dash-nome">${esc(c.nome||'')}</div><div class="dash-cod">⚙ ${esc(rd.cod||c.codigo_peca||'—')}</div>${(()=>{ const cli=dashClientePeca(rd.cod||c.codigo_peca, c); return cli?`<div class="dash-cli">CLIENTE: <b>${esc(cli)}</b></div>`:''; })()}</div>
       <div class="dash-box"><div class="dash-prod-h">PRODUÇÃO ${hora}</div><div class="dash-prod-n">${prodH>0?prodH:'—'}</div>
-        ${meta>0?`<div class="dash-meta-txt">META${cafe?' (CAFÉ)':''}: <b>${metaEf}</b> PEÇAS/HORA</div>`:''}
+        ${meta>0&&metaEf>0?`<div class="dash-meta-txt">META${cafe?' (CAFÉ)':''}${nJ>1?' ('+nJ+' HORAS DA NOITE)':''}: <b>${metaEf}</b> ${nJ>1?'PEÇAS':'PEÇAS/HORA'}</div>`:''}
         ${meta>0&&prodH>0&&!bateu&&faltam>0?`<div class="dash-meta-txt fail">FALTOU ${faltam} PEÇA${faltam===1?'':'S'}</div>`:''}
         ${cafe?`<div class="dash-meta-txt" style="color:var(--ny);font-weight:700">☕ META REDUZIDA — PARADA DE ${CAFE_PARADA_MIN} MIN</div>`:''}</div>
       ${meta>0&&prodH>0?`<div class="dash-eff"><div class="dash-pct-wrap"><svg class="hud-ring" viewBox="0 0 200 120" preserveAspectRatio="none"><ellipse class="r1" cx="100" cy="60" rx="96" ry="54"/><ellipse class="r2" cx="100" cy="60" rx="86" ry="46"/></svg><div class="hud-spin"><i></i><i></i></div><div class="dash-pct">${pct}%</div></div><div class="dash-eff-l">EFICIÊNCIA DA HORA</div>
@@ -5565,9 +5582,9 @@ function dashRenderGeral(){ const main=document.getElementById("dashMain"); if(!
   const sig="G|"+hora+"|"+JSON.stringify(dd)+"|"+rb.map(k=>metaRoboEm(k,dashChave())).join(','); if(sig===_dashSigMain) return; _dashSigMain=sig;
   let totalGeral=0;
   const linhas=rb.map(k=>{ const rd=dd[k]||{}, meta=metaRoboEm(k, dashChave());
-    const pa=parseCelVal(rd[campoH(hora)]).num, metaAt=metaHora(meta,hora), corAtual=(meta===0||pa===0)?DASH_NONE:(pa>=metaAt?DASH_OK:DASH_RED);
+    const pa=parseCelVal(rd[campoH(hora)]).num, metaAt=metaHora(meta,hora,rd), corAtual=(meta===0||pa===0)?DASH_NONE:(pa>=metaAt?DASH_OK:DASH_RED);
     const tr=horas.reduce((s,h)=>s+parseCelVal(rd[campoH(h)]).num,0); totalGeral+=tr;
-    const cells=horas.map(h=>{ const v=parseCelVal(rd[campoH(h)]).num, at=h===hora, cafe=ehCafe(h), metaEf=metaHora(meta,h);
+    const cells=horas.map(h=>{ const v=parseCelVal(rd[campoH(h)]).num, at=h===hora, cafe=ehCafe(h), metaEf=metaHora(meta,h,rd);
       const ok=metaEf>0&&v>=metaEf, fail=metaEf>0&&v>0&&v<metaEf; let cor=at?corAtual:ok?DASH_OK:fail?DASH_RED:DASH_NONE; if(cafe) cor=DASH_CAFE;
       return `<td class="${at?'at':''}" style="color:${cor};${at?'background:'+cor+'18':''}">${v>0?v:'—'}</td>`; }).join('');
     return `<tr><td class="rn">${esc(k)}</td><td class="cd">${esc(rd.cod||'—')}</td><td class="mt">${meta||'—'}</td>${cells}<td class="tt">${tr>0?tr.toLocaleString("pt-BR"):'—'}</td></tr>`; }).join('');

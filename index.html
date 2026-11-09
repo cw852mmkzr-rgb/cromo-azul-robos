@@ -2879,7 +2879,8 @@ function viewPainel(){
   const robosAtivos=ROBOS.filter(r=>totalRoboDia(A,M,D,String(r))>0).length;
   // último dia antes de hoje que teve produção (na segunda é a sexta, não o domingo zerado)
   let antDt=null, an=null;
-  for(let i=1;i<=31;i++){ const x=new Date(A,M,D-i); if(totalDia(x.getFullYear(),x.getMonth(),x.getDate())>0){ antDt=x; an=doDia(x.getFullYear(),x.getMonth(),x.getDate()); break; } }
+  // sábado e domingo não contam (hora extra de fim de semana não serve de comparação): na segunda compara com a sexta
+  for(let i=1;i<=31;i++){ const x=new Date(A,M,D-i); if(x.getDay()===0||x.getDay()===6) continue; if(totalDia(x.getFullYear(),x.getMonth(),x.getDate())>0){ antDt=x; an=doDia(x.getFullYear(),x.getMonth(),x.getDate()); break; } }
   const antNome = antDt ? (Math.round((new Date(A,M,D)-antDt)/864e5)===1 ? 'Ontem' : DSEM[antDt.getDay()].charAt(0)+DSEM[antDt.getDay()].slice(1).toLowerCase()) + ' ' + dd2(antDt.getDate())+'/'+dd2(antDt.getMonth()+1) : '';
   // comparação justa: hoje até a última hora lançada × dia anterior até a MESMA hora
   const ateHj = ultIdx>=0 ? hj.horas.slice(0,ultIdx+1).reduce((s,x)=>s+x.t,0) : 0;

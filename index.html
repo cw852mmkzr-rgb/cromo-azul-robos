@@ -2965,7 +2965,6 @@ function viewPainel(){
           <div class="pn2-num" style="color:#f9f871">${fmt(media)}</div>
           <div class="pn2-sub">${dcp} dia${dcp!==1?'s':''} com produção</div>
           <div class="pn2-sub">total do mês: <b>${fmt(totalMes)}</b></div>
-          ${media&&hj.total?`<div class="pn2-sub">hoje = <b style="color:${corPct(Math.round(hj.total/media*100))}">${Math.round(hj.total/media*100)}% da média</b></div>`:''}
         </div>
       </div>
       <div class="pn2-row">
@@ -6139,7 +6138,7 @@ const GUIA = [
         ['Produção de hoje','Total de peças de hoje até a última hora lançada. A setinha compara com o dia anterior que teve produção ATÉ A MESMA HORA (comparação justa: manhã com manhã).'],
         ['Meta do dia','Quanto da meta de hoje já foi feito e quanto falta. A meta soma a meta/hora de cada robô nas 10 horas do turno dia, já descontando a parada do café. O "ritmo" compara o que foi feito com a meta das horas que já passaram — a cor (verde/amarelo/vermelho) segue o ritmo.'],
         ['Dia anterior','O último dia com produção (na segunda é a sexta): total e quanto da meta daquele dia foi atingido.'],
-        ['Média diária','Média de peças por dia no mês (dias parados não contam), total do mês e quanto hoje já representa da média.'],
+        ['Média diária','Média de peças por dia no mês (dias parados não contam) e total do mês.'],
         ['Top 3 funcionários','Os 3 melhores entre quem foi marcado em cada hora na Meta Diária ("quem fez?"), pelo % da meta (peças ÷ meta das horas que trabalhou). Mostra robô, horas, peças e metas batidas. Se hoje ainda não tem ninguém marcado, mostra o dia anterior.'],
         ['Alertas','Robôs que não estão "Produzindo" e manutenções abertas. "Tudo operando" quando não há nada.'],
         ['Robôs · produção de hoje','Um cartão por robô com o status, as peças de hoje e as do dia anterior. Clique para abrir o robô.']]}

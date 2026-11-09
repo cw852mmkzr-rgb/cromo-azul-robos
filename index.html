@@ -1886,15 +1886,16 @@ const STATUS_LIST = ["Produzindo","Setup","Aguardando","Manutenção","Sem mão 
 const STATUS_COR = {"Produzindo":"var(--ok)","Setup":"var(--blue)","Aguardando":"var(--purple)","Manutenção":"var(--warn)","Sem mão de obra":"#a855f7","Parado":"var(--danger)"};
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const HORAS_DIA   = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
-const HORAS_NOITE = ["18:00","19:00","20:00","21:00","22:00"];
+// 19:00 é a janta (09/11/2026): fica fora da tabela e de todos os cálculos. O turno da noite tem 4 horas de trabalho.
+const HORAS_NOITE = ["18:00","20:00","21:00","22:00"];
 function campoH(h){ return 'h'+h.replace(':',''); }
 const HORAS_CAFE = ["09:00"]; // horários com meta reduzida (parada de café)
 const CAFE_PARADA_MIN = 25;   // minutos de parada na hora do café (produz só 60-25=35 min)
 function ehCafe(h){ return HORAS_CAFE.includes(h); }
 function ehCafeCampo(campo){ return HORAS_CAFE.some(h=>campoH(h)===campo); }
 // meta efetiva da hora: na parada do café a meta cai proporcional ao tempo produtivo
-// Turno da noite: o contador só zera no fim, então ninguém lança 18:00–21:00 e tudo vai às 22:00.
-// Com 18:00–21:00 vazias, a 22:00 vale as 4 horas do turno: meta ×4, conta como 4 horas
+// Turno da noite: o contador só zera no fim, então ninguém lança 18:00/20:00/21:00 e tudo vai às 22:00.
+// Com essas horas vazias, a 22:00 vale as 4 horas do turno: meta ×4, conta como 4 horas
 // (4 metas batidas ou não, pela média = valor ÷ 4). Se alguém lançar hora a hora, volta ao normal.
 const HORA_FECHA_NOITE = "22:00";
 const HORAS_NOITE_JUNTA = 4;

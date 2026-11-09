@@ -2864,8 +2864,10 @@ function viewPainel(){
   const HORAS=[...HORAS_DIA,...HORAS_NOITE];
   const ndias=diasNoMes(A,M); let totalMes=0, dcp=0;
   // média diária SEM o dia de hoje (o dia ainda está em andamento e puxaria a média para baixo)
+  // e sem sábado/domingo (hora extra de fim de semana não é dia normal). O total do mês conta tudo.
   let somaAnt=0;
-  for(let d=1;d<=ndias;d++){ const t=totalDia(A,M,d); totalMes+=t; if(t>0 && d<D){ dcp++; somaAnt+=t; } }
+  for(let d=1;d<=ndias;d++){ const t=totalDia(A,M,d); totalMes+=t; const ds=new Date(A,M,d).getDay();
+    if(t>0 && d<D && ds!==0 && ds!==6){ dcp++; somaAnt+=t; } }
   const media=dcp?Math.round(somaAnt/dcp):0;
   // produção, meta e meta/hora de um dia
   const doDia=(a,m,d)=>{
@@ -2965,7 +2967,7 @@ function viewPainel(){
         <div class="card glass pn2-k media">
           <div class="pn-lbl" style="color:#f9f871">Média diária · ${MESES[M]}</div>
           <div class="pn2-num" style="color:#f9f871">${dcp?fmt(media):'—'}</div>
-          <div class="pn2-sub">${dcp?dcp+' dia'+(dcp!==1?'s':'')+' com produção · sem contar hoje':'ainda sem dias fechados no mês'}</div>
+          <div class="pn2-sub">${dcp?dcp+(dcp!==1?' dias úteis':' dia útil')+' · sem hoje e sem sábado':'ainda sem dias fechados no mês'}</div>
           <div class="pn2-sub">total do mês: <b>${fmt(totalMes)}</b></div>
         </div>
       </div>
@@ -6140,7 +6142,7 @@ const GUIA = [
         ['Produção de hoje','Total de peças de hoje até a última hora lançada. A setinha compara com o dia anterior que teve produção ATÉ A MESMA HORA (comparação justa: manhã com manhã).'],
         ['Meta do dia','Quanto da meta de hoje já foi feito e quanto falta. A meta soma a meta/hora de cada robô nas 10 horas do turno dia, já descontando a parada do café. O "ritmo" compara o que foi feito com a meta das horas que já passaram — a cor (verde/amarelo/vermelho) segue o ritmo.'],
         ['Dia anterior','O último dia com produção (na segunda é a sexta): total e quanto da meta daquele dia foi atingido.'],
-        ['Média diária','Média de peças por dia no mês, sem contar hoje (o dia ainda não fechou) e sem os dias parados. Embaixo, o total do mês com hoje.'],
+        ['Média diária','Média de peças por dia útil no mês: sem contar hoje (o dia ainda não fechou), sábado, domingo e dias parados. Embaixo, o total do mês com hoje.'],
         ['Top 3 funcionários','Os 3 melhores entre quem foi marcado em cada hora na Meta Diária ("quem fez?"), pelo % da meta (peças ÷ meta das horas que trabalhou). Mostra robô, horas, peças e metas batidas. Se hoje ainda não tem ninguém marcado, mostra o dia anterior.'],
         ['Alertas','Robôs que não estão "Produzindo" e manutenções abertas. "Tudo operando" quando não há nada.'],
         ['Robôs · produção de hoje','Um cartão por robô com o status, as peças de hoje e as do dia anterior. Clique para abrir o robô.']]}

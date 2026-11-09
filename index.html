@@ -474,17 +474,41 @@ table.meta-t td.hcell .fhtag{font-size:10px;font-weight:600;color:var(--nc);font
 .pn2-ring{width:104px;height:104px;flex-shrink:0}
 .pn2-bar{height:9px;background:#16233c;border-radius:6px;margin-top:12px;overflow:hidden}
 .pn2-bar i{display:block;height:100%;border-radius:6px}
-.pn2-row{display:grid;grid-template-columns:3fr 1fr;gap:14px}
-.pn2-graf{padding:18px 20px}
+.pn2-row{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr);gap:14px}
+.pn2-graf{padding:18px 20px;min-width:0;overflow-x:auto}
 .pn2-graf-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .pn2-leg{display:flex;gap:16px;font-family:'Share Tech Mono',monospace;font-size:12.5px;color:var(--mut)}
 .pn2-leg span{display:flex;align-items:center;gap:6px}
 .pn2-leg i{width:12px;height:12px;border-radius:2px;display:inline-block}
 .pn2-leg i.tr{height:0;width:18px;border-top:2px dashed #f9f871;border-radius:0}
+/* maior, para ver de longe (muita gente olha esta aba) */
+.pn2 .pn-lbl{font-size:13px;letter-spacing:.14em}
+.pn2-num{font-size:60px}
+.pn2-sub{font-size:15px}
+.pn2-ring{width:118px;height:118px}
+.pn2-aviso{font-family:'Share Tech Mono',monospace;font-size:12.5px;color:var(--ny);border:1px solid rgba(249,248,113,.35);border-radius:4px;padding:3px 9px}
+.pn2-rank{width:100%;border-collapse:collapse;margin-top:12px;font-family:'Chakra Petch','Share Tech Mono',sans-serif}
+.pn2-rank th{text-align:left;font-family:'Share Tech Mono',monospace;font-size:12.5px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;padding:0 10px 10px;border-bottom:1px solid rgba(0,240,255,.15);white-space:nowrap}
+.pn2-rank td{padding:11px 10px;font-size:18px;font-weight:600;color:var(--txt);border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap}
+.pn2-rank .r{text-align:right}
+.pn2-rank .pos{font-size:22px;width:44px;text-align:center;font-family:'Orbitron',sans-serif;color:var(--mut)}
+.pn2-rank .nm{font-weight:700;font-size:19px;text-transform:uppercase;letter-spacing:.03em;max-width:240px;overflow:hidden;text-overflow:ellipsis}
+.pn2-rank tr.top .nm{color:#fff}
+.pn2-rank .rb{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--nc)}
+.pn2-rank .pc{font-family:'Orbitron',sans-serif;color:var(--nc)}
+.pn2-pct{display:flex;align-items:center;gap:10px;min-width:150px}
+.pn2-pct .tr{flex:1;height:9px;background:#16233c;border-radius:6px;overflow:hidden}
+.pn2-pct .tr i{display:block;height:100%;border-radius:6px}
+.pn2-pct b{font-family:'Orbitron',sans-serif;font-size:17px;min-width:58px;text-align:right}
+.pn2-mais{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--faint);margin-top:8px}
+.pn2-vazio{padding:36px 10px;text-align:center;font-size:17px;color:var(--mut)}
+.pn2-vazio span{font-size:14px;color:var(--faint)}
+.pn2 .pn-alert{font-size:16px}
+@media(max-width:700px){.pn2-rank th:nth-child(3),.pn2-rank td:nth-child(3),.pn2-rank th:nth-child(4),.pn2-rank td:nth-child(4){display:none}.pn2-rank td{font-size:15px;padding:9px 6px}.pn2-rank .nm{font-size:15px;max-width:120px}.pn2-pct{min-width:0}.pn2-pct .tr{display:none}.pn2-num{font-size:44px}.pn2-graf{padding:14px 10px}.pn2-rank th{padding:0 5px 8px;font-size:11px}.pn2-rank .pos{width:30px;font-size:16px;padding-left:2px;padding-right:2px}.pn2-pct b{min-width:0;font-size:15px}}
 .pn-rc-ant{font-family:'Share Tech Mono',monospace;font-size:13px;color:#ff6be0;margin-top:8px}
 .pn-rc-ant b{color:#ff9cec}
-@media(max-width:1250px){.pn2-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.pn2-row{grid-template-columns:1fr}}
-@media(max-width:560px){.pn2-kpis{grid-template-columns:1fr}.pn2-num{font-size:40px}.pn2-ring{width:84px;height:84px}}
+@media(max-width:1250px){.pn2-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.pn2-row{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:560px){.pn2-kpis{grid-template-columns:minmax(0,1fr)}.pn2-num{font-size:40px}.pn2-ring{width:84px;height:84px}}
 .pn-alert{display:flex;align-items:center;gap:11px;font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:700;margin-top:14px;letter-spacing:.02em}
 .pn-alert .dot{font-size:17px}
 .pn-robos{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
@@ -2734,27 +2758,31 @@ function viewPainel(){
   const pctAnt = (an && an.meta) ? Math.round(an.total/an.meta*100) : null;
   const corPct = p => p==null ? 'var(--faint)' : p>=100 ? '#00ffae' : p>=80 ? '#f9f871' : '#ff2b5e';
   // cor da meta pelo RITMO (no começo do dia o % do dia é sempre baixo; o ritmo diz se está no caminho)
-  const corMeta = !hj.meta ? "var(--faint)" : corPct(ritmo!=null ? ritmo : pctHoje);
+  const corMeta = (!hj.meta || !hj.total) ? "var(--faint)" : corPct(ritmo!=null ? ritmo : pctHoje); // sem lançamento ainda: cinza, não vermelho
   const dash=264, off=dash-(dash*Math.min(100,pctHoje)/100);
 
-  // gráfico hora a hora: hoje (ciano) × dia anterior (magenta) + linha da meta de hoje (amarela)
-  const ultAnt = an ? an.horas.reduce((u,x,i)=>x.t>0?i:u,-1) : -1;
-  const nH = Math.max(HORAS_DIA.length, ultIdx+1, ultAnt+1);
-  const hs = hj.horas.slice(0,nH), ha = an ? an.horas.slice(0,nH) : [];
-  const W=900, H=230, pL=46, pR=10, pT=14, pB=30, cw=W-pL-pR, chH=H-pT-pB;
-  const maxV=Math.max(1,...hs.map(x=>Math.max(x.t,x.meta)),...ha.map(x=>x.t));
-  const mag=Math.pow(10,Math.floor(Math.log10(maxV))); const passo=[1,2,2.5,5,10].map(f=>f*mag).find(s=>maxV/s<=4)||mag*10; const topo=Math.ceil(maxV/passo)*passo;
-  const yv=v=>pT+chH-(v/topo)*chH, step=cw/nH, bw=Math.min(26,step*0.34);
-  let graf='';
-  for(let v=0; v<=topo+0.001; v+=passo) graf+=`<line x1="${pL}" x2="${W-pR}" y1="${yv(v).toFixed(1)}" y2="${yv(v).toFixed(1)}" stroke="rgba(0,240,255,.08)"/><text x="${pL-8}" y="${(yv(v)+4).toFixed(1)}" text-anchor="end" font-size="12" fill="#7a86a8" font-family="Share Tech Mono,monospace">${fmt(v)}</text>`;
-  hs.forEach((x,i)=>{
-    const cx=pL+step*i+step/2, a=ha[i]?ha[i].t:0;
-    if(a>0) graf+=`<rect x="${(cx-bw-1).toFixed(1)}" y="${yv(a).toFixed(1)}" width="${bw.toFixed(1)}" height="${(pT+chH-yv(a)).toFixed(1)}" rx="2" fill="rgba(255,43,214,.55)"><title>${antNome} ${x.h}: ${fmt(a)} pç</title></rect>`;
-    if(x.t>0) graf+=`<rect x="${(cx+1).toFixed(1)}" y="${yv(x.t).toFixed(1)}" width="${bw.toFixed(1)}" height="${(pT+chH-yv(x.t)).toFixed(1)}" rx="2" fill="#00f0ff" style="filter:drop-shadow(0 0 4px rgba(0,240,255,.7))"><title>Hoje ${x.h}: ${fmt(x.t)} pç${x.meta?' · meta '+fmt(x.meta):''}</title></rect>`;
-    graf+=`<text x="${cx.toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="12" fill="${i===ultIdx?'#00f0ff':'#7a86a8'}" font-family="Share Tech Mono,monospace">${x.h.slice(0,2)}h</text>`;
-  });
-  const ptsMeta=hs.map((x,i)=>x.meta>0?`${(pL+step*i+step/2).toFixed(1)},${yv(x.meta).toFixed(1)}`:null).filter(Boolean);
-  if(ptsMeta.length>1) graf+=`<polyline points="${ptsMeta.join(' ')}" fill="none" stroke="#f9f871" stroke-width="2" stroke-dasharray="6 5" opacity=".9"/>`;
+  // ranking de funcionários do dia (quem foi marcado em cada hora na Meta Diária).
+  // Ordena pelo % da meta — justo entre robôs com metas diferentes; depois metas batidas e peças.
+  const rankDia=(a,m,d)=>{
+    const ch=chaveData(a,m,d), md=prod().metas_dias[ch]||{}, res={};
+    ROBOS.forEach(r=>{ const rk=String(r), rd=md[rk]; if(!rd) return; const meta=metaRoboEm(rk,ch);
+      HORAS.forEach(hr=>{ const campo=campoH(hr), val=parseCelVal(rd[campo]||'').num; if(val<=0) return;
+        const nome=String(rd["func_"+campo]||'').trim(); if(!nome) return;
+        const o=res[nome]||(res[nome]={nome,pecas:0,horas:0,ok:0,hMeta:0,metaSoma:0,pecasM:0,robos:new Set()});
+        o.pecas+=val; o.horas++; o.robos.add(rk);
+        const mh=metaHora(meta,hr); if(mh>0){ o.hMeta++; o.metaSoma+=mh; o.pecasM+=val; if(val>=mh) o.ok++; }
+      }); });
+    return Object.values(res).map(o=>({...o, pct:o.metaSoma?Math.round(o.pecasM/o.metaSoma*100):null}))
+      .sort((x,y)=>(y.pct==null?-1:y.pct)-(x.pct==null?-1:x.pct) || y.ok-x.ok || y.pecas-x.pecas);
+  };
+  let rk=rankDia(A,M,D), rkDe='hoje';
+  if(!rk.length && antDt){ rk=rankDia(antDt.getFullYear(),antDt.getMonth(),antDt.getDate()); rkDe=antNome; }
+  const medalha=i=>['🥇','🥈','🥉'][i]||(i+1)+'º';
+  const rankHtml = !rk.length ? `<div class="pn2-vazio">Nenhum funcionário marcado nas horas ainda.<br><span>Na Meta Diária, escolha "quem fez?" em cada hora para aparecer aqui.</span></div>`
+    : `<table class="pn2-rank"><thead><tr><th></th><th>Funcionário</th><th>Robô</th><th class="r">Horas</th><th class="r">Peças</th><th class="r">Metas</th><th>% da meta</th></tr></thead><tbody>${
+      rk.slice(0,10).map((f,i)=>`<tr class="${i<3?'top':''}"><td class="pos">${medalha(i)}</td><td class="nm">${esc(f.nome)}</td><td class="rb">${[...f.robos].sort().join(' · ')}</td><td class="r">${f.horas}</td><td class="r pc">${fmt(f.pecas)}</td><td class="r">${f.hMeta?f.ok+'/'+f.hMeta:'—'}</td>
+        <td><div class="pn2-pct"><div class="tr"><i style="width:${Math.min(100,f.pct||0)}%;background:${corPct(f.pct)}"></i></div><b style="color:${corPct(f.pct)}">${f.pct==null?'—':f.pct+'%'}</b></div></td></tr>`).join('')
+    }</tbody></table>${rk.length>10?`<div class="pn2-mais">+ ${rk.length-10} funcionário${rk.length-10>1?'s':''}</div>`:''}`;
 
   // alertas
   const alerta=Object.keys(robos()).sort((a,b)=>a-b).filter(k=>(robos()[k].status||"")!=="Produzindo");
@@ -2807,9 +2835,9 @@ function viewPainel(){
       </div>
       <div class="pn2-row">
         <div class="card glass pn2-graf">
-          <div class="pn2-graf-h"><div class="pn-lbl">Hora a hora · hoje × ${esc(antNome||'dia anterior')}</div>
-            <div class="pn2-leg"><span><i style="background:#00f0ff"></i>Hoje</span>${an?`<span><i style="background:rgba(255,43,214,.7)"></i>${esc(antNome)}</span>`:''}${ptsMeta.length>1?`<span><i class="tr"></i>Meta</span>`:''}</div></div>
-          <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;margin-top:8px" role="img" aria-label="Produção por hora de hoje comparada com o dia anterior">${graf}</svg>
+          <div class="pn2-graf-h"><div class="pn-lbl" style="font-size:14px">🏆 Ranking de funcionários · ${rkDe==='hoje'?'hoje':esc(rkDe)}</div>
+            ${rkDe!=='hoje'?`<div class="pn2-aviso">hoje ainda sem funcionário marcado — mostrando ${esc(rkDe)}</div>`:''}</div>
+          ${rankHtml}
         </div>
         <div class="card glass"><div class="pn-lbl" style="color:var(--nm)">// Alertas</div>${alertHtml}</div>
       </div>
@@ -5973,7 +6001,7 @@ const GUIA = [
         ['Meta do dia','Quanto da meta de hoje já foi feito e quanto falta. A meta soma a meta/hora de cada robô nas 10 horas do turno dia, já descontando a parada do café. O "ritmo" compara o que foi feito com a meta das horas que já passaram — a cor (verde/amarelo/vermelho) segue o ritmo.'],
         ['Dia anterior','O último dia com produção (na segunda é a sexta): total e quanto da meta daquele dia foi atingido.'],
         ['Média diária','Média de peças por dia no mês (dias parados não contam), total do mês e quanto hoje já representa da média.'],
-        ['Hora a hora','Barras de hoje (ciano) ao lado do dia anterior (rosa) em cada hora, com a meta de hoje na linha amarela tracejada.'],
+        ['Ranking de funcionários','Quem foi marcado em cada hora na Meta Diária ("quem fez?"), do melhor para o pior pelo % da meta (peças ÷ meta das horas que trabalhou). Mostra robô, horas, peças e metas batidas. Se hoje ainda não tem ninguém marcado, mostra o dia anterior.'],
         ['Alertas','Robôs que não estão "Produzindo" e manutenções abertas. "Tudo operando" quando não há nada.'],
         ['Robôs · produção de hoje','Um cartão por robô com o status, as peças de hoje e as do dia anterior. Clique para abrir o robô.']]}
     ]},

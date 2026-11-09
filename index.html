@@ -459,6 +459,32 @@ table.meta-t td.hcell .fhtag{font-size:10px;font-weight:600;color:var(--nc);font
 .pn-mes b{display:block;font-family:'Orbitron',sans-serif;font-size:17px;color:var(--nc);letter-spacing:.02em}
 .pn-mes i{display:block;font-style:normal;font-size:9.5px;color:var(--faint)}
 @media(max-width:520px){.pn-mes{position:static;display:inline-block;text-align:left;margin-bottom:10px}}
+/* ===== Painel v2 (09/11/2026): hoje × dia anterior, meta e média diária bem visíveis ===== */
+.pn2{display:flex;flex-direction:column;gap:14px}
+.pn2-kpis{display:grid;grid-template-columns:1.15fr 1.3fr 1fr 1fr;gap:14px}
+.pn2-k{padding:18px 20px;min-width:0}
+.pn2-num{font-family:'Orbitron',sans-serif;font-weight:800;font-size:50px;line-height:1.05;color:var(--nc);text-shadow:0 0 22px rgba(0,240,255,.45);margin-top:8px;letter-spacing:.01em;white-space:nowrap}
+.pn2-sub{font-family:'Share Tech Mono',monospace;font-size:13.5px;color:var(--mut);margin-top:6px;line-height:1.35}
+.pn2-sub b{color:var(--txt)}
+.pn2-cmp{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--mut)}
+.pn2-chip{font-family:'Orbitron',sans-serif;font-weight:700;font-size:15px;padding:3px 10px;border-radius:4px}
+.pn2-chip.up{color:#00ffae;background:rgba(0,255,174,.12);border:1px solid rgba(0,255,174,.45)}
+.pn2-chip.down{color:#ff2b5e;background:rgba(255,43,94,.12);border:1px solid rgba(255,43,94,.45)}
+.pn2-k.meta{display:flex;align-items:center;gap:18px}
+.pn2-ring{width:104px;height:104px;flex-shrink:0}
+.pn2-bar{height:9px;background:#16233c;border-radius:6px;margin-top:12px;overflow:hidden}
+.pn2-bar i{display:block;height:100%;border-radius:6px}
+.pn2-row{display:grid;grid-template-columns:3fr 1fr;gap:14px}
+.pn2-graf{padding:18px 20px}
+.pn2-graf-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.pn2-leg{display:flex;gap:16px;font-family:'Share Tech Mono',monospace;font-size:12.5px;color:var(--mut)}
+.pn2-leg span{display:flex;align-items:center;gap:6px}
+.pn2-leg i{width:12px;height:12px;border-radius:2px;display:inline-block}
+.pn2-leg i.tr{height:0;width:18px;border-top:2px dashed #f9f871;border-radius:0}
+.pn-rc-ant{font-family:'Share Tech Mono',monospace;font-size:13px;color:#ff6be0;margin-top:8px}
+.pn-rc-ant b{color:#ff9cec}
+@media(max-width:1250px){.pn2-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.pn2-row{grid-template-columns:1fr}}
+@media(max-width:560px){.pn2-kpis{grid-template-columns:1fr}.pn2-num{font-size:40px}.pn2-ring{width:84px;height:84px}}
 .pn-alert{display:flex;align-items:center;gap:11px;font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:700;margin-top:14px;letter-spacing:.02em}
 .pn-alert .dot{font-size:17px}
 .pn-robos{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
@@ -2182,6 +2208,7 @@ function renderMain(){
   let sig=nav.sec+":"+nav.id+"|"+isHost+"|";
   if(nav.sec==="robo") sig+=JSON.stringify(robos()[nav.id]||{});
   else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+_ppmModo+_ppmMes+_ppmAno+_ppmDataDia+_ppmDataSemana+_ppmDataIni+_ppmDataFim+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{})+"|R"+_relModo+_relDia+_relSemana+_relIni+_relFim+"|D"+(divisaoAtiva()?1:0)+"|F"+JSON.stringify(funcionarios());
+  if(nav.sec==="painel" && nav.id==="painel") sig+="|H"+new Date().toDateString(); // virou o dia: o Painel redesenha com o dia novo
   if(nav.sec==="painel" && nav.id==="guia") sig="painel:guia|"+isHost+"|"+isGerente;
   document.body.classList.toggle("ap-on", nav.sec==="painel" && nav.id==="apostila"); // sem as linhas de CRT sobre as páginas brancas
   if(nav.sec==="painel" && nav.id==="apostila") sig="painel:apostila|"+isHost+"|"+isGerente+"|"+(!!_apSenha)+"|"+(_apInfo?_apInfo.versao:0);
@@ -2673,29 +2700,62 @@ function diasNoMes(a,m){ return new Date(a,m+1,0).getDate(); }
 
 /* ---------- PAINEL (bento / visão geral) ---------- */
 function viewPainel(){
-  const A=hoje.getFullYear(),M=hoje.getMonth(),D=hoje.getDate();
-  const ndias=diasNoMes(A,M); let totalMes=0; const serie=[];
-  for(let d=1;d<=ndias;d++){ const t=totalDia(A,M,d); totalMes+=t; if(d<=D) serie.push(t); }
-  const hojeT=totalDia(A,M,D);
-  const dcp=serie.filter(t=>t>0).length; const media=dcp?Math.round(totalMes/dcp):0;
-  // produção de hoje hora a hora (todos os robôs) — gráfico de barras do card principal
-  const mdHoje=prod().metas_dias[chaveData(A,M,D)]||{};
-  const horasT=[...HORAS_DIA,...HORAS_NOITE].map(h=>({h, t:ROBOS.reduce((s,r)=>s+parseCelVal((mdHoje[String(r)]||{})[campoH(h)]).num,0)}));
-  let ultIdx=-1; horasT.forEach((x,i)=>{ if(x.t>0) ultIdx=i; });
-  const horasVis=horasT.slice(0, Math.max(HORAS_DIA.length, ultIdx+1)); // turno dia sempre; noite só se tiver produção
-  const maxH=Math.max(1,...horasVis.map(x=>x.t)), bw=320/horasVis.length;
-  const barras=horasVis.map((x,i)=>{ const hgt=x.t>0?Math.max(2,(x.t/maxH)*40):0; return `<rect x="${(i*bw+bw*.18).toFixed(1)}" y="${(42-hgt).toFixed(1)}" width="${(bw*.64).toFixed(1)}" height="${hgt.toFixed(1)}" rx="1.5" fill="#ff2bd6"><title>${x.h} · ${x.t.toLocaleString("pt-BR")} pç</title></rect>`; }).join('')
-    + horasVis.map((x,i)=> i%2===0 ? `<text x="${(i*bw+bw/2).toFixed(1)}" y="54" text-anchor="middle" font-size="8" fill="#7a86a8" font-family="Share Tech Mono,monospace">${x.h.slice(0,2)}h</text>` : '').join('');
-  const ultHora=ultIdx>=0?horasT[ultIdx]:null;
-  // último dia antes de hoje que teve produção (na segunda mostra a sexta, não o domingo zerado)
-  let antD=null, antT=0;
-  for(let i=1;i<=14;i++){ const dd=new Date(A,M,D-i), t=totalDia(dd.getFullYear(),dd.getMonth(),dd.getDate()); if(t>0){ antD=dd; antT=t; break; } }
-  const antTxt = antD ? ((Math.round((new Date(A,M,D)-antD)/864e5)===1?'ONTEM':['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][antD.getDay()]+' '+String(antD.getDate()).padStart(2,'0')+'/'+String(antD.getMonth()+1).padStart(2,'0'))+' '+antT.toLocaleString("pt-BR")) : '';
+  // data de AGORA (a página pode ficar dias aberta numa TV — "hoje" não pode ficar parado no dia em que abriu)
+  const agora=new Date(), A=agora.getFullYear(), M=agora.getMonth(), D=agora.getDate();
+  const DSEM=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+  const dd2=n=>String(n).padStart(2,'0'), fmt=n=>Math.round(n).toLocaleString("pt-BR");
+  const HORAS=[...HORAS_DIA,...HORAS_NOITE];
+  const ndias=diasNoMes(A,M); let totalMes=0, dcp=0;
+  for(let d=1;d<=ndias;d++){ const t=totalDia(A,M,d); totalMes+=t; if(t>0) dcp++; }
+  const media=dcp?Math.round(totalMes/dcp):0;
+  // produção, meta e meta/hora de um dia
+  const doDia=(a,m,d)=>{
+    const ch=chaveData(a,m,d), md=prod().metas_dias[ch]||{};
+    const horas=HORAS.map(h=>({h, t:ROBOS.reduce((s,r)=>s+parseCelVal((md[String(r)]||{})[campoH(h)]).num,0),
+      meta:ROBOS.reduce((s,r)=>s+metaHora(metaRoboEm(r,ch),h),0)}));
+    const meta=ROBOS.reduce((s,r)=>{ const m=metaRoboEm(r,ch); return s+Math.max(0,m*HORAS_DIA.length-cafeDescontoRobo(m)); },0);
+    return {horas, total:horas.reduce((s,x)=>s+x.t,0), meta};
+  };
+  const hj=doDia(A,M,D);
+  let ultIdx=-1; hj.horas.forEach((x,i)=>{ if(x.t>0) ultIdx=i; });
+  const ultHora=ultIdx>=0?hj.horas[ultIdx]:null;
   const robosAtivos=ROBOS.filter(r=>totalRoboDia(A,M,D,String(r))>0).length;
-  // meta do dia: soma das metas/hora dos robôs × 10h dia, descontando a parada do café
-  const metaDia=ROBOS.reduce((s,r)=>{ const m=metaRoboHoje(r); return s+Math.max(0,m*10-cafeDescontoRobo(m)); },0);
-  const pct=metaDia?Math.min(100,Math.round(hojeT/metaDia*100)):0;
-  const dash=232, off=dash-(dash*pct/100);
+  // último dia antes de hoje que teve produção (na segunda é a sexta, não o domingo zerado)
+  let antDt=null, an=null;
+  for(let i=1;i<=31;i++){ const x=new Date(A,M,D-i); if(totalDia(x.getFullYear(),x.getMonth(),x.getDate())>0){ antDt=x; an=doDia(x.getFullYear(),x.getMonth(),x.getDate()); break; } }
+  const antNome = antDt ? (Math.round((new Date(A,M,D)-antDt)/864e5)===1 ? 'Ontem' : DSEM[antDt.getDay()].charAt(0)+DSEM[antDt.getDay()].slice(1).toLowerCase()) + ' ' + dd2(antDt.getDate())+'/'+dd2(antDt.getMonth()+1) : '';
+  // comparação justa: hoje até a última hora lançada × dia anterior até a MESMA hora
+  const ateHj = ultIdx>=0 ? hj.horas.slice(0,ultIdx+1).reduce((s,x)=>s+x.t,0) : 0;
+  const ateAnt = (an && ultIdx>=0) ? an.horas.slice(0,ultIdx+1).reduce((s,x)=>s+x.t,0) : 0;
+  const metaAteAgora = ultIdx>=0 ? hj.horas.slice(0,ultIdx+1).reduce((s,x)=>s+x.meta,0) : 0;
+  const delta = ateAnt>0 ? Math.round((ateHj-ateAnt)/ateAnt*100) : null;
+  const pctHoje = hj.meta ? Math.round(hj.total/hj.meta*100) : 0;
+  const ritmo = metaAteAgora ? Math.round(ateHj/metaAteAgora*100) : null;
+  const pctAnt = (an && an.meta) ? Math.round(an.total/an.meta*100) : null;
+  const corPct = p => p==null ? 'var(--faint)' : p>=100 ? '#00ffae' : p>=80 ? '#f9f871' : '#ff2b5e';
+  // cor da meta pelo RITMO (no começo do dia o % do dia é sempre baixo; o ritmo diz se está no caminho)
+  const corMeta = !hj.meta ? "var(--faint)" : corPct(ritmo!=null ? ritmo : pctHoje);
+  const dash=264, off=dash-(dash*Math.min(100,pctHoje)/100);
+
+  // gráfico hora a hora: hoje (ciano) × dia anterior (magenta) + linha da meta de hoje (amarela)
+  const ultAnt = an ? an.horas.reduce((u,x,i)=>x.t>0?i:u,-1) : -1;
+  const nH = Math.max(HORAS_DIA.length, ultIdx+1, ultAnt+1);
+  const hs = hj.horas.slice(0,nH), ha = an ? an.horas.slice(0,nH) : [];
+  const W=900, H=230, pL=46, pR=10, pT=14, pB=30, cw=W-pL-pR, chH=H-pT-pB;
+  const maxV=Math.max(1,...hs.map(x=>Math.max(x.t,x.meta)),...ha.map(x=>x.t));
+  const mag=Math.pow(10,Math.floor(Math.log10(maxV))); const passo=[1,2,2.5,5,10].map(f=>f*mag).find(s=>maxV/s<=4)||mag*10; const topo=Math.ceil(maxV/passo)*passo;
+  const yv=v=>pT+chH-(v/topo)*chH, step=cw/nH, bw=Math.min(26,step*0.34);
+  let graf='';
+  for(let v=0; v<=topo+0.001; v+=passo) graf+=`<line x1="${pL}" x2="${W-pR}" y1="${yv(v).toFixed(1)}" y2="${yv(v).toFixed(1)}" stroke="rgba(0,240,255,.08)"/><text x="${pL-8}" y="${(yv(v)+4).toFixed(1)}" text-anchor="end" font-size="12" fill="#7a86a8" font-family="Share Tech Mono,monospace">${fmt(v)}</text>`;
+  hs.forEach((x,i)=>{
+    const cx=pL+step*i+step/2, a=ha[i]?ha[i].t:0;
+    if(a>0) graf+=`<rect x="${(cx-bw-1).toFixed(1)}" y="${yv(a).toFixed(1)}" width="${bw.toFixed(1)}" height="${(pT+chH-yv(a)).toFixed(1)}" rx="2" fill="rgba(255,43,214,.55)"><title>${antNome} ${x.h}: ${fmt(a)} pç</title></rect>`;
+    if(x.t>0) graf+=`<rect x="${(cx+1).toFixed(1)}" y="${yv(x.t).toFixed(1)}" width="${bw.toFixed(1)}" height="${(pT+chH-yv(x.t)).toFixed(1)}" rx="2" fill="#00f0ff" style="filter:drop-shadow(0 0 4px rgba(0,240,255,.7))"><title>Hoje ${x.h}: ${fmt(x.t)} pç${x.meta?' · meta '+fmt(x.meta):''}</title></rect>`;
+    graf+=`<text x="${cx.toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="12" fill="${i===ultIdx?'#00f0ff':'#7a86a8'}" font-family="Share Tech Mono,monospace">${x.h.slice(0,2)}h</text>`;
+  });
+  const ptsMeta=hs.map((x,i)=>x.meta>0?`${(pL+step*i+step/2).toFixed(1)},${yv(x.meta).toFixed(1)}`:null).filter(Boolean);
+  if(ptsMeta.length>1) graf+=`<polyline points="${ptsMeta.join(' ')}" fill="none" stroke="#f9f871" stroke-width="2" stroke-dasharray="6 5" opacity=".9"/>`;
+
   // alertas
   const alerta=Object.keys(robos()).sort((a,b)=>a-b).filter(k=>(robos()[k].status||"")!=="Produzindo");
   const nCh=chamados().filter(c=>c.status!=='Concluído').length;
@@ -2703,23 +2763,58 @@ function viewPainel(){
   if(alerta.length>6) alertHtml+=`<div class="pn-alert" style="color:var(--faint)"><span class="dot" style="color:var(--faint)"></span>+${alerta.length-6} ROBÔ${alerta.length-6>1?'S':''}</div>`;
   if(nCh) alertHtml+=`<div class="pn-alert"><span class="dot" style="color:var(--nm)"></span>${nCh} CHAMADO${nCh>1?'S':''} ABERTO${nCh>1?'S':''}</div>`;
   if(!alertHtml) alertHtml=`<div class="pn-alert" style="color:var(--ok)"><span class="dot" style="color:var(--ok)"></span>TUDO OPERANDO</div>`;
+
+  // robôs: hoje + dia anterior
   const robos6=Object.keys(robos()).sort((a,b)=>a-b).map(k=>{ const c=robos()[k],cor=STATUS_COR[c.status]||"var(--faint)"; const t=totalRoboDia(A,M,D,k);
+    const ta = antDt ? totalRoboDia(antDt.getFullYear(),antDt.getMonth(),antDt.getDate(),k) : 0;
     return `<div class="pn-rc card glass" style="cursor:pointer" onclick="goto('robo','${k}')"><div class="n">${esc(k)}</div>
-      <div class="s"><span class="dot" style="color:${cor}"></span>${esc(c.status||'—')}</div><div class="v">${t.toLocaleString("pt-BR")}</div></div>`;
+      <div class="s"><span class="dot" style="color:${cor}"></span>${esc(c.status||'—')}</div><div class="v">${fmt(t)}</div>
+      ${antDt?`<div class="pn-rc-ant">${esc(antNome)}: <b>${fmt(ta)}</b></div>`:''}</div>`;
   }).join("");
-  return pageHead(IC.painel,"Painel","Visão geral · "+MESES[M]+" "+A)
-    + `<div class="bento">
-        <div class="card glass pn-hoje">
-          <div class="pn-mes" title="Produção do mês de ${MESES[M]}"><span>${MESES[M].slice(0,3)}</span><b>${totalMes.toLocaleString("pt-BR")}</b><i>méd. ${media.toLocaleString("pt-BR")}/dia · ${dcp} dia${dcp!==1?'s':''}</i></div>
-          <div class="pn-lbl">Produção de hoje</div><div class="pn-big">${hojeT.toLocaleString("pt-BR")}</div>
-          <div class="pn-sub">${ultHora?`ÚLTIMA HORA ${ultHora.h} · ${ultHora.t.toLocaleString("pt-BR")} PÇ`:'SEM APONTAMENTO AINDA'} · ${robosAtivos} ROBÔ${robosAtivos!==1?'S':''}${antTxt?' · '+antTxt:''}</div>
-          <svg viewBox="0 0 320 58" width="100%" height="62" preserveAspectRatio="none" style="margin-top:10px;filter:drop-shadow(0 0 4px rgba(255,43,214,.55))">${barras}</svg></div>
-        <div class="card glass" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center"><div class="pn-lbl">Meta do dia</div>
-          <svg viewBox="0 0 90 90" width="90" height="90" style="margin-top:8px"><circle cx="45" cy="45" r="37" fill="none" stroke="#16233c" stroke-width="8"/><circle cx="45" cy="45" r="37" fill="none" stroke="#00f0ff" stroke-width="8" stroke-linecap="round" stroke-dasharray="${dash}" stroke-dashoffset="${off}" transform="rotate(-90 45 45)" style="filter:drop-shadow(0 0 6px rgba(0,240,255,.9))"/></svg>
-          <div class="pn-big" style="font-size:26px;margin-top:8px">${pct}%</div><div class="pn-sub">${hojeT.toLocaleString("pt-BR")} / ${metaDia.toLocaleString("pt-BR")} PÇ HOJE</div></div>
+
+  const chip = delta==null ? '' : `<span class="pn2-chip ${delta>=0?'up':'down'}">${delta>=0?'▲':'▼'} ${Math.abs(delta)}%</span>`;
+  return pageHead(IC.painel,"Painel","Visão geral · "+DSEM[agora.getDay()].toLowerCase()+", "+dd2(D)+"/"+dd2(M+1)+" · "+MESES[M]+" "+A)
+    + `<div class="pn2">
+      <div class="pn2-kpis">
+        <div class="card glass pn2-k hoje">
+          <div class="pn-lbl">Produção de hoje</div>
+          <div class="pn2-num">${fmt(hj.total)}</div>
+          <div class="pn2-sub">${ultHora?`até ${ultHora.h} · ${robosAtivos} robô${robosAtivos!==1?'s':''}`:'sem apontamento ainda'}</div>
+          ${delta!=null?`<div class="pn2-cmp">${chip}<span>vs ${esc(antNome)} até ${ultHora.h} (${fmt(ateAnt)})</span></div>`:''}
+        </div>
+        <div class="card glass pn2-k meta">
+          <svg viewBox="0 0 100 100" class="pn2-ring"><circle cx="50" cy="50" r="42" fill="none" stroke="#16233c" stroke-width="9"/><circle cx="50" cy="50" r="42" fill="none" style="stroke:${corMeta};color:${corMeta}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${dash}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 50 50)" style="filter:drop-shadow(0 0 6px currentColor)"/></svg>
+          <div>
+            <div class="pn-lbl">Meta do dia</div>
+            <div class="pn2-num" style="color:${corMeta}">${hj.meta?pctHoje+'%':'—'}</div>
+            <div class="pn2-sub">${fmt(hj.total)} de ${fmt(hj.meta)} pç${hj.meta&&hj.total<hj.meta?' · faltam '+fmt(hj.meta-hj.total):''}</div>
+            ${ritmo!=null?`<div class="pn2-sub">ritmo até agora: <b style="color:${corPct(ritmo)}">${ritmo}% da meta</b></div>`:''}
+          </div>
+        </div>
+        <div class="card glass pn2-k ant">
+          <div class="pn-lbl" style="color:var(--nm)">${antDt?esc(antNome)+' · dia anterior':'Dia anterior'}</div>
+          <div class="pn2-num" style="color:#ff6be0">${an?fmt(an.total):'—'}</div>
+          ${an?`<div class="pn2-sub">${an.meta?`<b style="color:${corPct(pctAnt)}">${pctAnt}% da meta</b> (${fmt(an.meta)} pç)`:'sem meta lançada'}</div>
+          <div class="pn2-bar"><i style="width:${Math.min(100,pctAnt||0)}%;background:${corPct(pctAnt)}"></i></div>`:'<div class="pn2-sub">sem produção nos últimos dias</div>'}
+        </div>
+        <div class="card glass pn2-k media">
+          <div class="pn-lbl" style="color:#f9f871">Média diária · ${MESES[M]}</div>
+          <div class="pn2-num" style="color:#f9f871">${fmt(media)}</div>
+          <div class="pn2-sub">${dcp} dia${dcp!==1?'s':''} com produção</div>
+          <div class="pn2-sub">total do mês: <b>${fmt(totalMes)}</b></div>
+          ${media&&hj.total?`<div class="pn2-sub">hoje = <b style="color:${corPct(Math.round(hj.total/media*100))}">${Math.round(hj.total/media*100)}% da média</b></div>`:''}
+        </div>
+      </div>
+      <div class="pn2-row">
+        <div class="card glass pn2-graf">
+          <div class="pn2-graf-h"><div class="pn-lbl">Hora a hora · hoje × ${esc(antNome||'dia anterior')}</div>
+            <div class="pn2-leg"><span><i style="background:#00f0ff"></i>Hoje</span>${an?`<span><i style="background:rgba(255,43,214,.7)"></i>${esc(antNome)}</span>`:''}${ptsMeta.length>1?`<span><i class="tr"></i>Meta</span>`:''}</div></div>
+          <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;margin-top:8px" role="img" aria-label="Produção por hora de hoje comparada com o dia anterior">${graf}</svg>
+        </div>
         <div class="card glass"><div class="pn-lbl" style="color:var(--nm)">// Alertas</div>${alertHtml}</div>
-        <div class="card glass span"><h3><svg viewBox="0 0 24 24">${IC.robot}</svg>Robôs · produção de hoje</h3><div class="pn-robos">${robos6}</div></div>
-      </div>`;
+      </div>
+      <div class="card glass"><h3><svg viewBox="0 0 24 24">${IC.robot}</svg>Robôs · produção de hoje</h3><div class="pn-robos">${robos6}</div></div>
+    </div>`;
 }
 
 /* ---------- PRODUÇÃO MENSAL ---------- */
@@ -5874,10 +5969,13 @@ const GUIA = [
     resumo:'Visão geral do mês e de hoje, logo que você entra.',
     blocos:[
       {t:'O que mostra', defs:[
-        ['Produção de hoje','Total de peças de hoje, com a produção hora a hora, a última hora lançada e quanto foi feito ontem. No canto, o total do mês com a média por dia.'],
-        ['Meta do dia','Quanto da meta de hoje já foi feito. A meta soma a meta/hora de cada robô nas 10 horas do turno dia, já descontando a parada do café.'],
+        ['Produção de hoje','Total de peças de hoje até a última hora lançada. A setinha compara com o dia anterior que teve produção ATÉ A MESMA HORA (comparação justa: manhã com manhã).'],
+        ['Meta do dia','Quanto da meta de hoje já foi feito e quanto falta. A meta soma a meta/hora de cada robô nas 10 horas do turno dia, já descontando a parada do café. O "ritmo" compara o que foi feito com a meta das horas que já passaram — a cor (verde/amarelo/vermelho) segue o ritmo.'],
+        ['Dia anterior','O último dia com produção (na segunda é a sexta): total e quanto da meta daquele dia foi atingido.'],
+        ['Média diária','Média de peças por dia no mês (dias parados não contam), total do mês e quanto hoje já representa da média.'],
+        ['Hora a hora','Barras de hoje (ciano) ao lado do dia anterior (rosa) em cada hora, com a meta de hoje na linha amarela tracejada.'],
         ['Alertas','Robôs que não estão "Produzindo" e manutenções abertas. "Tudo operando" quando não há nada.'],
-        ['Robôs · produção de hoje','Um cartão por robô com o status e as peças de hoje. Clique para abrir o robô.']]}
+        ['Robôs · produção de hoje','Um cartão por robô com o status, as peças de hoje e as do dia anterior. Clique para abrir o robô.']]}
     ]},
   { id:'mensal', titulo:'Produção Mensal', ico:'mensal', quem:'Todos', ir:'mensal',
     resumo:'Total de peças por dia do mês.',

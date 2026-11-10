@@ -2552,8 +2552,11 @@ function viewRobot(k){
       <div class="field"><label>Última troca registrada</label><div class="val" style="color:var(--ny)">${c.ultima_troca?esc(c.ultima_troca):"—"}</div></div>
       <div class="field"><label>🔩 Desgaste do eletrodo atual</label>
         <div style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <span style="font-size:22px;font-weight:900;color:${corDesg};font-family:Orbitron,sans-serif;text-shadow:0 0 8px ${corDesg}">${desgaste.toLocaleString("pt-BR")}</span>
-          <span style="font-size:11px;color:var(--faint);text-align:right;line-height:1.3">peças desde<br>última troca</span>
+          ${c.ultima_troca
+            ? `<span style="font-size:22px;font-weight:900;color:${corDesg};font-family:Orbitron,sans-serif;text-shadow:0 0 8px ${corDesg}">${desgaste.toLocaleString("pt-BR")}</span>
+          <span style="font-size:11px;color:var(--faint);text-align:right;line-height:1.3">peças desde<br>última troca</span>`
+            : `<span style="font-size:22px;font-weight:900;color:var(--faint);font-family:Orbitron,sans-serif">—</span>
+          <span style="font-size:11.5px;color:var(--mut);text-align:right;line-height:1.35">${isHost?'nenhuma troca registrada<br>clique em <b style="color:var(--nc)">+ Registrar troca agora</b><br>para começar a contar':'nenhuma troca registrada<br>a contagem começa quando o<br>HOST registrar a troca'}</span>`}
         </div>
         ${isHost?`<div style="display:flex;gap:8px;margin-top:6px">
           <div style="flex:1">
@@ -2794,11 +2797,15 @@ function calcDesgaste(k){
 }
 function registrarTrocaEletrodo(k){
   if(!isHost) return;
-  const c=robos()[k]; if(!c.eletrodo){ showToast("Informe o eletrodo primeiro",true); return; }
+  const c=robos()[k];
+  // o eletrodo pode vir do cadastro da peça em produção (é o que aparece na tela), não só do robô
+  const _pc=codProducaoRobo(k), _reg=pecasObj()[(_pc&&_pc.cod)||c.codigo_peca||""]||null;
+  const ele=valCampoRobo(c,_reg,'eletrodo'), tipo=valCampoRobo(c,_reg,'tipo_eletrodo');
+  if(!ele){ showToast("Informe o eletrodo primeiro",true); return; }
   if(!c.historico_eletrodo) c.historico_eletrodo=[];
   const agora=new Date().toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
   const pecas=calcDesgaste(k);
-  c.historico_eletrodo.push({data:agora,eletrodo:c.eletrodo,tipo:c.tipo_eletrodo||'',pecas_feitas:pecas});
+  c.historico_eletrodo.push({data:agora,eletrodo:ele,tipo:tipo||'',pecas_feitas:pecas});
   c.ultima_troca=agora;
   _mainSig=""; renderMain();
   saveToAPI().then(ok=>ok&&showToast(`Troca registrada ✓ — ${pecas.toLocaleString("pt-BR")} peças`,false,true));

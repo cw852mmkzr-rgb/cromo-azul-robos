@@ -195,7 +195,8 @@ table.mtable input{width:78px;padding:10px 4px;text-align:center;border-radius:8
 table.mtable input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(79,172,254,.2)}
 table.mtable input.ok{color:var(--ok);border-color:rgba(52,211,153,.35)}
 table.mtable input.low{color:var(--danger);border-color:rgba(251,113,133,.3)}
-table.mtable input.adj{color:var(--blue);border-color:rgba(79,172,254,.4)}
+:root{--just:#b46cff}
+table.mtable input.adj{color:var(--just)!important;border-color:rgba(180,108,255,.6)!important;background:rgba(180,108,255,.1)!important}
 .turno-h{display:flex;align-items:center;gap:9px;margin:6px 2px 10px}
 .turno-h .tg{font-family:'Space Grotesk';font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--mut);padding:12px 4px 2px}
@@ -428,8 +429,8 @@ table.meta-t input.pinp{width:96px;color:var(--ny);text-align:center}
 .funccard:hover::after{opacity:.8}
 /* célula da hora com campo de funcionário (busca) abaixo do valor */
 table.meta-t td.hcell{vertical-align:top;position:relative}
-table.meta-t .just-b{position:absolute;top:2px;right:2px;width:24px;height:24px;padding:0;border-radius:6px;border:1px dashed rgba(0,240,255,.5);background:rgba(5,6,13,.85);font-size:12px;line-height:1;cursor:pointer;opacity:.6;filter:grayscale(1)}
-table.meta-t .just-b.has{border-style:solid;border-color:#00f0ff;opacity:1;filter:none;box-shadow:0 0 8px -2px #00f0ff}
+table.meta-t .just-b{position:absolute;top:2px;right:2px;width:24px;height:24px;padding:0;border-radius:6px;border:1px dashed rgba(180,108,255,.5);background:rgba(5,6,13,.85);font-size:12px;line-height:1;cursor:pointer;opacity:.6;filter:grayscale(1)}
+table.meta-t .just-b.has{border-style:solid;border-color:var(--just);opacity:1;filter:none;box-shadow:0 0 8px -2px var(--just)}
 table.meta-t .just-b:hover{opacity:1;filter:none}
 table.meta-t td.just-td{cursor:pointer}
 table.meta-t td.hcell>input:first-child{display:block;margin:0 auto}
@@ -994,8 +995,8 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .rm-meta-cards{display:flex;gap:8px;margin-bottom:8px}
 .rm-meta-cards>div{flex:1;padding:8px;border-radius:4px;text-align:center;border:1px solid}
 .rm-meta-cards>div.ok{background:rgba(0,255,174,.08);border-color:rgba(0,255,174,.3)}
-.rm-meta-cards>div.just{background:rgba(0,240,255,.08);border-color:rgba(0,240,255,.35);color:#00f0ff}
-.just-tag{font-size:10px;color:#00f0ff;font-family:'Share Tech Mono',monospace;white-space:nowrap;margin-top:2px;font-weight:400}
+.rm-meta-cards>div.just{background:rgba(180,108,255,.08);border-color:rgba(180,108,255,.35);color:var(--just)}
+.just-tag{font-size:10px;color:var(--just);font-family:'Share Tech Mono',monospace;white-space:nowrap;margin-top:2px;font-weight:400}
 .rm-meta-cards>div.fail{background:rgba(255,43,94,.08);border-color:rgba(255,43,94,.3)}
 .rm-meta-cards>div>b{font-family:'Orbitron',sans-serif;font-weight:800;font-size:22px;display:block}
 .rm-meta-cards>div.ok>b{color:var(--ok)}.rm-meta-cards>div.fail>b{color:var(--danger)}
@@ -1244,12 +1245,12 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .fdet-res{font-size:13px;color:var(--mut)}.fdet-res b{color:#fff;font-weight:800}
 .fdet-list{padding:8px 10px;display:flex;flex-direction:column;gap:4px;max-height:300px;overflow-y:auto}
 .fdet-r{display:grid;grid-template-columns:78px minmax(90px,1.1fr) 2fr 52px 104px;align-items:center;gap:10px;padding:6px 6px;border-radius:5px}
-.fdet-jm{display:flex;align-items:center;justify-content:flex-end;gap:6px;color:#00f0ff!important;overflow:visible!important}
-.fdet-x{flex:none;width:20px;height:20px;padding:0;border-radius:50%;border:1px solid #00f0ff;background:rgba(0,240,255,.14);color:#00f0ff;font-family:Orbitron,sans-serif;font-weight:900;font-size:11px;line-height:18px;cursor:pointer;box-shadow:0 0 8px -2px #00f0ff}
-.fdet-x:hover,.fdet-r.abre .fdet-x{background:#00f0ff;color:#05060d}
+.fdet-jm{display:flex;align-items:center;justify-content:flex-end;gap:6px;color:var(--just)!important;overflow:visible!important}
+.fdet-x{flex:none;width:20px;height:20px;padding:0;border-radius:50%;border:1px solid var(--just);background:rgba(180,108,255,.14);color:var(--just);font-family:Orbitron,sans-serif;font-weight:900;font-size:11px;line-height:18px;cursor:pointer;box-shadow:0 0 8px -2px var(--just)}
+.fdet-x:hover,.fdet-r.abre .fdet-x{background:var(--just);color:#05060d}
 .fdet-x.vazio{border-style:dashed;box-shadow:none;opacity:.7}
-.fdet-mot{display:none;grid-column:1/-1;margin:2px 0 4px;padding:8px 11px;border-radius:7px;border:1px solid rgba(0,240,255,.35);background:rgba(0,240,255,.07);font-size:12.5px;color:var(--txt);line-height:1.45;white-space:normal}
-.fdet-mot b{color:#00f0ff;font-weight:700;margin-right:4px}
+.fdet-mot{display:none;grid-column:1/-1;margin:2px 0 4px;padding:8px 11px;border-radius:7px;border:1px solid rgba(180,108,255,.35);background:rgba(180,108,255,.07);font-size:12.5px;color:var(--txt);line-height:1.45;white-space:normal}
+.fdet-mot b{color:var(--just);font-weight:700;margin-right:4px}
 .fdet-mot span{display:block;margin-top:3px;font-size:11px;color:var(--faint);font-family:'Share Tech Mono',monospace}
 .fdet-r.abre .fdet-mot{display:block}
 .fdet-r:nth-child(odd){background:rgba(255,255,255,.025)}
@@ -3095,7 +3096,7 @@ function viewMeta(){
     + `<span class="mleg-k">Legenda</span>`
     + _leg('#00ffae','rgba(0,255,174,.10)','90','Verde — bateu a meta','produziu a meta da hora ou mais')
     + _leg('#ff2b5e','rgba(255,43,94,.10)','62','Vermelho — não bateu','ficou abaixo da meta da hora')
-    + _leg('#00f0ff','rgba(0,240,255,.10)','40#','Azul — parada justificável',isHost?'ajuste ou outro motivo · digite # no fim · fica fora da conta de metas':'ajuste ou outro motivo · fica fora da conta de metas')
+    + _leg('#b46cff','rgba(180,108,255,.12)','40#','Roxo — parada justificável',isHost?'ajuste ou outro motivo · digite # no fim · fica fora da conta de metas':'ajuste ou outro motivo · fica fora da conta de metas')
     + _leg('#f9f871','rgba(249,248,113,.12)','☕','Amarelo — café',`09:00 com meta menor (parada de ${CAFE_PARADA_MIN} min)`)
     + `</div>`;
   if(!isHost) head+=`<div class="legend" style="padding-left:6px">Somente leitura — entre como HOST para apontar produção.</div>`;
@@ -3194,7 +3195,7 @@ function metaTable(chave,md,horas){
           + (temFunc ? `<input class="fhinp${func?' has':''}" list="funcDatalist" value="${esc(func)}" placeholder="quem fez?" onchange="setFuncHora('${chave}','${r}','${campo}',this.value,this)" ${raw===""?'hidden':''}>` : "")
           + njTag + jusBtn + `</td>`;
       } else {
-        h+=`<td class="hcell ${cls}${cafe?' cafe-td':''}${jus!==null?' just-td':''}"${jusTit||cafeTit}${jus!==null?` onclick="abrirJust('${chave}','${r}','${campo}')"`:''} style="font-weight:600;color:${pv.adj?'var(--blue)':(raw===''?'var(--faint)':(metaEf>0?(pv.num>=metaEf?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}${raw!==""&&func?`<div class="fhtag">${esc(func)}</div>`:""}${njTag}${jusBtn}</td>`;
+        h+=`<td class="hcell ${cls}${cafe?' cafe-td':''}${jus!==null?' just-td':''}"${jusTit||cafeTit}${jus!==null?` onclick="abrirJust('${chave}','${r}','${campo}')"`:''} style="font-weight:600;color:${pv.adj?'var(--just)':(raw===''?'var(--faint)':(metaEf>0?(pv.num>=metaEf?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}${raw!==""&&func?`<div class="fhtag">${esc(func)}</div>`:""}${njTag}${jusBtn}</td>`;
       }
     });
     h+=`<td class="tot">${linTot.toLocaleString("pt-BR")}</td></tr>`;
@@ -4424,7 +4425,7 @@ function _funcVerDia(ch,rolar){
   const sem=dt.toLocaleDateString('pt-BR',{weekday:'long'});
   const itens=(x.itens||[]).slice().sort((a,b)=>a.h.localeCompare(b.h)||a.robo.localeCompare(b.robo));
   const mx=Math.max(...itens.map(i=>i.val),1), {tx,cor}=_funcCorTx(x);
-  const linhas=itens.map(i=>{ const ok=i.meta>0&&i.val>=i.meta, c=i.just?'#00f0ff':i.meta>0?(ok?'var(--ok)':'var(--danger)'):'var(--nc)';
+  const linhas=itens.map(i=>{ const ok=i.meta>0&&i.val>=i.meta, c=i.just?'#b46cff':i.meta>0?(ok?'var(--ok)':'var(--danger)'):'var(--nc)';
     return `<div class="fdet-r">
       <span class="fdet-h">${i.h}${ehCafe(i.h)?' ☕':''}</span>
       <span class="fdet-rb">R${esc(i.robo)}${i.cod?` · <em>${esc(i.cod)}</em>`:''}</span>
@@ -4437,7 +4438,7 @@ function _funcVerDia(ch,rolar){
     </div>`; }).join('');
   box.innerHTML=`<div class="fdet-top" style="--fc:${cor}">
       <div><div class="fdet-data">${dataFmt}</div><div class="fdet-sem">${sem}</div></div>
-      <div class="fdet-res"><b>${x.pecas.toLocaleString('pt-BR')}</b> peças · <b>${x.horas}</b>h${itens.length?` · das <b>${itens[0].h}</b> às <b>${itens[itens.length-1].h}</b>`:''}${tx!=null?` · metas <b>${x.metasOk}/${x.horasMeta}</b> (${tx}%)`:''}${x.just?` · <b style="color:#00f0ff">⏸ ${x.just}h parada justificável</b>`:''}</div>
+      <div class="fdet-res"><b>${x.pecas.toLocaleString('pt-BR')}</b> peças · <b>${x.horas}</b>h${itens.length?` · das <b>${itens[0].h}</b> às <b>${itens[itens.length-1].h}</b>`:''}${tx!=null?` · metas <b>${x.metasOk}/${x.horasMeta}</b> (${tx}%)`:''}${x.just?` · <b style="color:#b46cff">⏸ ${x.just}h parada justificável</b>`:''}</div>
     </div>
     <div class="fdet-list">${linhas||'<div class="fdet-vazio">Sem horas registradas.</div>'}</div>`;
   if(rolar) box.scrollIntoView({block:'nearest',behavior:'smooth'});
@@ -5367,7 +5368,7 @@ function openConfig(){ openModal("modalConfig"); }
    laranja = não bateu), depois a Visão Geral (robôs × horas) e rodapé com o total por hora. */
 let dashTimer=null, dashClockTimer=null, dashSlideTimer=null;
 let _dashIdx=0, _dashGeral=false, _dashSeq=[], _dashSigMain="", _dashSigFoot="";
-const DASH_OK="#00ffae", DASH_FAIL="#ff6a00", DASH_RED="#ff2b5e", DASH_NONE="#4a5a7a", DASH_ADJ="#00f0ff";
+const DASH_OK="#00ffae", DASH_FAIL="#ff6a00", DASH_RED="#ff2b5e", DASH_NONE="#4a5a7a", DASH_ADJ="#b46cff";
 function dashChave(){ const n=new Date(); return chaveData(n.getFullYear(),n.getMonth(),n.getDate()); }
 function dashDados(){ return prod().metas_dias[dashChave()]||{}; }
 function dashHoraAtual(){ const h=new Date().getHours(), all=[...HORAS_DIA,...HORAS_NOITE];
@@ -6286,7 +6287,7 @@ const GUIA = [
       {t:'Cores e símbolos', defs:[
         ['Verde','A hora bateu a meta.'],
         ['Vermelho','A hora ficou abaixo da meta.'],
-        ['# no fim (azul)','Meta com parada justificável — ajuste ou outro motivo (ex.: 45#). As peças somam normal nos totais, a hora fica FORA da conta de metas (nem batida, nem não batida) e aparece à parte como "⏸ parada justificável" no Painel, em Funcionários e no Relatório Mensal.'],
+        ['# no fim (roxo)','Meta com parada justificável — ajuste ou outro motivo (ex.: 45#). As peças somam normal nos totais, a hora fica FORA da conta de metas (nem batida, nem não batida) e aparece à parte como "⏸ parada justificável" no Painel, em Funcionários e no Relatório Mensal.'],
         ['☕ 09:00','Hora do café: a meta é reduzida porque a máquina roda só 35 dos 60 minutos (25 min de parada).']]},
       {t:'Botões do topo', defs:[
         ['📋 Copiar dia anterior','Copia meta, código e pontos do último dia com dados. Pede confirmação e não mexe na produção.'],

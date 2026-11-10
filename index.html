@@ -427,7 +427,11 @@ table.meta-t input.pinp{width:96px;color:var(--ny);text-align:center}
 .funccard{position:relative}
 .funccard:hover::after{opacity:.8}
 /* célula da hora com campo de funcionário (busca) abaixo do valor */
-table.meta-t td.hcell{vertical-align:top}
+table.meta-t td.hcell{vertical-align:top;position:relative}
+table.meta-t .just-b{position:absolute;top:2px;right:2px;width:24px;height:24px;padding:0;border-radius:6px;border:1px dashed rgba(0,240,255,.5);background:rgba(5,6,13,.85);font-size:12px;line-height:1;cursor:pointer;opacity:.6;filter:grayscale(1)}
+table.meta-t .just-b.has{border-style:solid;border-color:#00f0ff;opacity:1;filter:none;box-shadow:0 0 8px -2px #00f0ff}
+table.meta-t .just-b:hover{opacity:1;filter:none}
+table.meta-t td.just-td{cursor:pointer}
 table.meta-t td.hcell>input:first-child{display:block;margin:0 auto}
 table.meta-t input.fhinp{display:block;width:104px;margin:6px auto 0;padding:5px 7px;text-align:left;border-radius:6px;border:1px dashed rgba(0,240,255,.35);background:rgba(0,240,255,.05);color:var(--nc);font-size:11px;font-family:'Share Tech Mono',monospace;outline:none}
 table.meta-t input.fhinp[hidden]{display:none}
@@ -1246,7 +1250,7 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .fdet-rb em{font-style:normal;color:var(--mut)}
 .fdet-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}.fdet-bar i{display:block;height:100%;border-radius:99px}
 .fdet-v{font-family:Orbitron,sans-serif;font-weight:800;font-size:14px;text-align:right}
-.fdet-m{font-family:'Share Tech Mono',monospace;font-size:11.5px;color:var(--faint);text-align:right;white-space:nowrap}
+.fdet-m{font-family:'Share Tech Mono',monospace;font-size:11.5px;color:var(--faint);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px}
 .fhist-r:hover{background:rgba(0,240,255,.05)}
 @media(max-width:560px){.fcal-g{gap:3px}.fcal-d{min-height:40px;font-size:11px}.fcal-d b{font-size:8.5px}.fdet-r{grid-template-columns:66px 1fr 44px;row-gap:3px}.fdet-bar{grid-column:1/-1;order:5}.fdet-m{grid-column:1/-1;text-align:left;order:6}.fcal-leg{display:none}}
 /* card de manutenção: coluna do robô mais estreita no celular */
@@ -1644,6 +1648,21 @@ body.ap-on #app{zoom:1}
 </div>
 
 <!-- MODAL: Config / Backup -->
+<div class="modal-bg" id="modalJust">
+  <div class="modal glass" style="max-width:460px">
+    <h2>⏸ Parada justificável</h2>
+    <p class="hint" id="justInfo"></p>
+    <textarea id="justTxt" class="inp nocaps" rows="4" maxlength="300" style="resize:vertical;min-height:96px;font-family:inherit;text-transform:none" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();salvarJust();}"></textarea>
+    <p class="hint" id="justQuem" style="margin:8px 0 12px;font-size:11px"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn danger" id="justApagar" onclick="if(confirm('Apagar o motivo desta hora?')) salvarJust(true)">Apagar</button>
+      <span style="flex:1"></span>
+      <button type="button" class="btn ghost" id="justFechar" onclick="closeModal('modalJust')">Cancelar</button>
+      <button type="button" class="btn primary" id="justSalvar" onclick="salvarJust()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modalConfig">
   <div class="modal glass">
     <h2>Backup & Restauração</h2>
@@ -3152,12 +3171,16 @@ function metaTable(chave,md,horas){
       const cafeTit = (cafe&&metaEf>0) ? ` title="☕ Meta reduzida do café: ${metaEf} peças (parada de ${CAFE_PARADA_MIN} min)"`
         : (nJ>1 ? ` title="🌙 Turno da noite junto: a 22:00 vale ${nJ} horas${meta>0?' — meta '+metaEf+' peças ('+meta+'/h × '+nJ+')':''}"` : "");
       const njTag = (nJ>1 && raw!=="" && pv.num>0) ? `<div class="njtag">${nJ}h · média <b>${(Math.round(pv.num/nJ*10)/10).toLocaleString('pt-BR')}</b>/h${metaEf>0?' · meta '+metaEf:''}</div>` : "";
+      // # = parada justificável: motivo aparece ao passar o mouse e ao clicar no 💬 (só HOST/gestor escreve)
+      const jus = (raw!=="" && pv.adj) ? _justTxt(rd,campo) : null;
+      const jusTit = jus!==null ? ` title="⏸ Parada justificável — ${jus?esc(jus):'sem motivo informado'}"` : "";
+      const jusBtn = jus!==null ? `<button type="button" class="just-b${jus?' has':''}" aria-label="Motivo da parada"${jusTit} onclick="event.stopPropagation();abrirJust('${chave}','${r}','${campo}')">💬</button>` : "";
       if(isHost){
-        h+=`<td class="hcell${cafe?' cafe-td':''}"${cafeTit}><input class="${cls}" value="${esc(raw)}" oninput="onMetaInput(this)" onchange="setMeta('${chave}','${r}','${campo}',this.value,this)">`
+        h+=`<td class="hcell${cafe?' cafe-td':''}"${jusTit||cafeTit}><input class="${cls}" value="${esc(raw)}"${jusTit} oninput="onMetaInput(this)" onchange="setMeta('${chave}','${r}','${campo}',this.value,this)">`
           + (temFunc ? `<input class="fhinp${func?' has':''}" list="funcDatalist" value="${esc(func)}" placeholder="quem fez?" onchange="setFuncHora('${chave}','${r}','${campo}',this.value,this)" ${raw===""?'hidden':''}>` : "")
-          + njTag + `</td>`;
+          + njTag + jusBtn + `</td>`;
       } else {
-        h+=`<td class="hcell ${cls}${cafe?' cafe-td':''}"${cafeTit} style="font-weight:600;color:${pv.adj?'var(--blue)':(raw===''?'var(--faint)':(metaEf>0?(pv.num>=metaEf?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}${raw!==""&&func?`<div class="fhtag">${esc(func)}</div>`:""}${njTag}</td>`;
+        h+=`<td class="hcell ${cls}${cafe?' cafe-td':''}${jus!==null?' just-td':''}"${jusTit||cafeTit}${jus!==null?` onclick="abrirJust('${chave}','${r}','${campo}')"`:''} style="font-weight:600;color:${pv.adj?'var(--blue)':(raw===''?'var(--faint)':(metaEf>0?(pv.num>=metaEf?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}${raw!==""&&func?`<div class="fhtag">${esc(func)}</div>`:""}${njTag}${jusBtn}</td>`;
       }
     });
     h+=`<td class="tot">${linTot.toLocaleString("pt-BR")}</td></tr>`;
@@ -3189,7 +3212,43 @@ function setMeta(chave,robo,campo,v,el){
   if(v==="") delete rd[campo]; else rd[campo]=v;
   if(el){ const meta=metaHoraCampo(rd.meta, campo, rd), pv=parseCelVal(v);
     el.className = v===''?'':(pv.adj?'adj':(meta>0?(pv.num>=meta?'ok':'low'):'')); }
+  // # (parada justificável): pede o motivo; sem # o motivo some
+  const _adj = v!=="" && parseCelVal(v).adj;
+  if(!_adj) delete rd['just_'+campo];
   _mainSig=""; saveDebounced(); renderMainSoon();
+  if(_adj && !_justTxt(rd,campo)) setTimeout(()=>abrirJust(chave,robo,campo,true), 60);
+}
+/* ---------- Motivo da parada justificável (#) — 10/11/2026 ----------
+   rd['just_'+campo] = {txt, por:'HOST'|'Gestor', em:ISO}. Só HOST/gestor escreve; todos leem (mouse/clique). */
+function _justObj(rd,campo){ const j=rd&&rd['just_'+campo]; if(!j) return null; return typeof j==='string'?{txt:j}:j; }
+function _justTxt(rd,campo){ const j=_justObj(rd,campo); return j?String(j.txt||'').trim():''; }
+let _justCtx=null;
+function abrirJust(chave,robo,campo,aoLancar){
+  const rd=((prod().metas_dias||{})[chave]||{})[String(robo)]||{};
+  const raw=String(rd[campo]||''); if(!parseCelVal(raw).adj) return;
+  _justCtx={chave,robo:String(robo),campo};
+  const hora=[...HORAS_DIA,...HORAS_NOITE].find(h=>campoH(h)===campo)||campo;
+  const p=chave.split('_').map(Number), dt=String(p[2]).padStart(2,'0')+'/'+String(p[1]+1).padStart(2,'0');
+  const j=_justObj(rd,campo), func=rd['func_'+campo]||'';
+  document.getElementById('justInfo').innerHTML=`Robô <b>${esc(String(robo))}</b> · <b>${esc(hora)}</b> · ${dt} — <b>${parseCelVal(raw).num}</b> peças${func?' · '+esc(func):''}`;
+  const ta=document.getElementById('justTxt'); ta.value=j?j.txt||'':''; ta.readOnly=!isHost;
+  ta.placeholder=isHost?'Escreva o motivo da parada (ex.: troca de eletrodo, falta de peça, manutenção, setup...)':'Nenhum motivo foi escrito para esta hora.';
+  document.getElementById('justQuem').textContent = j&&j.txt ? ('Escrito por '+(j.por||'HOST')+(j.em?' em '+new Date(j.em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'')) : (aoLancar?'Você marcou esta hora com # (parada justificável). Ela fica fora da conta de metas.':'');
+  document.getElementById('justSalvar').hidden=!isHost;
+  document.getElementById('justApagar').hidden=!(isHost && j && j.txt);
+  document.getElementById('justFechar').textContent=isHost?(aoLancar?'Depois':'Cancelar'):'Fechar';
+  openModal('modalJust');
+  if(isHost) setTimeout(()=>{ ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length); },40);
+}
+function salvarJust(apagar){
+  if(!isHost || !_justCtx) return;
+  const {chave,robo,campo}=_justCtx; const p=prod();
+  const rd=(p.metas_dias[chave]||{})[robo]; if(!rd){ closeModal('modalJust'); return; }
+  const txt=apagar?'':String(document.getElementById('justTxt').value||'').trim().slice(0,300);
+  if(txt) rd['just_'+campo]={txt, por:isGerente?'Gestor':'HOST', em:new Date().toISOString()}; else delete rd['just_'+campo];
+  closeModal('modalJust'); _justCtx=null;
+  _mainSig=""; saveDebounced(); renderMainSoon();
+  showToast(txt?'Motivo salvo ✓':'Motivo apagado', false, true);
 }
 function setPontos(chave,robo,v){ if(!isHost) return;
   const p=prod(); if(!p.metas_dias[chave]) p.metas_dias[chave]={}; if(!p.metas_dias[chave][robo]) p.metas_dias[chave][robo]={};
@@ -4233,7 +4292,7 @@ function desempenhoFuncDetalhe(nome,ano,mes){
         porDia[chave].pecas+=val; porDia[chave].horas+=n;
         const metaEf=metaHora(meta,hr,rd), ehJust=metaEf<=0 && meta>0 && horaAjuste(rd,hr);
         if(ehJust){ just+=n; porDia[chave].just+=n; }
-        porDia[chave].itens.push({h:hr, robo:rk, val, meta:metaEf, n, just:ehJust, cod:String(rd.cod||'').trim()});
+        porDia[chave].itens.push({h:hr, robo:rk, val, meta:metaEf, n, just:ehJust, motivo:ehJust?_justTxt(rd,campo):'', cod:String(rd.cod||'').trim()});
         if(metaEf>0){ horasMeta+=n; porRobo[rk].horasMeta+=n; porDia[chave].horasMeta+=n;
           if(val>=metaEf){ metasOk+=n; porRobo[rk].metasOk+=n; porDia[chave].metasOk+=n; } }
       });
@@ -4353,7 +4412,7 @@ function _funcVerDia(ch,rolar){
       <span class="fdet-rb">R${esc(i.robo)}${i.cod?` · <em>${esc(i.cod)}</em>`:''}</span>
       <div class="fdet-bar"><i style="width:${Math.max(Math.round(i.val/mx*100),4)}%;background:${c};box-shadow:0 0 6px ${c}"></i></div>
       <span class="fdet-v" style="color:${c}">${i.val.toLocaleString('pt-BR')}</span>
-      <span class="fdet-m">${i.just?'⏸ parada justificável':i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:'sem meta'}${i.n>1?' · '+i.n+'h (média '+(Math.round(i.val/i.n*10)/10).toLocaleString('pt-BR')+'/h)':''}</span>
+      <span class="fdet-m"${i.just?` title="${esc(i.motivo||'sem motivo informado')}"`:''}>${i.just?'⏸ parada justificável'+(i.motivo?' — '+esc(i.motivo):''):i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:'sem meta'}${i.n>1?' · '+i.n+'h (média '+(Math.round(i.val/i.n*10)/10).toLocaleString('pt-BR')+'/h)':''}</span>
     </div>`; }).join('');
   box.innerHTML=`<div class="fdet-top" style="--fc:${cor}">
       <div><div class="fdet-data">${dataFmt}</div><div class="fdet-sem">${sem}</div></div>

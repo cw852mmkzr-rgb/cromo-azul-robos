@@ -5693,11 +5693,12 @@ function dashClientePeca(cod, c){
 function dashRenderRobo(k){ const main=document.getElementById("dashMain"); const c=robos()[k]; if(!main||!c) return;
   const rd=dashDados()[k]||{}, hora=dashHoraAtual();
   const meta=metaRoboEm(k, dashChave()), prodH=parseCelVal(rd[campoH(hora)]).num;
-  const cafe=ehCafe(hora); const metaEf=metaHora(meta,hora,rd); const nJ=horasDaCelula(hora,rd);
+  const cafe=ehCafe(hora); const adjH=horaAjuste(rd,hora); const nJ=horasDaCelula(hora,rd);
+  // # (parada justificável) fica fora da conta de metas, mas no Dashboard mostra a meta, a eficiência e quanto faltou normalmente
+  const metaEf=adjH?metaHora(meta,hora,{...rd,[campoH(hora)]:String(prodH)}):metaHora(meta,hora,rd);
   const pct=metaEf>0?Math.round(prodH/metaEf*100):0, bateu=metaEf>0&&prodH>=metaEf, faltam=metaEf>0?Math.max(metaEf-prodH,0):0;
-  const adjH=horaAjuste(rd,hora);
   const cor=cafe?DASH_CAFE:adjH?DASH_ADJ:((prodH===0&&(meta===0||metaEf===0))?DASH_NONE:bateu?DASH_OK:DASH_FAIL);
-  const sig=`R|${k}|${hora}|${prodH}|${meta}|${rd.cod||''}|${dashClientePeca(rd.cod||c.codigo_peca, c)}|${_dashIdx}|${_dashSeq.length}|M${dashModelo()}|C${cafe?1:0}`; if(sig===_dashSigMain) return; _dashSigMain=sig;
+  const sig=`R|${k}|${hora}|${prodH}|${meta}|${rd.cod||''}|${dashClientePeca(rd.cod||c.codigo_peca, c)}|${_dashIdx}|${_dashSeq.length}|M${dashModelo()}|C${cafe?1:0}|A${adjH?1:0}|${metaEf}`; if(sig===_dashSigMain) return; _dashSigMain=sig;
   const dots=_dashSeq.map((_,i)=>`<i class="${i===_dashIdx?'on':''}"></i>`).join('')+`<i class="g"></i>`;
   main.innerHTML=`<div class="dash-robo" data-modelo="${dashModelo()}" style="--cor:${cor}"><div class="dash-sweep"></div>
     <div class="dash-fit"><div class="dash-robo-svg">${dashRoboSVG(cor)}</div>

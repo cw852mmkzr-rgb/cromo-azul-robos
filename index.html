@@ -441,7 +441,7 @@ table.meta-t input.fhinp.has{border-style:solid;border-color:rgba(0,240,255,.5);
 table.meta-t input.fhinp:focus{border-color:var(--nc);box-shadow:0 0 0 2px rgba(0,240,255,.18)}
 table.meta-t td.hcell .njtag{font-size:11px;color:var(--purple);font-family:'Share Tech Mono',monospace;margin-top:5px;white-space:nowrap}
 table.meta-t td.hcell .njtag b{color:var(--txt)}
-/* caixa/nome do funcionário com a cor da hora: verde bateu, vermelho não bateu, roxo parada justificável */
+/* caixa/nome do funcionário com a cor da hora: verde bateu, vermelho não bateu, roxo parada justificada */
 table.meta-t input.fhinp.fh-ok{color:#00ffae;border-color:rgba(0,255,174,.55)!important;background:rgba(0,255,174,.07);box-shadow:0 0 8px -3px #00ffae!important}
 table.meta-t input.fhinp.fh-low{color:#ff5c80;border-color:rgba(255,43,94,.6)!important;background:rgba(255,43,94,.08);box-shadow:0 0 8px -3px #ff2b5e!important}
 table.meta-t input.fhinp.fh-adj{color:#c99bff;border-color:rgba(180,108,255,.65)!important;background:rgba(180,108,255,.1);box-shadow:0 0 8px -3px #b46cff!important}
@@ -1666,7 +1666,7 @@ body.ap-on #app{zoom:1}
 <!-- MODAL: Config / Backup -->
 <div class="modal-bg" id="modalJust">
   <div class="modal glass" style="max-width:460px">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><h2>⏸ Parada justificável</h2><button type="button" class="btn ghost tiny" onclick="closeModal('modalJust')" aria-label="Fechar" style="padding:6px 10px;flex:none">✕</button></div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><h2>⏸ Parada justificada</h2><button type="button" class="btn ghost tiny" onclick="closeModal('modalJust')" aria-label="Fechar" style="padding:6px 10px;flex:none">✕</button></div>
     <p class="hint" id="justInfo"></p>
     <textarea id="justTxt" class="inp nocaps" rows="4" maxlength="300" style="resize:vertical;min-height:96px;font-family:inherit;text-transform:none" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();salvarJust();}"></textarea>
     <p class="hint" id="justQuem" style="margin:8px 0 12px;font-size:11px"></p>
@@ -2965,7 +2965,7 @@ function viewPainel(){
         const n=horasDaCelula(hr,rd);
         o.pecas+=val; o.horas+=n; o.robos.add(rk);
         const mh=metaHora(meta,hr,rd); if(mh>0){ o.hMeta+=n; o.metaSoma+=mh; o.pecasM+=val; if(val>=mh) o.ok+=n; }
-        else if(meta>0 && horaAjuste(rd,hr)) o.just=(o.just||0)+n; // # = parada justificável (fora da conta, mas aparece)
+        else if(meta>0 && horaAjuste(rd,hr)) o.just=(o.just||0)+n; // # = parada justificada (fora da conta, mas aparece)
       }); });
     // mínimo de horas para disputar o topo (10/11/2026): quem fez só 1 hora não passa na frente de quem fez o dia todo.
     // Começo do dia (ninguém completou 4 h ainda): ranking normal, sem mínimo. Depois: mínimo de 4 h.
@@ -2981,7 +2981,7 @@ function viewPainel(){
   const medalha=i=>['🥇','🥈','🥉'][i]||(i+1)+'º';
   const rankHtml = !rk.length ? `<div class="pn2-vazio">Nenhum funcionário marcado nas horas ainda.<br><span>Na Meta Diária, escolha "quem fez?" em cada hora para aparecer aqui.</span></div>`
     : `<table class="pn2-rank"><thead><tr><th></th><th>Funcionário</th><th>Robô</th><th class="r">Horas</th><th class="r">Peças</th><th class="r">Metas</th><th>% da meta</th></tr></thead><tbody>${
-      rk.slice(0,3).map((f,i)=>`<tr class="${i<3?'top':''}"><td class="pos">${medalha(i)}</td><td class="nm">${esc(f.nome)}</td><td class="rb">${[...f.robos].sort().join(' · ')}</td><td class="r">${f.horas}</td><td class="r pc">${fmt(f.pecas)}</td><td class="r">${f.hMeta?f.ok+'/'+f.hMeta:'—'}${f.just?`<div class="just-tag" title="Horas com # — parada justificável (fora da conta de metas)">⏸ ${f.just} just.</div>`:''}</td>
+      rk.slice(0,3).map((f,i)=>`<tr class="${i<3?'top':''}"><td class="pos">${medalha(i)}</td><td class="nm">${esc(f.nome)}</td><td class="rb">${[...f.robos].sort().join(' · ')}</td><td class="r">${f.horas}</td><td class="r pc">${fmt(f.pecas)}</td><td class="r">${f.hMeta?f.ok+'/'+f.hMeta:'—'}${f.just?`<div class="just-tag" title="Horas com # — parada justificada (fora da conta de metas)">⏸ ${f.just} just.</div>`:''}</td>
         <td><div class="pn2-pct"><div class="tr"><i style="width:${Math.min(100,f.pct||0)}%;background:${corPct(f.pct)}"></i></div><b style="color:${corPct(f.pct)}">${f.pct==null?'—':f.pct+'%'}</b></div></td></tr>`).join('')
     }</tbody></table>${rk.length?`<div class="pn2-mais">${rk.length>3?`top 3 de ${rk.length} funcionários no dia · `:''}${rk.minH>1?`mínimo de ${rk.minH} h trabalhadas para entrar no ranking`:'começo do dia: sem mínimo de horas até alguém completar 4 h'}</div>`:''}`;
 
@@ -3103,7 +3103,7 @@ function viewMeta(){
     + `<span class="mleg-k">Legenda</span>`
     + _leg('#00ffae','rgba(0,255,174,.10)','90','Verde — bateu a meta','produziu a meta da hora ou mais')
     + _leg('#ff2b5e','rgba(255,43,94,.10)','62','Vermelho — não bateu','ficou abaixo da meta da hora')
-    + _leg('#b46cff','rgba(180,108,255,.12)','40#','Roxo — parada justificável',isHost?'ajuste ou outro motivo · digite # no fim · fica fora da conta de metas':'ajuste ou outro motivo · fica fora da conta de metas')
+    + _leg('#b46cff','rgba(180,108,255,.12)','40#','Roxo — parada justificada',isHost?'ajuste ou outro motivo · digite # no fim · fica fora da conta de metas':'ajuste ou outro motivo · fica fora da conta de metas')
     + _leg('#f9f871','rgba(249,248,113,.12)','☕','Amarelo — café',`09:00 com meta menor (parada de ${CAFE_PARADA_MIN} min)`)
     + `</div>`;
   if(!isHost) head+=`<div class="legend" style="padding-left:6px">Somente leitura — entre como HOST para apontar produção.</div>`;
@@ -3193,9 +3193,9 @@ function metaTable(chave,md,horas){
       const cafeTit = (cafe&&metaEf>0) ? ` title="☕ Meta reduzida do café: ${metaEf} peças (parada de ${CAFE_PARADA_MIN} min)"`
         : (nJ>1 ? ` title="🌙 Turno da noite junto: a 22:00 vale ${nJ} horas${meta>0?' — meta '+metaEf+' peças ('+meta+'/h × '+nJ+')':''}"` : "");
       const njTag = (nJ>1 && raw!=="" && pv.num>0) ? `<div class="njtag">${nJ}h · média <b>${(Math.round(pv.num/nJ*10)/10).toLocaleString('pt-BR')}</b>/h${metaEf>0?' · meta '+metaEf:''}</div>` : "";
-      // # = parada justificável: motivo aparece ao passar o mouse e ao clicar no 💬 (só HOST/gestor escreve)
+      // # = parada justificada: motivo aparece ao passar o mouse e ao clicar no 💬 (só HOST/gestor escreve)
       const jus = (raw!=="" && pv.adj) ? _justTxt(rd,campo) : null;
-      const jusTit = jus!==null ? ` title="⏸ Parada justificável — ${jus?esc(jus):'sem motivo informado'}"` : "";
+      const jusTit = jus!==null ? ` title="⏸ Parada justificada — ${jus?esc(jus):'sem motivo informado'}"` : "";
       const jusBtn = jus!==null ? `<button type="button" class="just-b${jus?' has':''}" aria-label="Motivo da parada"${jusTit} onclick="event.stopPropagation();abrirJust('${chave}','${r}','${campo}')">💬</button>` : "";
       if(isHost){
         h+=`<td class="hcell${cafe?' cafe-td':''}"${jusTit||cafeTit}><input class="${cls}" value="${esc(raw)}"${jusTit} oninput="onMetaInput(this)" onchange="setMeta('${chave}','${r}','${campo}',this.value,this)">`
@@ -3237,13 +3237,13 @@ function setMeta(chave,robo,campo,v,el){
     // a caixa do nome acompanha a cor da hora (verde / vermelho / roxo)
     const fh=el.parentElement&&el.parentElement.querySelector('.fhinp');
     if(fh){ fh.classList.remove('fh-ok','fh-low','fh-adj'); if(el.className) fh.classList.add('fh-'+el.className); } }
-  // # (parada justificável): pede o motivo; sem # o motivo some
+  // # (parada justificada): pede o motivo; sem # o motivo some
   const _adj = v!=="" && parseCelVal(v).adj;
   if(!_adj) delete rd['just_'+campo];
   _mainSig=""; saveDebounced(); renderMainSoon();
   if(_adj && !_justTxt(rd,campo)) setTimeout(()=>abrirJust(chave,robo,campo,true), 60);
 }
-/* ---------- Motivo da parada justificável (#) — 10/11/2026 ----------
+/* ---------- Motivo da parada justificada (#) — 10/11/2026 ----------
    rd['just_'+campo] = {txt, por:'HOST'|'Gestor', em:ISO}. Só HOST/gestor escreve; todos leem (mouse/clique). */
 function _justObj(rd,campo){ const j=rd&&rd['just_'+campo]; if(!j) return null; return typeof j==='string'?{txt:j}:j; }
 function _justTxt(rd,campo){ const j=_justObj(rd,campo); return j?String(j.txt||'').trim():''; }
@@ -3258,7 +3258,7 @@ function abrirJust(chave,robo,campo,aoLancar){
   document.getElementById('justInfo').innerHTML=`Robô <b>${esc(String(robo))}</b> · <b>${esc(hora)}</b> · ${dt} — <b>${parseCelVal(raw).num}</b> peças${func?' · '+esc(func):''}`;
   const ta=document.getElementById('justTxt'); ta.value=j?j.txt||'':''; ta.readOnly=!isHost;
   ta.placeholder=isHost?'Escreva o motivo da parada (ex.: troca de eletrodo, falta de peça, manutenção, setup...)':'Nenhum motivo foi escrito para esta hora.';
-  document.getElementById('justQuem').textContent = j&&j.txt ? ('Escrito por '+_justAutor(j.por)+(j.em?' em '+new Date(j.em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'')) : (aoLancar?'Você marcou esta hora com # (parada justificável). Ela fica fora da conta de metas.':'');
+  document.getElementById('justQuem').textContent = j&&j.txt ? ('Escrito por '+_justAutor(j.por)+(j.em?' em '+new Date(j.em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'')) : (aoLancar?'Você marcou esta hora com # (parada justificada). Ela fica fora da conta de metas.':'');
   // .btn tem display próprio, então o atributo hidden não esconde: usa style.display
   document.getElementById('justSalvar').style.display=isHost?'':'none';
   document.getElementById('justApagar').style.display=(isHost && j && j.txt)?'':'none';
@@ -3580,7 +3580,7 @@ function viewRelMensal(){
       const meta=metaRoboEm(robo, chaveData(anoSel,mesIdx,d));
       if(meta<=0) return;
       HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v<=0) return; const metaEf=metaHora(meta,h,rd);
-        if(metaEf<=0){ if(horaAjuste(rd,h)) justif+=horasDaCelula(h,rd); return; } // # = parada justificável
+        if(metaEf<=0){ if(horaAjuste(rd,h)) justif+=horasDaCelula(h,rd); return; } // # = parada justificada
         const n=horasDaCelula(h,rd); if(v>=metaEf) atingiu+=n; else naoAtingiu+=n;
       });
     });
@@ -3593,7 +3593,7 @@ function viewRelMensal(){
       const cor=r.pct>=80?'var(--ok)':r.pct>=50?'var(--ny)':'var(--danger)';
       return `<div class="rm-meta-row">
         <div class="rm-meta-head"><span class="rob">Robô ${r.robo}</span><span class="cod">${esc(r.cod)}</span><span class="pct" style="color:${cor}">${r.pct}% de aproveitamento</span></div>
-        <div class="rm-meta-cards"><div class="ok"><b>${r.atingiu}x</b><span>✅ Atingiu a meta</span></div><div class="fail"><b>${r.naoAtingiu}x</b><span>❌ Não atingiu</span></div>${r.justif?`<div class="just"><b>${r.justif}x</b><span>⏸ Parada justificável</span></div>`:''}</div>
+        <div class="rm-meta-cards"><div class="ok"><b>${r.atingiu}x</b><span>✅ Atingiu a meta</span></div><div class="fail"><b>${r.naoAtingiu}x</b><span>❌ Não atingiu</span></div>${r.justif?`<div class="just"><b>${r.justif}x</b><span>⏸ Parada justificada</span></div>`:''}</div>
         <div class="rm-meta-bar"><i style="width:${r.pct}%;background:${cor}"></i></div>
       </div>`;
     }).join(''):'<div class="hist-empty">Sem dados de meta no mês.</div>'}
@@ -4176,7 +4176,7 @@ function desempenhoFunc(ano,mes){
         o.diaPecas[chave]=(o.diaPecas[chave]||0)+val;
         const metaEf=metaHora(meta,hr,rd);
         if(metaEf>0){ o.horasMeta+=n; if(val>=metaEf) o.metasOk+=n; }
-        else if(meta>0 && horaAjuste(rd,hr)) o.just+=n; // # = parada justificável
+        else if(meta>0 && horaAjuste(rd,hr)) o.just+=n; // # = parada justificada
       });
     });
   });
@@ -4258,7 +4258,7 @@ function viewFuncionarios(){
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           ${_funcStat('Média/hora',f.media.toLocaleString("pt-BR"),'var(--nc)')}
-          ${_funcStat('Metas batidas',(f.horasMeta>0?`${f.metasOk}/${f.horasMeta} · ${f.taxa}%`:'—')+(f.just?`<div class="just-tag" style="font-size:11px">⏸ ${f.just}h parada justificável</div>`:''),'var(--ok)')}
+          ${_funcStat('Metas batidas',(f.horasMeta>0?`${f.metasOk}/${f.horasMeta} · ${f.taxa}%`:'—')+(f.just?`<div class="just-tag" style="font-size:11px">⏸ ${f.just}h parada justificada</div>`:''),'var(--ok)')}
           ${_funcStat('Horas trabalhadas',f.horas.toLocaleString("pt-BR"),'var(--purple,#a78bfa)')}
           ${_funcStat('Dias / Robôs',`${f.dias} / ${f.robos}`,'var(--ny)')}
           ${_funcStat('Melhor dia',f.melhorDia?`${f.melhorPecas} pç`:'—','var(--ok)')}
@@ -4359,7 +4359,7 @@ function abrirFuncDetalhe(nomeEnc){
     ${_funcStat('Peças',d.pecas.toLocaleString("pt-BR"),'var(--ok)',true)}
     ${_funcStat('Média/hora',d.media.toLocaleString("pt-BR"),'var(--nc)',true)}
     ${_funcStat('% da meta',d.horasMeta>0?d.taxa+'%':'—',st.cor,true)}
-    ${_funcStat('Metas batidas',(d.horasMeta>0?`${d.metasOk}/${d.horasMeta}`:'—')+(d.just?`<div class="just-tag" style="font-size:12px">⏸ ${d.just}h parada justificável</div>`:''),'var(--ok)',true)}
+    ${_funcStat('Metas batidas',(d.horasMeta>0?`${d.metasOk}/${d.horasMeta}`:'—')+(d.just?`<div class="just-tag" style="font-size:12px">⏸ ${d.just}h parada justificada</div>`:''),'var(--ok)',true)}
     ${_funcStat('Horas',d.horas.toLocaleString("pt-BR"),'var(--purple,#a78bfa)',true)}
     ${_funcStat('Dias / Robôs',`${d.dias} / ${d.robos}`,'var(--ny)',true)}
   </div>`;
@@ -4442,13 +4442,13 @@ function _funcVerDia(ch,rolar){
       <div class="fdet-bar"><i style="width:${Math.max(Math.round(i.val/mx*100),4)}%;background:${c};box-shadow:0 0 6px ${c}"></i></div>
       <span class="fdet-v" style="color:${c}">${i.val.toLocaleString('pt-BR')}</span>
       ${i.just
-        ? `<span class="fdet-m fdet-jm" title="Parada justificável — ${esc(i.motivo||'sem motivo informado')}">⏸ justific.<button type="button" class="fdet-x${i.motivo?'':' vazio'}" aria-label="Ver o motivo da parada" onclick="event.stopPropagation();this.closest('.fdet-r').classList.toggle('abre')">!</button></span>
+        ? `<span class="fdet-m fdet-jm" title="Parada justificada — ${esc(i.motivo||'sem motivo informado')}">⏸ justific.<button type="button" class="fdet-x${i.motivo?'':' vazio'}" aria-label="Ver o motivo da parada" onclick="event.stopPropagation();this.closest('.fdet-r').classList.toggle('abre')">!</button></span>
            <div class="fdet-mot"><b>⏸ Motivo da parada:</b> ${i.motivo?esc(i.motivo):'<i>sem motivo informado</i>'}${i.motivoPor?`<span>— escrito por ${esc(i.motivoPor)}</span>`:''}</div>`
         : `<span class="fdet-m">${i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:'sem meta'}${i.n>1?' · '+i.n+'h (média '+(Math.round(i.val/i.n*10)/10).toLocaleString('pt-BR')+'/h)':''}</span>`}
     </div>`; }).join('');
   box.innerHTML=`<div class="fdet-top" style="--fc:${cor}">
       <div><div class="fdet-data">${dataFmt}</div><div class="fdet-sem">${sem}</div></div>
-      <div class="fdet-res"><b>${x.pecas.toLocaleString('pt-BR')}</b> peças · <b>${x.horas}</b>h${itens.length?` · das <b>${itens[0].h}</b> às <b>${itens[itens.length-1].h}</b>`:''}${tx!=null?` · metas <b>${x.metasOk}/${x.horasMeta}</b> (${tx}%)`:''}${x.just?` · <b style="color:#b46cff">⏸ ${x.just}h parada justificável</b>`:''}</div>
+      <div class="fdet-res"><b>${x.pecas.toLocaleString('pt-BR')}</b> peças · <b>${x.horas}</b>h${itens.length?` · das <b>${itens[0].h}</b> às <b>${itens[itens.length-1].h}</b>`:''}${tx!=null?` · metas <b>${x.metasOk}/${x.horasMeta}</b> (${tx}%)`:''}${x.just?` · <b style="color:#b46cff">⏸ ${x.just}h parada justificada</b>`:''}</div>
     </div>
     <div class="fdet-list">${linhas||'<div class="fdet-vazio">Sem horas registradas.</div>'}</div>`;
   if(rolar) box.scrollIntoView({block:'nearest',behavior:'smooth'});
@@ -5694,7 +5694,7 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
   const rd=dashDados()[k]||{}, hora=dashHoraAtual();
   const meta=metaRoboEm(k, dashChave()), prodH=parseCelVal(rd[campoH(hora)]).num;
   const cafe=ehCafe(hora); const adjH=horaAjuste(rd,hora); const nJ=horasDaCelula(hora,rd);
-  // # (parada justificável) fica fora da conta de metas, mas no Dashboard mostra a meta, a eficiência e quanto faltou normalmente
+  // # (parada justificada) fica fora da conta de metas, mas no Dashboard mostra a meta, a eficiência e quanto faltou normalmente
   const metaEf=adjH?metaHora(meta,hora,{...rd,[campoH(hora)]:String(prodH)}):metaHora(meta,hora,rd);
   const pct=metaEf>0?Math.round(prodH/metaEf*100):0, bateu=metaEf>0&&prodH>=metaEf, faltam=metaEf>0?Math.max(metaEf-prodH,0):0;
   const cor=cafe?DASH_CAFE:adjH?DASH_ADJ:((prodH===0&&(meta===0||metaEf===0))?DASH_NONE:bateu?DASH_OK:DASH_FAIL);
@@ -5708,7 +5708,7 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
         ${meta>0&&metaEf>0?`<div class="dash-meta-txt">META${cafe?' (CAFÉ)':''}${nJ>1?' ('+nJ+' HORAS DA NOITE)':''}: <b>${metaEf}</b> ${nJ>1?'PEÇAS':'PEÇAS/HORA'}</div>`:''}
         ${meta>0&&prodH>0&&!bateu&&faltam>0?`<div class="dash-meta-txt fail">FALTOU ${faltam} PEÇA${faltam===1?'':'S'}</div>`:''}
         ${cafe?`<div class="dash-meta-txt" style="color:var(--ny);font-weight:700">☕ META REDUZIDA — PARADA DE ${CAFE_PARADA_MIN} MIN</div>`:''}
-        ${adjH&&prodH>0?`<div class="dash-meta-txt" style="color:${DASH_ADJ};font-weight:700">⏸ PARADA JUSTIFICÁVEL</div>`:''}</div>
+        ${adjH&&prodH>0?`<div class="dash-meta-txt" style="color:${DASH_ADJ};font-weight:700">⏸ PARADA JUSTIFICADA</div>`:''}</div>
       ${meta>0&&prodH>0?`<div class="dash-eff"><div class="dash-pct-wrap"><svg class="hud-ring" viewBox="0 0 200 120" preserveAspectRatio="none"><ellipse class="r1" cx="100" cy="60" rx="96" ry="54"/><ellipse class="r2" cx="100" cy="60" rx="86" ry="46"/></svg><div class="hud-spin"><i></i><i></i></div><div class="dash-pct">${pct}%</div></div><div class="dash-eff-l">EFICIÊNCIA DA HORA</div>
         <div class="dash-bar"><i style="transform:scaleX(${Math.min(pct,100)/100})"></i></div></div>`:''}
       <div class="dash-dots">${dots}</div>
@@ -6298,7 +6298,7 @@ const GUIA = [
       {t:'Cores e símbolos', defs:[
         ['Verde','A hora bateu a meta.'],
         ['Vermelho','A hora ficou abaixo da meta.'],
-        ['# no fim (roxo)','Meta com parada justificável — ajuste ou outro motivo (ex.: 45#). As peças somam normal nos totais, a hora fica FORA da conta de metas (nem batida, nem não batida) e aparece à parte como "⏸ parada justificável" no Painel, em Funcionários e no Relatório Mensal.'],
+        ['# no fim (roxo)','Meta com parada justificada — ajuste ou outro motivo (ex.: 45#). As peças somam normal nos totais, a hora fica FORA da conta de metas (nem batida, nem não batida) e aparece à parte como "⏸ parada justificada" no Painel, em Funcionários e no Relatório Mensal.'],
         ['☕ 09:00','Hora do café: a meta é reduzida porque a máquina roda só 35 dos 60 minutos (25 min de parada).']]},
       {t:'Botões do topo', defs:[
         ['📋 Copiar dia anterior','Copia meta, código e pontos do último dia com dados. Pede confirmação e não mexe na produção.'],

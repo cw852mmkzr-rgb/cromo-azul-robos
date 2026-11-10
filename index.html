@@ -3055,7 +3055,7 @@ function viewMeta(){
     + `<span class="mleg-k">Legenda</span>`
     + _leg('#00ffae','rgba(0,255,174,.10)','90','Verde — bateu a meta','produziu a meta da hora ou mais')
     + _leg('#ff2b5e','rgba(255,43,94,.10)','62','Vermelho — não bateu','ficou abaixo da meta da hora')
-    + _leg('#00f0ff','rgba(0,240,255,.10)','40#','Azul — ajuste técnico',isHost?'digite # no fim do número':'hora com ajuste técnico')
+    + _leg('#00f0ff','rgba(0,240,255,.10)','40#','Azul — ajuste ou outro motivo',isHost?'ajuste técnico ou outro motivo · digite # no fim do número':'hora com ajuste técnico ou outro motivo')
     + _leg('#f9f871','rgba(249,248,113,.12)','☕','Amarelo — café',`09:00 com meta menor (parada de ${CAFE_PARADA_MIN} min)`)
     + `</div>`;
   if(!isHost) head+=`<div class="legend" style="padding-left:6px">Somente leitura — entre como HOST para apontar produção.</div>`;

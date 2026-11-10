@@ -1243,7 +1243,15 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .fdet-sem{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;margin-top:2px}
 .fdet-res{font-size:13px;color:var(--mut)}.fdet-res b{color:#fff;font-weight:800}
 .fdet-list{padding:8px 10px;display:flex;flex-direction:column;gap:4px;max-height:300px;overflow-y:auto}
-.fdet-r{display:grid;grid-template-columns:78px minmax(90px,1.1fr) 2fr 52px 92px;align-items:center;gap:10px;padding:6px 6px;border-radius:5px}
+.fdet-r{display:grid;grid-template-columns:78px minmax(90px,1.1fr) 2fr 52px 104px;align-items:center;gap:10px;padding:6px 6px;border-radius:5px}
+.fdet-jm{display:flex;align-items:center;justify-content:flex-end;gap:6px;color:#00f0ff!important;overflow:visible!important}
+.fdet-x{flex:none;width:20px;height:20px;padding:0;border-radius:50%;border:1px solid #00f0ff;background:rgba(0,240,255,.14);color:#00f0ff;font-family:Orbitron,sans-serif;font-weight:900;font-size:11px;line-height:18px;cursor:pointer;box-shadow:0 0 8px -2px #00f0ff}
+.fdet-x:hover,.fdet-r.abre .fdet-x{background:#00f0ff;color:#05060d}
+.fdet-x.vazio{border-style:dashed;box-shadow:none;opacity:.7}
+.fdet-mot{display:none;grid-column:1/-1;margin:2px 0 4px;padding:8px 11px;border-radius:7px;border:1px solid rgba(0,240,255,.35);background:rgba(0,240,255,.07);font-size:12.5px;color:var(--txt);line-height:1.45;white-space:normal}
+.fdet-mot b{color:#00f0ff;font-weight:700;margin-right:4px}
+.fdet-mot span{display:block;margin-top:3px;font-size:11px;color:var(--faint);font-family:'Share Tech Mono',monospace}
+.fdet-r.abre .fdet-mot{display:block}
 .fdet-r:nth-child(odd){background:rgba(255,255,255,.025)}
 .fdet-h{font-family:Orbitron,sans-serif;font-weight:700;font-size:13px;color:#eaf6ff}
 .fdet-rb{font-family:'Share Tech Mono',monospace;font-size:12.5px;color:var(--nc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -4302,7 +4310,7 @@ function desempenhoFuncDetalhe(nome,ano,mes){
         porDia[chave].pecas+=val; porDia[chave].horas+=n;
         const metaEf=metaHora(meta,hr,rd), ehJust=metaEf<=0 && meta>0 && horaAjuste(rd,hr);
         if(ehJust){ just+=n; porDia[chave].just+=n; }
-        porDia[chave].itens.push({h:hr, robo:rk, val, meta:metaEf, n, just:ehJust, motivo:ehJust?_justTxt(rd,campo):'', cod:String(rd.cod||'').trim()});
+        porDia[chave].itens.push({h:hr, robo:rk, val, meta:metaEf, n, just:ehJust, motivo:ehJust?_justTxt(rd,campo):'', motivoPor:(ehJust&&_justObj(rd,campo))?_justAutor(_justObj(rd,campo).por):'', cod:String(rd.cod||'').trim()});
         if(metaEf>0){ horasMeta+=n; porRobo[rk].horasMeta+=n; porDia[chave].horasMeta+=n;
           if(val>=metaEf){ metasOk+=n; porRobo[rk].metasOk+=n; porDia[chave].metasOk+=n; } }
       });
@@ -4422,7 +4430,10 @@ function _funcVerDia(ch,rolar){
       <span class="fdet-rb">R${esc(i.robo)}${i.cod?` · <em>${esc(i.cod)}</em>`:''}</span>
       <div class="fdet-bar"><i style="width:${Math.max(Math.round(i.val/mx*100),4)}%;background:${c};box-shadow:0 0 6px ${c}"></i></div>
       <span class="fdet-v" style="color:${c}">${i.val.toLocaleString('pt-BR')}</span>
-      <span class="fdet-m"${i.just?` title="${esc(i.motivo||'sem motivo informado')}"`:''}>${i.just?'⏸ parada justificável'+(i.motivo?' — '+esc(i.motivo):''):i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:'sem meta'}${i.n>1?' · '+i.n+'h (média '+(Math.round(i.val/i.n*10)/10).toLocaleString('pt-BR')+'/h)':''}</span>
+      ${i.just
+        ? `<span class="fdet-m fdet-jm" title="Parada justificável — ${esc(i.motivo||'sem motivo informado')}">⏸ justific.<button type="button" class="fdet-x${i.motivo?'':' vazio'}" aria-label="Ver o motivo da parada" onclick="event.stopPropagation();this.closest('.fdet-r').classList.toggle('abre')">!</button></span>
+           <div class="fdet-mot"><b>⏸ Motivo da parada:</b> ${i.motivo?esc(i.motivo):'<i>sem motivo informado</i>'}${i.motivoPor?`<span>— escrito por ${esc(i.motivoPor)}</span>`:''}</div>`
+        : `<span class="fdet-m">${i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:'sem meta'}${i.n>1?' · '+i.n+'h (média '+(Math.round(i.val/i.n*10)/10).toLocaleString('pt-BR')+'/h)':''}</span>`}
     </div>`; }).join('');
   box.innerHTML=`<div class="fdet-top" style="--fc:${cor}">
       <div><div class="fdet-data">${dataFmt}</div><div class="fdet-sem">${sem}</div></div>

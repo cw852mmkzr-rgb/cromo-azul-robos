@@ -1650,7 +1650,7 @@ body.ap-on #app{zoom:1}
 <!-- MODAL: Config / Backup -->
 <div class="modal-bg" id="modalJust">
   <div class="modal glass" style="max-width:460px">
-    <h2>⏸ Parada justificável</h2>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><h2>⏸ Parada justificável</h2><button type="button" class="btn ghost tiny" onclick="closeModal('modalJust')" aria-label="Fechar" style="padding:6px 10px;flex:none">✕</button></div>
     <p class="hint" id="justInfo"></p>
     <textarea id="justTxt" class="inp nocaps" rows="4" maxlength="300" style="resize:vertical;min-height:96px;font-family:inherit;text-transform:none" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();salvarJust();}"></textarea>
     <p class="hint" id="justQuem" style="margin:8px 0 12px;font-size:11px"></p>
@@ -3239,13 +3239,17 @@ function abrirJust(chave,robo,campo,aoLancar){
   document.getElementById('justInfo').innerHTML=`Robô <b>${esc(String(robo))}</b> · <b>${esc(hora)}</b> · ${dt} — <b>${parseCelVal(raw).num}</b> peças${func?' · '+esc(func):''}`;
   const ta=document.getElementById('justTxt'); ta.value=j?j.txt||'':''; ta.readOnly=!isHost;
   ta.placeholder=isHost?'Escreva o motivo da parada (ex.: troca de eletrodo, falta de peça, manutenção, setup...)':'Nenhum motivo foi escrito para esta hora.';
-  document.getElementById('justQuem').textContent = j&&j.txt ? ('Escrito por '+(j.por||'HOST')+(j.em?' em '+new Date(j.em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'')) : (aoLancar?'Você marcou esta hora com # (parada justificável). Ela fica fora da conta de metas.':'');
-  document.getElementById('justSalvar').hidden=!isHost;
-  document.getElementById('justApagar').hidden=!(isHost && j && j.txt);
+  document.getElementById('justQuem').textContent = j&&j.txt ? ('Escrito por '+_justAutor(j.por)+(j.em?' em '+new Date(j.em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'')) : (aoLancar?'Você marcou esta hora com # (parada justificável). Ela fica fora da conta de metas.':'');
+  // .btn tem display próprio, então o atributo hidden não esconde: usa style.display
+  document.getElementById('justSalvar').style.display=isHost?'':'none';
+  document.getElementById('justApagar').style.display=(isHost && j && j.txt)?'':'none';
   document.getElementById('justFechar').textContent=isHost?(aoLancar?'Depois':'Cancelar'):'Fechar';
   openModal('modalJust');
   if(isHost) setTimeout(()=>{ ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length); },40);
 }
+// quem escreveu o motivo: o HOST é a ELIANE
+const HOST_NOME = 'ELIANE';
+function _justAutor(por){ por=String(por||'HOST'); return por==='HOST' ? 'HOST — '+HOST_NOME : por; }
 function salvarJust(apagar){
   if(!isHost || !_justCtx) return;
   const {chave,robo,campo}=_justCtx; const p=prod();

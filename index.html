@@ -816,6 +816,15 @@ body.dash-tv .dash-static.on{animation:ruidoTV .3s steps(6)}
 /* ===== Horário do café (09:00) — meta reduzida ===== */
 table.meta-t th.cafe{color:var(--ny);background:rgba(249,248,113,.10);border-bottom:2px solid rgba(249,248,113,.5)}
 table.meta-t td.cafe-td{background:rgba(249,248,113,.06)}
+/* Legenda das cores da Meta Diária */
+.mleg{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;padding:12px 14px!important;margin-top:12px}
+.mleg-k{grid-column:1/-1;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+.mleg-i{display:flex;align-items:center;gap:10px;min-width:0;padding:7px 12px 7px 7px;border-radius:10px;border:1px solid var(--c);background:var(--bg);box-shadow:0 0 14px -8px var(--c)}
+.mleg-sw{flex:none;min-width:44px;height:34px;padding:0 6px;box-sizing:border-box;border-radius:7px;display:grid;place-items:center;font-family:'Orbitron',sans-serif;font-weight:700;font-size:15px;color:var(--c);border:1.5px solid var(--c);background:rgba(5,6,13,.7);text-shadow:0 0 8px var(--c)}
+.mleg-t{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.mleg-t b{font-size:13.5px;font-weight:700;color:var(--c)}
+.mleg-t small{font-size:11px;color:var(--mut)}
+@media(max-width:520px){.mleg{grid-template-columns:1fr 1fr;gap:8px;padding:10px!important}.mleg-i{padding:6px 8px 6px 6px;gap:7px}.mleg-t b{font-size:12px}.mleg-t small{font-size:10px}.mleg-sw{min-width:36px;height:30px;font-size:13px}}
 table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .dash-hc.cafe{background:rgba(249,248,113,.10);border-color:rgba(249,248,113,.5)}
 
@@ -3030,8 +3039,17 @@ function viewMeta(){
           <div class="metric"><div class="k">🌙 Noite</div><div class="v" style="color:var(--purple)">${totNoite.toLocaleString("pt-BR")}</div></div>
           <div class="metric"><div class="k">∑ Total</div><div class="v" style="color:var(--cyan)">${totalGeral.toLocaleString("pt-BR")}</div></div>
         </div></div>`;
+  // Legenda das cores (para todos) — bem visível, com uma "célula" de exemplo de cada cor
+  const _leg=(c,bg,ex,t,s)=>`<div class="mleg-i" style="--c:${c};--bg:${bg}"><span class="mleg-sw">${ex}</span><span class="mleg-t"><b>${t}</b><small>${s}</small></span></div>`;
+  head+=`<div class="mleg card glass" role="note" aria-label="Legenda das cores">`
+    + `<span class="mleg-k">Legenda</span>`
+    + _leg('#00ffae','rgba(0,255,174,.10)','90','Verde — bateu a meta','produziu a meta da hora ou mais')
+    + _leg('#ff2b5e','rgba(255,43,94,.10)','62','Vermelho — não bateu','ficou abaixo da meta da hora')
+    + _leg('#00f0ff','rgba(0,240,255,.10)','40#','Azul — ajuste técnico',isHost?'digite # no fim do número':'hora com ajuste técnico')
+    + _leg('#f9f871','rgba(249,248,113,.12)','☕','Amarelo — café',`09:00 com meta menor (parada de ${CAFE_PARADA_MIN} min)`)
+    + `</div>`;
   if(!isHost) head+=`<div class="legend" style="padding-left:6px">Somente leitura — entre como HOST para apontar produção.</div>`;
-  else head+=`<div class="legend"><span><b style="color:var(--ok)">■</b> atingiu a meta/hora</span><span><b style="color:var(--danger)">■</b> abaixo da meta</span><span><b style="color:var(--blue)">■</b> ajuste técnico (digite <b>#</b> no fim)</span><span style="color:var(--ny)"><b>☕ 09:00</b> — meta reduzida (parada de ${CAFE_PARADA_MIN} min do café)</span>${divisaoAtiva()?`<span style="color:var(--ny)">➗ divisão ON — digite o total de pontos; dividimos pela coluna PTS</span>`:''}</div>`;
+  else if(divisaoAtiva()) head+=`<div class="legend"><span style="color:var(--ny)">➗ divisão ON — digite o total de pontos; dividimos pela coluna PTS</span></div>`;
 
   return head
     + `<div class="card glass"><div class="turno-h"><span style="font-size:15px">☀</span><span class="tg" style="color:var(--ok)">Turno Dia — 08:00 às 17:00</span></div>${metaTable(chave,md,HORAS_DIA)}</div>`

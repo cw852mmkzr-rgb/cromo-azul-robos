@@ -441,6 +441,13 @@ table.meta-t input.fhinp.has{border-style:solid;border-color:rgba(0,240,255,.5);
 table.meta-t input.fhinp:focus{border-color:var(--nc);box-shadow:0 0 0 2px rgba(0,240,255,.18)}
 table.meta-t td.hcell .njtag{font-size:11px;color:var(--purple);font-family:'Share Tech Mono',monospace;margin-top:5px;white-space:nowrap}
 table.meta-t td.hcell .njtag b{color:var(--txt)}
+/* caixa/nome do funcionário com a cor da hora: verde bateu, vermelho não bateu, roxo parada justificável */
+table.meta-t input.fhinp.fh-ok{color:#00ffae;border-color:rgba(0,255,174,.55)!important;background:rgba(0,255,174,.07);box-shadow:0 0 8px -3px #00ffae!important}
+table.meta-t input.fhinp.fh-low{color:#ff5c80;border-color:rgba(255,43,94,.6)!important;background:rgba(255,43,94,.08);box-shadow:0 0 8px -3px #ff2b5e!important}
+table.meta-t input.fhinp.fh-adj{color:#c99bff;border-color:rgba(180,108,255,.65)!important;background:rgba(180,108,255,.1);box-shadow:0 0 8px -3px #b46cff!important}
+table.meta-t td.hcell.ok .fhtag{color:#00ffae}
+table.meta-t td.hcell.low .fhtag{color:#ff5c80}
+table.meta-t td.hcell.adj .fhtag{color:#c99bff}
 table.meta-t td.hcell .fhtag{font-size:10px;font-weight:600;color:var(--nc);font-family:'Share Tech Mono',monospace;margin-top:4px;opacity:.85;white-space:nowrap}
 /* grade de dias / barras */
 .daycell{border-radius:6px}
@@ -3192,7 +3199,7 @@ function metaTable(chave,md,horas){
       const jusBtn = jus!==null ? `<button type="button" class="just-b${jus?' has':''}" aria-label="Motivo da parada"${jusTit} onclick="event.stopPropagation();abrirJust('${chave}','${r}','${campo}')">💬</button>` : "";
       if(isHost){
         h+=`<td class="hcell${cafe?' cafe-td':''}"${jusTit||cafeTit}><input class="${cls}" value="${esc(raw)}"${jusTit} oninput="onMetaInput(this)" onchange="setMeta('${chave}','${r}','${campo}',this.value,this)">`
-          + (temFunc ? `<input class="fhinp${func?' has':''}" list="funcDatalist" value="${esc(func)}" placeholder="quem fez?" onchange="setFuncHora('${chave}','${r}','${campo}',this.value,this)" ${raw===""?'hidden':''}>` : "")
+          + (temFunc ? `<input class="fhinp${func?' has':''}${cls?' fh-'+cls:''}" list="funcDatalist" value="${esc(func)}" placeholder="quem fez?" onchange="setFuncHora('${chave}','${r}','${campo}',this.value,this)" ${raw===""?'hidden':''}>` : "")
           + njTag + jusBtn + `</td>`;
       } else {
         h+=`<td class="hcell ${cls}${cafe?' cafe-td':''}${jus!==null?' just-td':''}"${jusTit||cafeTit}${jus!==null?` onclick="abrirJust('${chave}','${r}','${campo}')"`:''} style="font-weight:600;color:${pv.adj?'var(--just)':(raw===''?'var(--faint)':(metaEf>0?(pv.num>=metaEf?'var(--ok)':'var(--danger)'):'var(--txt)'))}">${raw===''?'·':esc(String(pv.num))}${raw!==""&&func?`<div class="fhtag">${esc(func)}</div>`:""}${njTag}${jusBtn}</td>`;
@@ -3226,7 +3233,10 @@ function setMeta(chave,robo,campo,v,el){
   }
   if(v==="") delete rd[campo]; else rd[campo]=v;
   if(el){ const meta=metaHoraCampo(rd.meta, campo, rd), pv=parseCelVal(v);
-    el.className = v===''?'':(pv.adj?'adj':(meta>0?(pv.num>=meta?'ok':'low'):'')); }
+    el.className = v===''?'':(pv.adj?'adj':(meta>0?(pv.num>=meta?'ok':'low'):''));
+    // a caixa do nome acompanha a cor da hora (verde / vermelho / roxo)
+    const fh=el.parentElement&&el.parentElement.querySelector('.fhinp');
+    if(fh){ fh.classList.remove('fh-ok','fh-low','fh-adj'); if(el.className) fh.classList.add('fh-'+el.className); } }
   // # (parada justificável): pede o motivo; sem # o motivo some
   const _adj = v!=="" && parseCelVal(v).adj;
   if(!_adj) delete rd['just_'+campo];

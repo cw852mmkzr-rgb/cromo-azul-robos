@@ -2951,8 +2951,14 @@ function viewPainel(){
         const mh=metaHora(meta,hr,rd); if(mh>0){ o.hMeta+=n; o.metaSoma+=mh; o.pecasM+=val; if(val>=mh) o.ok+=n; }
         else if(meta>0 && horaAjuste(rd,hr)) o.just=(o.just||0)+n; // # = parada justificável (fora da conta, mas aparece)
       }); });
-    return Object.values(res).map(o=>({...o, pct:o.metaSoma?Math.round(o.pecasM/o.metaSoma*100):null}))
-      .sort((x,y)=>(y.pct==null?-1:y.pct)-(x.pct==null?-1:x.pct) || y.ok-x.ok || y.pecas-x.pecas);
+    // mínimo de horas para disputar o topo (10/11/2026): quem fez só 1 hora não passa na frente de quem fez o dia todo.
+    // Mínimo = metade das horas de quem mais trabalhou no dia, até no máximo 4 h (de manhã cedo o mínimo é baixo).
+    const lista=Object.values(res).map(o=>({...o, pct:o.metaSoma?Math.round(o.pecasM/o.metaSoma*100):null}));
+    const maxH=lista.reduce((m,o)=>Math.max(m,o.horas),0), minH=Math.max(1,Math.min(4,Math.ceil(maxH/2)));
+    lista.forEach(o=>{ o.ok_min = o.horas>=minH; });
+    const ord=(x,y)=>(y.pct==null?-1:y.pct)-(x.pct==null?-1:x.pct) || y.ok-x.ok || y.pecas-x.pecas;
+    const out=[...lista.filter(o=>o.ok_min).sort(ord), ...lista.filter(o=>!o.ok_min).sort(ord)];
+    out.minH=minH; return out;
   };
   let rk=rankDia(A,M,D), rkDe='hoje';
   if(!rk.length && antDt){ rk=rankDia(antDt.getFullYear(),antDt.getMonth(),antDt.getDate()); rkDe=antNome; }
@@ -2961,7 +2967,7 @@ function viewPainel(){
     : `<table class="pn2-rank"><thead><tr><th></th><th>Funcionário</th><th>Robô</th><th class="r">Horas</th><th class="r">Peças</th><th class="r">Metas</th><th>% da meta</th></tr></thead><tbody>${
       rk.slice(0,3).map((f,i)=>`<tr class="${i<3?'top':''}"><td class="pos">${medalha(i)}</td><td class="nm">${esc(f.nome)}</td><td class="rb">${[...f.robos].sort().join(' · ')}</td><td class="r">${f.horas}</td><td class="r pc">${fmt(f.pecas)}</td><td class="r">${f.hMeta?f.ok+'/'+f.hMeta:'—'}${f.just?`<div class="just-tag" title="Horas com # — parada justificável (fora da conta de metas)">⏸ ${f.just} just.</div>`:''}</td>
         <td><div class="pn2-pct"><div class="tr"><i style="width:${Math.min(100,f.pct||0)}%;background:${corPct(f.pct)}"></i></div><b style="color:${corPct(f.pct)}">${f.pct==null?'—':f.pct+'%'}</b></div></td></tr>`).join('')
-    }</tbody></table>${rk.length>3?`<div class="pn2-mais">top 3 de ${rk.length} funcionários no dia</div>`:''}`;
+    }</tbody></table>${rk.length?`<div class="pn2-mais">${rk.length>3?`top 3 de ${rk.length} funcionários no dia · `:''}mínimo de ${rk.minH} h trabalhada${rk.minH>1?'s':''} para entrar no ranking</div>`:''}`;
 
   // alertas
   const alerta=Object.keys(robos()).sort((a,b)=>a-b).filter(k=>(robos()[k].status||"")!=="Produzindo");
@@ -6242,7 +6248,7 @@ const GUIA = [
         ['Meta do dia','Quanto da meta de hoje já foi feito e quanto falta. A meta soma a meta/hora de cada robô nas 10 horas do turno dia, já descontando a parada do café. O "ritmo" compara o que foi feito com a meta das horas que já passaram — a cor (verde/amarelo/vermelho) segue o ritmo.'],
         ['Dia anterior','O último dia com produção (na segunda é a sexta): total e quanto da meta daquele dia foi atingido.'],
         ['Média diária','Média de peças por dia útil no mês: sem contar hoje (o dia ainda não fechou), sábado, domingo e dias parados. Embaixo, o total do mês com hoje.'],
-        ['Top 3 funcionários','Os 3 melhores entre quem foi marcado em cada hora na Meta Diária ("quem fez?"), pelo % da meta (peças ÷ meta das horas que trabalhou). Mostra robô, horas, peças e metas batidas. Se hoje ainda não tem ninguém marcado, mostra o dia anterior.'],
+        ['Top 3 funcionários','Os 3 melhores entre quem foi marcado em cada hora na Meta Diária ("quem fez?"), pelo % da meta (peças ÷ meta das horas que trabalhou). Para entrar no topo precisa de um mínimo de horas no dia (metade das horas de quem mais trabalhou, até 4 h); quem fez menos vai para o fim. Mostra robô, horas, peças e metas batidas. Se hoje ainda não tem ninguém marcado, mostra o dia anterior.'],
         ['Alertas','Robôs que não estão "Produzindo" e manutenções abertas. "Tudo operando" quando não há nada.'],
         ['Robôs · produção de hoje','Um cartão por robô com o status, as peças de hoje e as do dia anterior. Clique para abrir o robô.']]}
     ]},

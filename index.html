@@ -990,6 +990,8 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .rm-meta-cards{display:flex;gap:8px;margin-bottom:8px}
 .rm-meta-cards>div{flex:1;padding:8px;border-radius:4px;text-align:center;border:1px solid}
 .rm-meta-cards>div.ok{background:rgba(0,255,174,.08);border-color:rgba(0,255,174,.3)}
+.rm-meta-cards>div.just{background:rgba(0,240,255,.08);border-color:rgba(0,240,255,.35);color:#00f0ff}
+.just-tag{font-size:10px;color:#00f0ff;font-family:'Share Tech Mono',monospace;white-space:nowrap;margin-top:2px;font-weight:400}
 .rm-meta-cards>div.fail{background:rgba(255,43,94,.08);border-color:rgba(255,43,94,.3)}
 .rm-meta-cards>div>b{font-family:'Orbitron',sans-serif;font-weight:800;font-size:22px;display:block}
 .rm-meta-cards>div.ok>b{color:var(--ok)}.rm-meta-cards>div.fail>b{color:var(--danger)}
@@ -2928,6 +2930,7 @@ function viewPainel(){
         const n=horasDaCelula(hr,rd);
         o.pecas+=val; o.horas+=n; o.robos.add(rk);
         const mh=metaHora(meta,hr,rd); if(mh>0){ o.hMeta+=n; o.metaSoma+=mh; o.pecasM+=val; if(val>=mh) o.ok+=n; }
+        else if(meta>0 && horaAjuste(rd,hr)) o.just=(o.just||0)+n; // # = parada justificável (fora da conta, mas aparece)
       }); });
     return Object.values(res).map(o=>({...o, pct:o.metaSoma?Math.round(o.pecasM/o.metaSoma*100):null}))
       .sort((x,y)=>(y.pct==null?-1:y.pct)-(x.pct==null?-1:x.pct) || y.ok-x.ok || y.pecas-x.pecas);
@@ -2937,7 +2940,7 @@ function viewPainel(){
   const medalha=i=>['🥇','🥈','🥉'][i]||(i+1)+'º';
   const rankHtml = !rk.length ? `<div class="pn2-vazio">Nenhum funcionário marcado nas horas ainda.<br><span>Na Meta Diária, escolha "quem fez?" em cada hora para aparecer aqui.</span></div>`
     : `<table class="pn2-rank"><thead><tr><th></th><th>Funcionário</th><th>Robô</th><th class="r">Horas</th><th class="r">Peças</th><th class="r">Metas</th><th>% da meta</th></tr></thead><tbody>${
-      rk.slice(0,3).map((f,i)=>`<tr class="${i<3?'top':''}"><td class="pos">${medalha(i)}</td><td class="nm">${esc(f.nome)}</td><td class="rb">${[...f.robos].sort().join(' · ')}</td><td class="r">${f.horas}</td><td class="r pc">${fmt(f.pecas)}</td><td class="r">${f.hMeta?f.ok+'/'+f.hMeta:'—'}</td>
+      rk.slice(0,3).map((f,i)=>`<tr class="${i<3?'top':''}"><td class="pos">${medalha(i)}</td><td class="nm">${esc(f.nome)}</td><td class="rb">${[...f.robos].sort().join(' · ')}</td><td class="r">${f.horas}</td><td class="r pc">${fmt(f.pecas)}</td><td class="r">${f.hMeta?f.ok+'/'+f.hMeta:'—'}${f.just?`<div class="just-tag" title="Horas com # — parada justificável (fora da conta de metas)">⏸ ${f.just} just.</div>`:''}</td>
         <td><div class="pn2-pct"><div class="tr"><i style="width:${Math.min(100,f.pct||0)}%;background:${corPct(f.pct)}"></i></div><b style="color:${corPct(f.pct)}">${f.pct==null?'—':f.pct+'%'}</b></div></td></tr>`).join('')
     }</tbody></table>${rk.length>3?`<div class="pn2-mais">top 3 de ${rk.length} funcionários no dia</div>`:''}`;
 
@@ -3059,7 +3062,7 @@ function viewMeta(){
     + `<span class="mleg-k">Legenda</span>`
     + _leg('#00ffae','rgba(0,255,174,.10)','90','Verde — bateu a meta','produziu a meta da hora ou mais')
     + _leg('#ff2b5e','rgba(255,43,94,.10)','62','Vermelho — não bateu','ficou abaixo da meta da hora')
-    + _leg('#00f0ff','rgba(0,240,255,.10)','40#','Azul — ajuste ou outro motivo',isHost?'ajuste técnico ou outro motivo · digite # no fim do número':'hora com ajuste técnico ou outro motivo')
+    + _leg('#00f0ff','rgba(0,240,255,.10)','40#','Azul — parada justificável',isHost?'ajuste ou outro motivo · digite # no fim · fica fora da conta de metas':'ajuste ou outro motivo · fica fora da conta de metas')
     + _leg('#f9f871','rgba(249,248,113,.12)','☕','Amarelo — café',`09:00 com meta menor (parada de ${CAFE_PARADA_MIN} min)`)
     + `</div>`;
   if(!isHost) head+=`<div class="legend" style="padding-left:6px">Somente leitura — entre como HOST para apontar produção.</div>`;
@@ -3481,27 +3484,28 @@ function viewRelMensal(){
 
   const HORAS=[...HORAS_DIA,...HORAS_NOITE];
   const metasAtingidas = ROBOS.map(robo=>{
-    let atingiu=0,naoAtingiu=0, cod='—';
+    let atingiu=0,naoAtingiu=0,justif=0, cod='—';
     diasComDados.forEach(d=>{
       const rd=diasDoMes[d].robos[robo]?.dia||{};
       if(rd.cod && rd.cod!=='—') cod=rd.cod;
       // cada dia vale pela meta daquele dia
       const meta=metaRoboEm(robo, chaveData(anoSel,mesIdx,d));
       if(meta<=0) return;
-      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v<=0) return; const metaEf=metaHora(meta,h,rd); if(metaEf<=0) return;
+      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v<=0) return; const metaEf=metaHora(meta,h,rd);
+        if(metaEf<=0){ if(horaAjuste(rd,h)) justif+=horasDaCelula(h,rd); return; } // # = parada justificável
         const n=horasDaCelula(h,rd); if(v>=metaEf) atingiu+=n; else naoAtingiu+=n;
       });
     });
-    if(atingiu===0 && naoAtingiu===0) return null;
-    const total=atingiu+naoAtingiu, pct=Math.round(atingiu/total*100);
-    return {robo,cod,atingiu,naoAtingiu,total,pct};
+    if(atingiu===0 && naoAtingiu===0 && justif===0) return null;
+    const total=atingiu+naoAtingiu, pct=total?Math.round(atingiu/total*100):0;
+    return {robo,cod,atingiu,naoAtingiu,justif,total,pct};
   }).filter(Boolean).sort((a,b)=>b.pct-a.pct);
   html += `<div class="card glass"><h3>🎯 Metas Atingidas por Robô no Mês</h3>
     ${metasAtingidas.length?metasAtingidas.map(r=>{
       const cor=r.pct>=80?'var(--ok)':r.pct>=50?'var(--ny)':'var(--danger)';
       return `<div class="rm-meta-row">
         <div class="rm-meta-head"><span class="rob">Robô ${r.robo}</span><span class="cod">${esc(r.cod)}</span><span class="pct" style="color:${cor}">${r.pct}% de aproveitamento</span></div>
-        <div class="rm-meta-cards"><div class="ok"><b>${r.atingiu}x</b><span>✅ Atingiu a meta</span></div><div class="fail"><b>${r.naoAtingiu}x</b><span>❌ Não atingiu</span></div></div>
+        <div class="rm-meta-cards"><div class="ok"><b>${r.atingiu}x</b><span>✅ Atingiu a meta</span></div><div class="fail"><b>${r.naoAtingiu}x</b><span>❌ Não atingiu</span></div>${r.justif?`<div class="just"><b>${r.justif}x</b><span>⏸ Parada justificável</span></div>`:''}</div>
         <div class="rm-meta-bar"><i style="width:${r.pct}%;background:${cor}"></i></div>
       </div>`;
     }).join(''):'<div class="hist-empty">Sem dados de meta no mês.</div>'}
@@ -4068,7 +4072,7 @@ function removerFuncionario(nome){ if(!isHost) return;
 // Agrega desempenho por funcionário no período (ano, mes; mes=null => ano inteiro)
 function desempenhoFunc(ano,mes){
   const res={};
-  const garante=n=>{ if(!res[n]) res[n]={nome:n,pecas:0,horas:0,metasOk:0,horasMeta:0,dias:new Set(),diaPecas:{},robos:new Set()}; return res[n]; };
+  const garante=n=>{ if(!res[n]) res[n]={nome:n,pecas:0,horas:0,metasOk:0,horasMeta:0,just:0,dias:new Set(),diaPecas:{},robos:new Set()}; return res[n]; };
   funcionarios().forEach(n=>garante(n));
   const md=prod().metas_dias||{};
   Object.entries(md).forEach(([chave,dia])=>{
@@ -4084,6 +4088,7 @@ function desempenhoFunc(ano,mes){
         o.diaPecas[chave]=(o.diaPecas[chave]||0)+val;
         const metaEf=metaHora(meta,hr,rd);
         if(metaEf>0){ o.horasMeta+=n; if(val>=metaEf) o.metasOk+=n; }
+        else if(meta>0 && horaAjuste(rd,hr)) o.just+=n; // # = parada justificável
       });
     });
   });
@@ -4165,7 +4170,7 @@ function viewFuncionarios(){
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           ${_funcStat('Média/hora',f.media.toLocaleString("pt-BR"),'var(--nc)')}
-          ${_funcStat('Metas batidas',f.horasMeta>0?`${f.metasOk}/${f.horasMeta} · ${f.taxa}%`:'—','var(--ok)')}
+          ${_funcStat('Metas batidas',(f.horasMeta>0?`${f.metasOk}/${f.horasMeta} · ${f.taxa}%`:'—')+(f.just?`<div class="just-tag" style="font-size:11px">⏸ ${f.just}h parada justificável</div>`:''),'var(--ok)')}
           ${_funcStat('Horas trabalhadas',f.horas.toLocaleString("pt-BR"),'var(--purple,#a78bfa)')}
           ${_funcStat('Dias / Robôs',`${f.dias} / ${f.robos}`,'var(--ny)')}
           ${_funcStat('Melhor dia',f.melhorDia?`${f.melhorPecas} pç`:'—','var(--ok)')}
@@ -4212,7 +4217,7 @@ function desempenhoFuncDetalhe(nome,ano,mes){
   const md=prod().metas_dias||{};
   const porRobo={}; ROBOS.forEach(r=>porRobo[String(r)]={pecas:0,horas:0,metasOk:0,horasMeta:0});
   const porDia={};
-  let pecas=0,horas=0,metasOk=0,horasMeta=0;
+  let pecas=0,horas=0,metasOk=0,horasMeta=0,just=0;
   Object.entries(md).forEach(([chave,dia])=>{
     const p=chave.split('_').map(Number); if(p.length!==3) return;
     if(p[0]!==ano) return; if(mes!=null && p[1]!==mes) return;
@@ -4224,10 +4229,11 @@ function desempenhoFuncDetalhe(nome,ano,mes){
         const n=horasDaCelula(hr,rd);
         pecas+=val; horas+=n;
         porRobo[rk].pecas+=val; porRobo[rk].horas+=n;
-        if(!porDia[chave]) porDia[chave]={pecas:0,horas:0,metasOk:0,horasMeta:0,itens:[]};
+        if(!porDia[chave]) porDia[chave]={pecas:0,horas:0,metasOk:0,horasMeta:0,just:0,itens:[]};
         porDia[chave].pecas+=val; porDia[chave].horas+=n;
-        const metaEf=metaHora(meta,hr,rd);
-        porDia[chave].itens.push({h:hr, robo:rk, val, meta:metaEf, n, cod:String(rd.cod||'').trim()});
+        const metaEf=metaHora(meta,hr,rd), ehJust=metaEf<=0 && meta>0 && horaAjuste(rd,hr);
+        if(ehJust){ just+=n; porDia[chave].just+=n; }
+        porDia[chave].itens.push({h:hr, robo:rk, val, meta:metaEf, n, just:ehJust, cod:String(rd.cod||'').trim()});
         if(metaEf>0){ horasMeta+=n; porRobo[rk].horasMeta+=n; porDia[chave].horasMeta+=n;
           if(val>=metaEf){ metasOk+=n; porRobo[rk].metasOk+=n; porDia[chave].metasOk+=n; } }
       });
@@ -4238,7 +4244,7 @@ function desempenhoFuncDetalhe(nome,ano,mes){
   const robosList=Object.entries(porRobo).filter(([k,v])=>v.horas>0).map(([k,v])=>({robo:k,...v})).sort((a,b)=>b.pecas-a.pecas);
   const diasList=Object.keys(porDia).map(ch=>{const p=ch.split('_').map(Number);return {chave:ch,ano:p[0],mes:p[1],dia:p[2],...porDia[ch]};}).sort((a,b)=>b.ano-a.ano||b.mes-a.mes||b.dia-a.dia);
   let melhorDia=null,melhorP=0; diasList.forEach(d=>{ if(d.pecas>melhorP){melhorP=d.pecas;melhorDia=d;} });
-  return {nome,pecas,horas,media,metasOk,horasMeta,taxa,dias:diasList.length,robos:robosList.length,robosList,diasList,melhorDia,melhorP};
+  return {nome,pecas,horas,media,metasOk,horasMeta,just,taxa,dias:diasList.length,robos:robosList.length,robosList,diasList,melhorDia,melhorP};
 }
 function abrirFuncDetalhe(nomeEnc){
   const nome=decodeURIComponent(nomeEnc);
@@ -4265,7 +4271,7 @@ function abrirFuncDetalhe(nomeEnc){
     ${_funcStat('Peças',d.pecas.toLocaleString("pt-BR"),'var(--ok)',true)}
     ${_funcStat('Média/hora',d.media.toLocaleString("pt-BR"),'var(--nc)',true)}
     ${_funcStat('% da meta',d.horasMeta>0?d.taxa+'%':'—',st.cor,true)}
-    ${_funcStat('Metas batidas',d.horasMeta>0?`${d.metasOk}/${d.horasMeta}`:'—','var(--ok)',true)}
+    ${_funcStat('Metas batidas',(d.horasMeta>0?`${d.metasOk}/${d.horasMeta}`:'—')+(d.just?`<div class="just-tag" style="font-size:12px">⏸ ${d.just}h parada justificável</div>`:''),'var(--ok)',true)}
     ${_funcStat('Horas',d.horas.toLocaleString("pt-BR"),'var(--purple,#a78bfa)',true)}
     ${_funcStat('Dias / Robôs',`${d.dias} / ${d.robos}`,'var(--ny)',true)}
   </div>`;
@@ -4307,7 +4313,7 @@ function abrirFuncDetalhe(nomeEnc){
             <td style="padding:11px 12px;font-size:14px;color:var(--txt)">${dataFmt}</td>
             <td style="padding:11px 12px;font-size:16px;color:var(--ok);text-align:center;font-family:Orbitron,sans-serif;font-weight:700">${x.pecas.toLocaleString("pt-BR")}</td>
             <td style="padding:11px 12px;font-size:14px;color:var(--faint);text-align:center">${x.horas}</td>
-            <td style="padding:11px 12px;font-size:14px;color:${corTx};text-align:center;font-weight:700">${x.horasMeta>0?`${x.metasOk}/${x.horasMeta} · ${tx}%`:'—'}</td>
+            <td style="padding:11px 12px;font-size:14px;color:${corTx};text-align:center;font-weight:700">${x.horasMeta>0?`${x.metasOk}/${x.horasMeta} · ${tx}%`:'—'}${x.just?`<div class="just-tag">⏸ ${x.just}h just.</div>`:''}</td>
           </tr>`; }).join('')}
         </tbody>
       </table>
@@ -4341,17 +4347,17 @@ function _funcVerDia(ch,rolar){
   const sem=dt.toLocaleDateString('pt-BR',{weekday:'long'});
   const itens=(x.itens||[]).slice().sort((a,b)=>a.h.localeCompare(b.h)||a.robo.localeCompare(b.robo));
   const mx=Math.max(...itens.map(i=>i.val),1), {tx,cor}=_funcCorTx(x);
-  const linhas=itens.map(i=>{ const ok=i.meta>0&&i.val>=i.meta, c=i.meta>0?(ok?'var(--ok)':'var(--danger)'):'var(--nc)';
+  const linhas=itens.map(i=>{ const ok=i.meta>0&&i.val>=i.meta, c=i.just?'#00f0ff':i.meta>0?(ok?'var(--ok)':'var(--danger)'):'var(--nc)';
     return `<div class="fdet-r">
       <span class="fdet-h">${i.h}${ehCafe(i.h)?' ☕':''}</span>
       <span class="fdet-rb">R${esc(i.robo)}${i.cod?` · <em>${esc(i.cod)}</em>`:''}</span>
       <div class="fdet-bar"><i style="width:${Math.max(Math.round(i.val/mx*100),4)}%;background:${c};box-shadow:0 0 6px ${c}"></i></div>
       <span class="fdet-v" style="color:${c}">${i.val.toLocaleString('pt-BR')}</span>
-      <span class="fdet-m">${i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:'sem meta'}${i.n>1?' · '+i.n+'h (média '+(Math.round(i.val/i.n*10)/10).toLocaleString('pt-BR')+'/h)':''}</span>
+      <span class="fdet-m">${i.just?'⏸ parada justificável':i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:'sem meta'}${i.n>1?' · '+i.n+'h (média '+(Math.round(i.val/i.n*10)/10).toLocaleString('pt-BR')+'/h)':''}</span>
     </div>`; }).join('');
   box.innerHTML=`<div class="fdet-top" style="--fc:${cor}">
       <div><div class="fdet-data">${dataFmt}</div><div class="fdet-sem">${sem}</div></div>
-      <div class="fdet-res"><b>${x.pecas.toLocaleString('pt-BR')}</b> peças · <b>${x.horas}</b>h${itens.length?` · das <b>${itens[0].h}</b> às <b>${itens[itens.length-1].h}</b>`:''}${tx!=null?` · metas <b>${x.metasOk}/${x.horasMeta}</b> (${tx}%)`:''}</div>
+      <div class="fdet-res"><b>${x.pecas.toLocaleString('pt-BR')}</b> peças · <b>${x.horas}</b>h${itens.length?` · das <b>${itens[0].h}</b> às <b>${itens[itens.length-1].h}</b>`:''}${tx!=null?` · metas <b>${x.metasOk}/${x.horasMeta}</b> (${tx}%)`:''}${x.just?` · <b style="color:#00f0ff">⏸ ${x.just}h parada justificável</b>`:''}</div>
     </div>
     <div class="fdet-list">${linhas||'<div class="fdet-vazio">Sem horas registradas.</div>'}</div>`;
   if(rolar) box.scrollIntoView({block:'nearest',behavior:'smooth'});
@@ -5609,7 +5615,8 @@ function dashRenderRobo(k){ const main=document.getElementById("dashMain"); cons
       <div class="dash-box"><div class="dash-prod-h">PRODUÇÃO ${hora}</div><div class="dash-prod-n">${prodH>0?prodH:'—'}</div>
         ${meta>0&&metaEf>0?`<div class="dash-meta-txt">META${cafe?' (CAFÉ)':''}${nJ>1?' ('+nJ+' HORAS DA NOITE)':''}: <b>${metaEf}</b> ${nJ>1?'PEÇAS':'PEÇAS/HORA'}</div>`:''}
         ${meta>0&&prodH>0&&!bateu&&faltam>0?`<div class="dash-meta-txt fail">FALTOU ${faltam} PEÇA${faltam===1?'':'S'}</div>`:''}
-        ${cafe?`<div class="dash-meta-txt" style="color:var(--ny);font-weight:700">☕ META REDUZIDA — PARADA DE ${CAFE_PARADA_MIN} MIN</div>`:''}</div>
+        ${cafe?`<div class="dash-meta-txt" style="color:var(--ny);font-weight:700">☕ META REDUZIDA — PARADA DE ${CAFE_PARADA_MIN} MIN</div>`:''}
+        ${adjH&&prodH>0?`<div class="dash-meta-txt" style="color:${DASH_ADJ};font-weight:700">⏸ PARADA JUSTIFICÁVEL</div>`:''}</div>
       ${meta>0&&prodH>0?`<div class="dash-eff"><div class="dash-pct-wrap"><svg class="hud-ring" viewBox="0 0 200 120" preserveAspectRatio="none"><ellipse class="r1" cx="100" cy="60" rx="96" ry="54"/><ellipse class="r2" cx="100" cy="60" rx="86" ry="46"/></svg><div class="hud-spin"><i></i><i></i></div><div class="dash-pct">${pct}%</div></div><div class="dash-eff-l">EFICIÊNCIA DA HORA</div>
         <div class="dash-bar"><i style="transform:scaleX(${Math.min(pct,100)/100})"></i></div></div>`:''}
       <div class="dash-dots">${dots}</div>
@@ -6199,7 +6206,7 @@ const GUIA = [
       {t:'Cores e símbolos', defs:[
         ['Verde','A hora bateu a meta.'],
         ['Vermelho','A hora ficou abaixo da meta.'],
-        ['# no fim (azul)','Ajuste ou outro motivo (ex.: 45#). As peças somam normal nos totais, mas a hora fica FORA da conta de metas: não conta como batida nem como não batida.'],
+        ['# no fim (azul)','Meta com parada justificável — ajuste ou outro motivo (ex.: 45#). As peças somam normal nos totais, a hora fica FORA da conta de metas (nem batida, nem não batida) e aparece à parte como "⏸ parada justificável" no Painel, em Funcionários e no Relatório Mensal.'],
         ['☕ 09:00','Hora do café: a meta é reduzida porque a máquina roda só 35 dos 60 minutos (25 min de parada).']]},
       {t:'Botões do topo', defs:[
         ['📋 Copiar dia anterior','Copia meta, código e pontos do último dia com dados. Pede confirmação e não mexe na produção.'],

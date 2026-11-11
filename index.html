@@ -913,6 +913,7 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .ppd-hbar-h{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--mut);letter-spacing:.04em}
 .ppd-rob-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
 .ppd-rob-card{padding:12px 14px;border:1px solid var(--glass-bd2);border-radius:4px;background:rgba(255,255,255,.03)}
+.ppd-nota{margin:-14px 0 22px;font-family:'Share Tech Mono',monospace;font-size:11.5px;color:var(--mut);line-height:1.4}
 .ppd-rob-card.clic{cursor:pointer;transition:border-color .15s,background .15s}
 .ppd-rob-card.clic:hover{border-color:rgba(0,240,255,.5);background:rgba(0,240,255,.05)}
 .ppd-rob-card.sel{border-color:#00f0ff;background:rgba(0,240,255,.09);box-shadow:0 0 12px -4px #00f0ff}
@@ -3875,12 +3876,14 @@ function _ppmAgregar(per){
     if(!diaData || !_ppecaEmPeriodo(chave,per)) return;
     Object.keys(robos()).forEach(robo=>{
       const rd=diaData[robo]||{}; const cod=(rd.cod||'').trim(); if(!cod||cod==='—') return;
-      const o=out[cod] || (out[cod]={total:0, porDia:{}, porHora:{}, porHoraN:{}, robos:{}, horasRobo:0, porRobo:{}});
+      const o=out[cod] || (out[cod]={total:0, porDia:{}, porHora:{}, porHoraN:{}, porHoraH:{}, robos:{}, horasRobo:0, porRobo:{}});
       // porRobo: os mesmos números separados por robô (detalhe da peça com filtro de robô)
-      const s=o.porRobo[robo] || (o.porRobo[robo]={total:0, porDia:{}, porHora:{}, porHoraN:{}, horasRobo:0});
+      const s=o.porRobo[robo] || (o.porRobo[robo]={total:0, porDia:{}, porHora:{}, porHoraN:{}, porHoraH:{}, horasRobo:0});
       let ts=0;
-      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v>0){ ts+=v; o.porHora[h]=(o.porHora[h]||0)+v; o.porHoraN[h]=(o.porHoraN[h]||0)+1; o.horasRobo++;
-        s.porHora[h]=(s.porHora[h]||0)+v; s.porHoraN[h]=(s.porHoraN[h]||0)+1; s.horasRobo++; } });
+      // nh = horas que a célula vale: 22:00 sozinha (noite junta) = 4 horas — entra assim nas médias por hora/minuto
+      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v>0){ const nh=horasDaCelula(h,rd); ts+=v;
+        o.porHora[h]=(o.porHora[h]||0)+v; o.porHoraN[h]=(o.porHoraN[h]||0)+1; o.porHoraH[h]=(o.porHoraH[h]||0)+nh; o.horasRobo+=nh;
+        s.porHora[h]=(s.porHora[h]||0)+v; s.porHoraN[h]=(s.porHoraN[h]||0)+1; s.porHoraH[h]=(s.porHoraH[h]||0)+nh; s.horasRobo+=nh; } });
       if(ts<=0) return;
       o.total+=ts; o.porDia[chave]=(o.porDia[chave]||0)+ts; o.robos[robo]=(o.robos[robo]||0)+ts;
       s.total+=ts; s.porDia[chave]=(s.porDia[chave]||0)+ts;
@@ -4001,7 +4004,9 @@ function _ppmAbrirDetalhe(cod, roboSel){
   Object.entries(d.porDia).forEach(([k,v])=>{ if(!melhorDia||v>melhorDia.v)melhorDia={k,v}; if(!piorDia||v<piorDia.v)piorDia={k,v}; });
   let melhorHora=null;
   // melhor hora = maior MÉDIA por apontamento naquela hora (não a soma do período)
-  Object.entries(d.porHora).forEach(([h,v])=>{ const n=(d.porHoraN||{})[h]||1, m=v/n; if(!melhorHora||m>melhorHora.m)melhorHora={h,m,n}; });
+  // dividido pelas HORAS que as células valem (22:00 com a noite junta = 4 h), não pelo nº de apontamentos
+  Object.entries(d.porHora).forEach(([h,v])=>{ const n=(d.porHoraN||{})[h]||1, nh=(d.porHoraH||{})[h]||n, m=v/nh; if(!melhorHora||m>melhorHora.m)melhorHora={h,m,n}; });
+  const temNoiteJunta = (d.porHoraH||{})[HORA_FECHA_NOITE] > (d.porHoraN||{})[HORA_FECHA_NOITE];
   const fmtK=k=>{ const p=k.split('_').map(Number); return String(p[2]).padStart(2,'0')+'/'+String(p[1]+1).padStart(2,'0'); };
   const kpi=(l,v,s,c)=>`<div class="ppd-kpi" style="--kc:${c}"><div class="ppd-kpi-l">${l}</div><div class="ppd-kpi-v">${v}</div><div class="ppd-kpi-s">${s}</div></div>`;
   const kpis=[
@@ -4018,8 +4023,9 @@ function _ppmAbrirDetalhe(cod, roboSel){
   const HORAS=[...HORAS_DIA,...HORAS_NOITE];
   const mxH=Math.max(...HORAS.map(h=>d.porHora[h]||0),1);
   const hbars=HORAS.map(h=>{ const v=d.porHora[h]||0; const cafe=ehCafe(h);
-    return `<div class="ppd-hbar"><div class="ppd-hbar-v">${v>0?v.toLocaleString('pt-BR'):''}</div><div class="ppd-hbar-fill${cafe?' cafe':''}" style="height:${v>0?Math.max(Math.round(v/mxH*54),3):2}px"></div><div class="ppd-hbar-h">${h}${cafe?' ☕':''}</div></div>`;
-  }).join('');
+    return `<div class="ppd-hbar"><div class="ppd-hbar-v">${v>0?v.toLocaleString('pt-BR'):''}</div><div class="ppd-hbar-fill${cafe?' cafe':''}" style="height:${v>0?Math.max(Math.round(v/mxH*54),3):2}px"></div><div class="ppd-hbar-h">${h}${cafe?' ☕':''}${h===HORA_FECHA_NOITE&&temNoiteJunta?' *':''}</div></div>`;
+  }).join('') + '';
+  const notaNoite = temNoiteJunta ? `<div class="ppd-nota">* 22:00 junta as 4 horas da noite (18h, 20h, 21h e 22h): a barra mostra as peças das 4 horas e nas médias ela conta como 4 horas.</div>` : '';
   // a lista de robôs mostra sempre todos (com o escolhido destacado); clicar num cartão filtra por ele
   const robHTML = robosTodos.length ? `<div class="ppd-rob-grid">${robosTodos.map(([robo,qtd])=>{ const pctR=Math.round(qtd/dTodos.total*100);
     const multi=robosTodos.length>1, sel=roboSel===robo;
@@ -4039,7 +4045,7 @@ function _ppmAbrirDetalhe(cod, roboSel){
       <div class="ppd-hero"><div class="ppd-hero-v">${total.toLocaleString('pt-BR')}</div><div class="ppd-hero-l">peças produzidas no período${roboSel?' · <b style="color:var(--nc)">só o Robô '+esc(roboSel)+'</b>':(robosTodos.length>1?' · todos os robôs':'')}</div></div>
       <div class="ppd-kpis">${kpis}</div>
       <div class="ppd-sec-t">⏱ Distribuição por hora</div>
-      <div class="ppd-hbars">${hbars}</div>
+      <div class="ppd-hbars">${hbars}</div>${notaNoite}
       <div class="ppd-sec-t">⚙ Produção por robô</div>
       ${robHTML}
     </div></div>`;

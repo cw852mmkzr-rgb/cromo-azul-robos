@@ -913,6 +913,17 @@ table.mtable input.cafe{color:var(--ny);border-color:rgba(249,248,113,.35)}
 .ppd-hbar-h{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--mut);letter-spacing:.04em}
 .ppd-rob-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
 .ppd-rob-card{padding:12px 14px;border:1px solid var(--glass-bd2);border-radius:4px;background:rgba(255,255,255,.03)}
+.ppd-rob-card.clic{cursor:pointer;transition:border-color .15s,background .15s}
+.ppd-rob-card.clic:hover{border-color:rgba(0,240,255,.5);background:rgba(0,240,255,.05)}
+.ppd-rob-card.sel{border-color:#00f0ff;background:rgba(0,240,255,.09);box-shadow:0 0 12px -4px #00f0ff}
+.ppd-rob-tag{font-family:'Share Tech Mono',monospace;font-size:10px;color:#05060d;background:#00f0ff;border-radius:3px;padding:1px 5px;margin-left:6px;letter-spacing:.04em}
+.ppd-filtro{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px}
+.ppd-filtro-l{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-right:2px}
+.ppd-fb{font-family:'Chakra Petch',sans-serif;font-size:13px;font-weight:600;color:var(--txt);background:rgba(255,255,255,.04);border:1px solid var(--glass-bd2);border-radius:999px;padding:6px 13px;cursor:pointer;transition:border-color .15s,background .15s}
+.ppd-fb b{font-family:'Orbitron',sans-serif;font-size:11.5px;color:var(--mut);margin-left:4px}
+.ppd-fb:hover{border-color:rgba(0,240,255,.5)}
+.ppd-fb.on{background:rgba(0,240,255,.14);border-color:#00f0ff;color:#00f0ff;box-shadow:0 0 10px -3px #00f0ff}
+.ppd-fb.on b{color:#00f0ff}
 .ppd-rob-nome{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;color:var(--mut);letter-spacing:.04em}
 .ppd-rob-val{font-family:'Orbitron',sans-serif;font-weight:800;font-size:22px;color:var(--ok);margin:4px 0 6px;text-shadow:0 0 8px rgba(0,255,174,.35)}
 .ppd-rob-bar{height:5px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
@@ -3864,11 +3875,15 @@ function _ppmAgregar(per){
     if(!diaData || !_ppecaEmPeriodo(chave,per)) return;
     Object.keys(robos()).forEach(robo=>{
       const rd=diaData[robo]||{}; const cod=(rd.cod||'').trim(); if(!cod||cod==='—') return;
-      const o=out[cod] || (out[cod]={total:0, porDia:{}, porHora:{}, porHoraN:{}, robos:{}, horasRobo:0});
+      const o=out[cod] || (out[cod]={total:0, porDia:{}, porHora:{}, porHoraN:{}, robos:{}, horasRobo:0, porRobo:{}});
+      // porRobo: os mesmos números separados por robô (detalhe da peça com filtro de robô)
+      const s=o.porRobo[robo] || (o.porRobo[robo]={total:0, porDia:{}, porHora:{}, porHoraN:{}, horasRobo:0});
       let ts=0;
-      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v>0){ ts+=v; o.porHora[h]=(o.porHora[h]||0)+v; o.porHoraN[h]=(o.porHoraN[h]||0)+1; o.horasRobo++; } });
+      HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v>0){ ts+=v; o.porHora[h]=(o.porHora[h]||0)+v; o.porHoraN[h]=(o.porHoraN[h]||0)+1; o.horasRobo++;
+        s.porHora[h]=(s.porHora[h]||0)+v; s.porHoraN[h]=(s.porHoraN[h]||0)+1; s.horasRobo++; } });
       if(ts<=0) return;
       o.total+=ts; o.porDia[chave]=(o.porDia[chave]||0)+ts; o.robos[robo]=(o.robos[robo]||0)+ts;
+      s.total+=ts; s.porDia[chave]=(s.porDia[chave]||0)+ts;
     });
   });
   return out;
@@ -3961,9 +3976,18 @@ function _ppmRenderLista(){
     </div>`;
   }).join('');
 }
-function _ppmAbrirDetalhe(cod){
-  const per=_ppmPeriodo(); const d=_ppmAgregar(per)[cod];
-  if(!d){ showToast('Sem dados para '+cod,true); return; }
+function _ppmAbrirDetalhe(cod, roboSel){
+  const per=_ppmPeriodo(); const dTodos=_ppmAgregar(per)[cod];
+  if(!dTodos){ showToast('Sem dados para '+cod,true); return; }
+  // filtro de robô (10/11/2026): "Todos" soma todos os robôs; escolhendo um, todos os números são só dele
+  if(roboSel && !(dTodos.porRobo&&dTodos.porRobo[roboSel]&&dTodos.porRobo[roboSel].total>0)) roboSel='';
+  const d = roboSel ? {...dTodos.porRobo[roboSel], robos:{[roboSel]:dTodos.porRobo[roboSel].total}} : dTodos;
+  const codEsc = String(cod).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const robosTodos=Object.entries(dTodos.robos).sort((a,b)=>b[1]-a[1]);
+  const filtroHTML = robosTodos.length>1 ? `<div class="ppd-filtro"><span class="ppd-filtro-l">Ver robô:</span>
+      <button type="button" class="ppd-fb${roboSel?'':' on'}" onclick="_ppmAbrirDetalhe('${codEsc}','')">Todos <b>${dTodos.total.toLocaleString('pt-BR')}</b></button>
+      ${robosTodos.map(([r,q])=>`<button type="button" class="ppd-fb${roboSel===r?' on':''}" onclick="_ppmAbrirDetalhe('${codEsc}','${esc(r)}')">Robô ${esc(r)} <b>${q.toLocaleString('pt-BR')}</b></button>`).join('')}
+    </div>` : '';
   const total=d.total, diasProd=Object.keys(d.porDia).length, horasRobo=d.horasRobo;
   const mediaDia = diasProd>0?Math.round(total/diasProd):0;
   const mediaHora = horasRobo>0?Math.round(total/horasRobo):0;
@@ -3996,8 +4020,10 @@ function _ppmAbrirDetalhe(cod){
   const hbars=HORAS.map(h=>{ const v=d.porHora[h]||0; const cafe=ehCafe(h);
     return `<div class="ppd-hbar"><div class="ppd-hbar-v">${v>0?v.toLocaleString('pt-BR'):''}</div><div class="ppd-hbar-fill${cafe?' cafe':''}" style="height:${v>0?Math.max(Math.round(v/mxH*54),3):2}px"></div><div class="ppd-hbar-h">${h}${cafe?' ☕':''}</div></div>`;
   }).join('');
-  const robHTML = robosOrd.length ? `<div class="ppd-rob-grid">${robosOrd.map(([robo,qtd])=>{ const pctR=Math.round(qtd/total*100);
-    return `<div class="ppd-rob-card"><div class="ppd-rob-nome">⚙ Robô ${esc(robo)}</div><div class="ppd-rob-val">${qtd.toLocaleString('pt-BR')}</div><div class="ppd-rob-bar"><div style="width:${pctR}%"></div></div><div class="ppd-rob-pct">${pctR}% do total</div></div>`;
+  // a lista de robôs mostra sempre todos (com o escolhido destacado); clicar num cartão filtra por ele
+  const robHTML = robosTodos.length ? `<div class="ppd-rob-grid">${robosTodos.map(([robo,qtd])=>{ const pctR=Math.round(qtd/dTodos.total*100);
+    const multi=robosTodos.length>1, sel=roboSel===robo;
+    return `<div class="ppd-rob-card${sel?' sel':''}${multi?' clic':''}"${multi?` onclick="_ppmAbrirDetalhe('${codEsc}','${sel?'':esc(robo)}')" title="${sel?'Voltar para todos os robôs':'Ver só o Robô '+esc(robo)}"`:''}><div class="ppd-rob-nome">⚙ Robô ${esc(robo)}${sel?' <span class="ppd-rob-tag">selecionado</span>':''}</div><div class="ppd-rob-val">${qtd.toLocaleString('pt-BR')}</div><div class="ppd-rob-bar"><div style="width:${pctR}%"></div></div><div class="ppd-rob-pct">${pctR}% do total</div></div>`;
   }).join('')}</div>` : '<div class="ppd-empty">Sem robôs.</div>';
   let ov=document.getElementById('ppdOv');
   if(!ov){
@@ -4009,7 +4035,8 @@ function _ppmAbrirDetalhe(cod){
   ov.innerHTML=`<div class="ppd-card glass">
     <div class="ppd-head"><div><div class="ppd-head-cod">${esc(cod)}</div><div class="ppd-head-sub">📅 ${esc(per.label)}${nomePeca(cod)?' · '+esc(nomePeca(cod)):''}</div></div><button type="button" class="ppd-head-x" onclick="_ppecaFecharDetalhe()">✕</button></div>
     <div class="ppd-body">
-      <div class="ppd-hero"><div class="ppd-hero-v">${total.toLocaleString('pt-BR')}</div><div class="ppd-hero-l">peças produzidas no período</div></div>
+      ${filtroHTML}
+      <div class="ppd-hero"><div class="ppd-hero-v">${total.toLocaleString('pt-BR')}</div><div class="ppd-hero-l">peças produzidas no período${roboSel?' · <b style="color:var(--nc)">só o Robô '+esc(roboSel)+'</b>':(robosTodos.length>1?' · todos os robôs':'')}</div></div>
       <div class="ppd-kpis">${kpis}</div>
       <div class="ppd-sec-t">⏱ Distribuição por hora</div>
       <div class="ppd-hbars">${hbars}</div>

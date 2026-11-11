@@ -835,6 +835,9 @@ table.meta-t th.cafe{color:var(--ny);background:rgba(249,248,113,.10);border-bot
 table.meta-t td.cafe-td{background:rgba(249,248,113,.06)}
 /* Legenda das cores da Meta Diária */
 .mleg{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;padding:12px 14px!important;margin-top:12px}
+.mfds{margin-top:12px;padding:13px 16px!important;border-color:rgba(249,248,113,.45)!important;background:rgba(249,248,113,.06)!important;font-size:15px;color:var(--txt)}
+.mfds b{color:var(--ny);font-family:'Orbitron',sans-serif;letter-spacing:.04em}
+.mfds span{color:var(--mut);font-size:13.5px;margin-left:4px}
 .mleg-k{grid-column:1/-1;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
 .mleg-i{display:flex;align-items:center;gap:10px;min-width:0;padding:7px 12px 7px 7px;border-radius:10px;border:1px solid var(--c);background:var(--bg);box-shadow:0 0 14px -8px var(--c)}
 .mleg-sw{flex:none;min-width:44px;height:34px;padding:0 6px;box-sizing:border-box;border-radius:7px;display:grid;place-items:center;font-family:'Orbitron',sans-serif;font-weight:700;font-size:15px;color:var(--c);border:1.5px solid var(--c);background:rgba(5,6,13,.7);text-shadow:0 0 8px var(--c)}
@@ -1997,8 +2000,12 @@ function metaHora(meta,h,rd){ meta=parseInt(meta)||0; if(meta<=0) return 0;
   return ehCafe(h) ? Math.max(1,Math.round(meta*(60-CAFE_PARADA_MIN)/60)) : meta; }
 // Meta/hora de um robô num dia: vale SO a meta lançada naquele dia.
 // Dia sem meta = sem meta (0): o dashboard mostra "—" e a célula não ganha cor.
+// Sábado e domingo (10/11/2026): só as PEÇAS contam — sem meta e fora de toda média e de melhor/menor dia.
+function ehFds(a,m,d){ const w=new Date(a,m,d).getDay(); return w===0||w===6; }
+function ehFdsChave(ch){ const p=String(ch||'').split('_').map(Number); return p.length===3 && !p.some(isNaN) && ehFds(p[0],p[1],p[2]); }
 function metaRoboEm(robo, chaveDia){
   const rk=String(robo);
+  if(ehFdsChave(chaveDia)) return 0; // fim de semana não tem meta
   try{
     const dia=(prod().metas_dias||{})[chaveDia];
     const rd=dia&&dia[rk];
@@ -2700,8 +2707,10 @@ function renderHistoricoRobo(k){
   const selHtml=`<select onchange="_histRoboSet('${k}',this.value)" title="Mês do histórico">${meses.map(m=>{ const [a,mm]=m.split('_').map(Number); return `<option value="${m}" ${m===selM?'selected':''}>${MESES[mm]} ${a}</option>`; }).join('')}<option value="todos" ${selM==='todos'?'selected':''}>Todos os meses</option></select>`;
   const maxTot=Math.max(...registros.map(r=>r.totalGeral),1);
   const acum=registros.reduce((s,r)=>s+r.totalGeral,0);
-  const media=Math.round(acum/registros.length);
-  const melhor=registros.reduce((b,r)=>r.totalGeral>b.totalGeral?r:b,registros[0]);
+  // média diária e melhor dia: só dia útil (sábado/domingo só somam as peças no total acumulado)
+  const _regU=registros.filter(r=>!ehFds(r.ano,r.mes,r.dia));
+  const media=_regU.length?Math.round(_regU.reduce((s,r)=>s+r.totalGeral,0)/_regU.length):0;
+  const melhor=_regU.length?_regU.reduce((b,r)=>r.totalGeral>b.totalGeral?r:b,_regU[0]):registros[0];
   const linhas=registros.map(r=>{
     const pct=Math.round(r.totalGeral/maxTot*100);
     // meta do dia com a meta daquele dia e só as horas da noite que trabalharam (22:00 junta = 4 metas)
@@ -3065,7 +3074,7 @@ function viewPainel(){
           <div>
             <div class="pn-lbl">Meta do dia</div>
             <div class="pn2-num" style="color:${corMeta}">${hj.meta?pctHoje+'%':'—'}</div>
-            <div class="pn2-sub">${fmt(hj.total)} de ${fmt(hj.meta)} pç${hj.meta&&hj.total<hj.meta?' · faltam '+fmt(hj.meta-hj.total):''}</div>
+            <div class="pn2-sub">${ehFds(A,M,D)?`${DSEM[agora.getDay()]==='SÁB'?'sábado':'domingo'}: sem meta · só as peças (${fmt(hj.total)} pç)`:`${fmt(hj.total)} de ${fmt(hj.meta)} pç${hj.meta&&hj.total<hj.meta?' · faltam '+fmt(hj.meta-hj.total):''}`}</div>
             ${ritmo!=null?`<div class="pn2-sub">ritmo até agora: <b style="color:${corPct(ritmo)}">${ritmo}% da meta</b></div>`:''}
           </div>
         </div>
@@ -3096,10 +3105,11 @@ function viewPainel(){
 
 /* ---------- PRODUÇÃO MENSAL ---------- */
 function viewMensal(){
-  const ndias=diasNoMes(selAno,selMes); let totalMes=0, diasComProd=0; const totais=[];
-  for(let d=1; d<=ndias; d++){ const t=totalDia(selAno,selMes,d); totais.push(t); totalMes+=t; if(t>0) diasComProd++; }
+  const ndias=diasNoMes(selAno,selMes); let totalMes=0, diasComProd=0, somaUteis=0; const totais=[];
+  // a média é só de dia útil (sábado/domingo só somam as peças no total)
+  for(let d=1; d<=ndias; d++){ const t=totalDia(selAno,selMes,d); totais.push(t); totalMes+=t; if(t>0 && !ehFds(selAno,selMes,d)){ diasComProd++; somaUteis+=t; } }
   const maxDia=Math.max(1,...totais);
-  const media=diasComProd?Math.round(totalMes/diasComProd):0;
+  const media=diasComProd?Math.round(somaUteis/diasComProd):0;
   let cells="";
   for(let d=1; d<=ndias; d++){ const t=totais[d-1];
     const eHoje=(selAno===hoje.getFullYear()&&selMes===hoje.getMonth()&&d===hoje.getDate());
@@ -3148,7 +3158,8 @@ function viewMeta(){
         </div></div>`;
   // Legenda das cores (para todos) — bem visível, com uma "célula" de exemplo de cada cor
   const _leg=(c,bg,ex,t,s)=>`<div class="mleg-i" style="--c:${c};--bg:${bg}"><span class="mleg-sw">${ex}</span><span class="mleg-t"><b>${t}</b><small>${s}</small></span></div>`;
-  head+=`<div class="mleg card glass" role="note" aria-label="Legenda das cores">`
+  if(ehFds(selAno,selMes,selDia)) head+=`<div class="mfds card glass" role="note">📅 <b>${new Date(selAno,selMes,selDia).getDay()===6?'Sábado':'Domingo'}</b> — sem meta e fora das médias. <span>Aqui só as peças contam (entram nos totais).</span></div>`;
+  else head+=`<div class="mleg card glass" role="note" aria-label="Legenda das cores">`
     + `<span class="mleg-k">Legenda</span>`
     + _leg('#00ffae','rgba(0,255,174,.10)','90','Verde — bateu a meta','produziu a meta da hora ou mais')
     + _leg('#ff2b5e','rgba(255,43,94,.10)','62','Vermelho — não bateu','ficou abaixo da meta da hora')
@@ -3214,6 +3225,7 @@ window.addEventListener('resize', ()=>{ clearTimeout(_metaEncaixa._t); _metaEnca
 function metaTable(chave,md,horas){
   const rb=robos();
   const temFunc=funcionarios().length>0;
+  const fds=ehFdsChave(chave); // sábado/domingo: sem meta, só as peças
   // cabeçalho: ROBÔ | META | CÓD | PTS | horas... | TOTAL   (robôs nas linhas — igual ao Células)
   let h=`<div class="mtable-wrap"><table class="mtable meta-t${PTS_VISIVEL?'':' sem-pts'}"><thead><tr>`
     + `<th class="rlab">Robô</th><th class="cmeta">Meta</th><th class="ccod">Cód</th><th class="cpts">Pts</th>`
@@ -3222,11 +3234,12 @@ function metaTable(chave,md,horas){
   ROBOS.forEach(r=>{ const rd=md[String(r)]||{};
     const metaPadrao=parseInt(rb[String(r)]&&rb[String(r)].meta_hora)||0;
     const metaDia=(rd.meta!=null&&String(rd.meta).trim()!=="")?String(rd.meta).trim():"";
-    const meta=parseInt(metaDia)||0;
+    const meta=fds?0:(parseInt(metaDia)||0);
     const cod=rd.cod||""; const pts=(rd.pontos!=null&&rd.pontos!=="")?rd.pontos:""; let linTot=0;
     h+=`<tr>${statusCellRobo(r)}`;
     // META
-    h+= isHost ? `<td class="cmeta"><input class="minp" value="${esc(metaDia)}" placeholder="" title="Meta por hora deste dia. Digite para definir; vazio usa a meta do cadastro do robô (${metaPadrao||'não definida'}) só para colorir as células." onchange="setMetaHoraRobo('${chave}','${r}',this.value)"></td>`
+    h+= fds ? `<td class="cmeta" style="color:var(--faint)" title="Sábado e domingo não têm meta — só as peças contam">—</td>`
+      : isHost ? `<td class="cmeta"><input class="minp" value="${esc(metaDia)}" placeholder="" title="Meta por hora deste dia. Digite para definir; vazio usa a meta do cadastro do robô (${metaPadrao||'não definida'}) só para colorir as células." onchange="setMetaHoraRobo('${chave}','${r}',this.value)"></td>`
                : `<td class="cmeta" style="color:var(--blue)">${metaDia||(meta?meta:'—')}</td>`;
     // CÓD
     h+= isHost ? `<td class="ccod"><input class="cinp" list="pecaCods" value="${esc(cod)}" placeholder="—" onchange="setCod('${chave}','${r}',this.value)"></td>`
@@ -3241,7 +3254,7 @@ function metaTable(chave,md,horas){
       const nJ=horasDaCelula(hr,rd);
       const cafeTit = (cafe&&metaEf>0) ? ` title="☕ Meta reduzida do café: ${metaEf} peças (parada de ${CAFE_PARADA_MIN} min)"`
         : (nJ>1 ? ` title="🌙 Turno da noite junto: a 22:00 vale ${nJ} horas${meta>0?' — meta '+metaEf+' peças ('+meta+'/h × '+nJ+')':''}"` : "");
-      const njTag = (nJ>1 && raw!=="" && pv.num>0) ? `<div class="njtag">${nJ}h · média <b>${(Math.round(pv.num/nJ*10)/10).toLocaleString('pt-BR')}</b>/h${metaEf>0?' · meta '+metaEf:''}</div>` : "";
+      const njTag = (nJ>1 && raw!=="" && pv.num>0) ? `<div class="njtag">${nJ}h${fds?'':` · média <b>${(Math.round(pv.num/nJ*10)/10).toLocaleString('pt-BR')}</b>/h`}${metaEf>0?' · meta '+metaEf:''}</div>` : "";
       // # = parada justificada: motivo aparece ao passar o mouse e ao clicar no 💬 (só HOST/gestor escreve)
       const jus = (raw!=="" && pv.adj) ? _justTxt(rd,campo) : null;
       const jusTit = jus!==null ? ` title="⏸ Parada justificada — ${jus?esc(jus):'sem motivo informado'}"` : "";
@@ -3281,7 +3294,7 @@ function setMeta(chave,robo,campo,v,el){
     }
   }
   if(v==="") delete rd[campo]; else rd[campo]=v;
-  if(el){ const meta=metaHoraCampo(rd.meta, campo, rd), pv=parseCelVal(v);
+  if(el){ const meta=metaHoraCampo(ehFdsChave(chave)?0:rd.meta, campo, rd), pv=parseCelVal(v);
     el.className = v===''?'':(pv.adj?'adj':(meta>0?(pv.num>=meta?'ok':'low'):''));
     // a caixa do nome acompanha a cor da hora (verde / vermelho / roxo)
     const fh=el.parentElement&&el.parentElement.querySelector('.fhinp');
@@ -3451,9 +3464,10 @@ function viewRelMensal(){
   }
   const diasComDados=Object.keys(diasDoMes).map(Number).sort((a,b)=>a-b);
   const totalMes=diasComDados.reduce((s,d)=>s+diasDoMes[d].totalGeral,0);
-  const diasComProd=diasComDados.filter(d=>diasDoMes[d].totalGeral>0);
-  const mediaDia=diasComProd.length>0?Math.round(totalMes/diasComProd.length):0;
-  const melhorDia=diasComDados.reduce((best,d)=>diasDoMes[d].totalGeral>(diasDoMes[best]?.totalGeral||0)?d:best, diasComDados[0]);
+  // média e melhor dia só com dia útil — sábado/domingo só somam as peças no total
+  const diasComProd=diasComDados.filter(d=>diasDoMes[d].totalGeral>0 && !ehFds(anoSel,mesIdx,d));
+  const mediaDia=diasComProd.length>0?Math.round(diasComProd.reduce((s,d)=>s+diasDoMes[d].totalGeral,0)/diasComProd.length):0;
+  const melhorDia=diasComProd.length?diasComProd.reduce((best,d)=>diasDoMes[d].totalGeral>diasDoMes[best].totalGeral?d:best, diasComProd[0]):null;
 
   const eficienciaRobo = ROBOS.map(robo=>{
     let totalProd=0,diasAtivo=0,diasBateu=0,metaAcum=0,prodMeta=0,diasComMeta=0,somaMetaH=0;
@@ -3592,7 +3606,8 @@ function viewRelMensal(){
           return `C${r1(b.x+(c.x-a.x)*t)},${r1(Math.min(base,b.y+(c.y-a.y)*t))} ${r1(c.x-(d.x-b.x)*t)},${r1(Math.min(base,c.y-(d.y-b.y)*t))} ${c.x},${c.y}`; }).join(' ');
     const x0=n===1?r1(pts[0].x-slot*.3):pts[0].x, x1=n===1?r1(pts[0].x+slot*.3):pts[n-1].x;
     const area=curva+` L${x1},${base} L${x0},${base} Z`;
-    const ib=vals.indexOf(maxV), dur=1.3;
+    // "melhor" dia do gráfico: só dia útil (sábado/domingo não disputam)
+    const ib=(()=>{ let b=-1; vals.forEach((v,i)=>{ if(!ehFds(anoSel,mesIdx,diasGrafico[i]) && (b<0||v>vals[b])) b=i; }); return b<0?vals.indexOf(maxV):b; })(), dur=1.3;
     const fmtK=v=>v>=1000?(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+'k':String(v);
     let grade=''; for(let k=1;k<=4;k++){ const y=Y(passo*k); grade+=`<line class="ev-grid" x1="${pL}" x2="${W-pR}" y1="${y}" y2="${y}"/><text class="ev-ax" x="${pL-8}" y="${y+3}" text-anchor="end">${fmtK(passo*k)}</text>`; }
     grade+=`<line class="ev-base" x1="${pL}" x2="${W-pR}" y1="${base}" y2="${base}"/><text class="ev-ax" x="${pL-8}" y="${base+3}" text-anchor="end">0</text>`;
@@ -3890,14 +3905,16 @@ function _ppmAgregar(per){
     if(!diaData || !_ppecaEmPeriodo(chave,per)) return;
     Object.keys(robos()).forEach(robo=>{
       const rd=diaData[robo]||{}; const cod=(rd.cod||'').trim(); if(!cod||cod==='—') return;
-      const o=out[cod] || (out[cod]={total:0, porDia:{}, porHora:{}, porHoraN:{}, porHoraH:{}, robos:{}, horasRobo:0, porRobo:{}});
+      const o=out[cod] || (out[cod]={total:0, porDia:{}, porHora:{}, porHoraN:{}, porHoraH:{}, robos:{}, horasRobo:0, porRobo:{}, totalU:0, horasRoboU:0, porHoraU:{}, porHoraNU:{}, porHoraHU:{}});
       // porRobo: os mesmos números separados por robô (detalhe da peça com filtro de robô)
-      const s=o.porRobo[robo] || (o.porRobo[robo]={total:0, porDia:{}, porHora:{}, porHoraN:{}, porHoraH:{}, horasRobo:0});
+      const s=o.porRobo[robo] || (o.porRobo[robo]={total:0, porDia:{}, porHora:{}, porHoraN:{}, porHoraH:{}, horasRobo:0, totalU:0, horasRoboU:0, porHoraU:{}, porHoraNU:{}, porHoraHU:{}});
+      // *U = só dia útil: as médias usam estes (sábado/domingo só somam as peças no total)
+      const util=!ehFdsChave(chave);
       let ts=0;
       // nh = horas que a célula vale: 22:00 sozinha (noite junta) = 4 horas — entra assim nas médias por hora/minuto
       HORAS.forEach(h=>{ const v=parseCelVal(rd[campoH(h)]||'').num; if(v>0){ const nh=horasDaCelula(h,rd); ts+=v;
-        o.porHora[h]=(o.porHora[h]||0)+v; o.porHoraN[h]=(o.porHoraN[h]||0)+1; o.porHoraH[h]=(o.porHoraH[h]||0)+nh; o.horasRobo+=nh;
-        s.porHora[h]=(s.porHora[h]||0)+v; s.porHoraN[h]=(s.porHoraN[h]||0)+1; s.porHoraH[h]=(s.porHoraH[h]||0)+nh; s.horasRobo+=nh; } });
+        [o,s].forEach(x=>{ x.porHora[h]=(x.porHora[h]||0)+v; x.porHoraN[h]=(x.porHoraN[h]||0)+1; x.porHoraH[h]=(x.porHoraH[h]||0)+nh; x.horasRobo+=nh;
+          if(util){ x.totalU+=v; x.porHoraU[h]=(x.porHoraU[h]||0)+v; x.porHoraNU[h]=(x.porHoraNU[h]||0)+1; x.porHoraHU[h]=(x.porHoraHU[h]||0)+nh; x.horasRoboU+=nh; } }); } });
       if(ts<=0) return;
       o.total+=ts; o.porDia[chave]=(o.porDia[chave]||0)+ts; o.robos[robo]=(o.robos[robo]||0)+ts;
       s.total+=ts; s.porDia[chave]=(s.porDia[chave]||0)+ts;
@@ -4005,31 +4022,33 @@ function _ppmAbrirDetalhe(cod, roboSel){
       <button type="button" class="ppd-fb${roboSel?'':' on'}" onclick="_ppmAbrirDetalhe('${codEsc}','')">Todos <b>${dTodos.total.toLocaleString('pt-BR')}</b></button>
       ${robosTodos.map(([r,q])=>`<button type="button" class="ppd-fb${roboSel===r?' on':''}" onclick="_ppmAbrirDetalhe('${codEsc}','${esc(r)}')">Robô ${esc(r)} <b>${q.toLocaleString('pt-BR')}</b></button>`).join('')}
     </div>` : '';
-  const total=d.total, diasProd=Object.keys(d.porDia).length, horasRobo=d.horasRobo;
-  const mediaDia = diasProd>0?Math.round(total/diasProd):0;
-  const mediaHora = horasRobo>0?Math.round(total/horasRobo):0;
-  const mediaMin = horasRobo>0? +(total/(horasRobo*60)).toFixed(2):0;
-  // meta = média das metas dos robôs que produziram esta peça
+  // médias, melhor/menor dia e melhor hora: só dia útil (sábado/domingo só somam as peças no total)
+  const total=d.total, diasU=Object.keys(d.porDia).filter(k=>!ehFdsChave(k)), diasProd=Object.keys(d.porDia).length, diasProdU=diasU.length, horasRobo=d.horasRoboU||0;
+  const mediaDia = diasProdU>0?Math.round(d.totalU/diasProdU):0;
+  const mediaHora = horasRobo>0?Math.round(d.totalU/horasRobo):0;
+  const mediaMin = horasRobo>0? +(d.totalU/(horasRobo*60)).toFixed(2):0;
+  // meta = média das metas lançadas nos dias úteis em que cada robô fez esta peça (antes era a meta de HOJE)
   const robosOrd=Object.entries(d.robos).sort((a,b)=>b[1]-a[1]);
-  const metaSum=robosOrd.reduce((s,[r])=>s+metaRoboHoje(r),0);
-  const meta = robosOrd.length? Math.round(metaSum/robosOrd.length) : 0;
-  const pctMeta = meta>0? Math.round(mediaHora/meta*100):null;
+  const _metas=[]; robosOrd.forEach(([r])=>{ Object.keys(((dTodos.porRobo||{})[r]||{}).porDia||{}).forEach(k=>{ const m=metaRoboEm(r,k); if(m>0) _metas.push(m); }); });
+  const meta = _metas.length? Math.round(_metas.reduce((a,b)=>a+b,0)/_metas.length) : 0;
+  const pctMeta = meta>0&&mediaHora>0? Math.round(mediaHora/meta*100):null;
   let melhorDia=null,piorDia=null;
-  Object.entries(d.porDia).forEach(([k,v])=>{ if(!melhorDia||v>melhorDia.v)melhorDia={k,v}; if(!piorDia||v<piorDia.v)piorDia={k,v}; });
+  diasU.forEach(k=>{ const v=d.porDia[k]; if(!melhorDia||v>melhorDia.v)melhorDia={k,v}; if(!piorDia||v<piorDia.v)piorDia={k,v}; });
   let melhorHora=null;
   // melhor hora = maior MÉDIA por apontamento naquela hora (não a soma do período)
   // dividido pelas HORAS que as células valem (22:00 com a noite junta = 4 h), não pelo nº de apontamentos
-  Object.entries(d.porHora).forEach(([h,v])=>{ const n=(d.porHoraN||{})[h]||1, nh=(d.porHoraH||{})[h]||n, m=v/nh; if(!melhorHora||m>melhorHora.m)melhorHora={h,m,n}; });
+  Object.entries(d.porHoraU||{}).forEach(([h,v])=>{ const n=(d.porHoraNU||{})[h]||1, nh=(d.porHoraHU||{})[h]||n, m=v/nh; if(!melhorHora||m>melhorHora.m)melhorHora={h,m,n}; });
+  const temFds = diasProd>diasProdU;
   const temNoiteJunta = (d.porHoraH||{})[HORA_FECHA_NOITE] > (d.porHoraN||{})[HORA_FECHA_NOITE];
   const fmtK=k=>{ const p=k.split('_').map(Number); return String(p[2]).padStart(2,'0')+'/'+String(p[1]+1).padStart(2,'0'); };
   const kpi=(l,v,s,c)=>`<div class="ppd-kpi" style="--kc:${c}"><div class="ppd-kpi-l">${l}</div><div class="ppd-kpi-v">${v}</div><div class="ppd-kpi-s">${s}</div></div>`;
   const kpis=[
-    kpi('Média por dia', mediaDia.toLocaleString('pt-BR'), diasProd+' dia'+(diasProd!==1?'s':'')+' produtivo'+(diasProd!==1?'s':''), 'var(--warn)'),
+    kpi('Média por dia', diasProdU?mediaDia.toLocaleString('pt-BR'):'—', diasProdU+' dia'+(diasProdU!==1?'s':'')+' út'+(diasProdU!==1?'eis':'il')+(temFds?' (sem sáb/dom)':''), 'var(--warn)'),
     kpi('Média por hora', mediaHora.toLocaleString('pt-BR'), 'por robô ativo', 'var(--blue)'),
     kpi('Média por minuto', String(mediaMin).replace('.',','), 'peça/min por robô', 'var(--purple)'),
     kpi('Meta/hora', meta>0?meta.toLocaleString('pt-BR'):'—', pctMeta!=null?pctMeta+'% da meta atingido':'sem meta cadastrada', pctMeta==null?'var(--faint)':(pctMeta>=100?'var(--ok)':'#ff6a00')),
     melhorDia?kpi('Melhor dia', melhorDia.v.toLocaleString('pt-BR'), fmtK(melhorDia.k), 'var(--ok)'):'',
-    (piorDia&&diasProd>1)?kpi('Menor dia', piorDia.v.toLocaleString('pt-BR'), fmtK(piorDia.k), 'var(--danger)'):'',
+    (piorDia&&diasProdU>1)?kpi('Menor dia', piorDia.v.toLocaleString('pt-BR'), fmtK(piorDia.k), 'var(--danger)'):'',
     melhorHora?kpi('Melhor hora', Math.round(melhorHora.m).toLocaleString('pt-BR'), 'média às '+melhorHora.h+' ('+melhorHora.n+' registro'+(melhorHora.n!==1?'s':'')+')', 'var(--ok)'):'',
     kpi('Dias produtivos', diasProd+'/'+per.numDias, 'dias com produção', 'var(--blue)'),
     kpi('Robôs', String(robosOrd.length), robosOrd.length===1?'único robô':'robôs envolvidos', 'var(--purple)')
@@ -4039,7 +4058,8 @@ function _ppmAbrirDetalhe(cod, roboSel){
   const hbars=HORAS.map(h=>{ const v=d.porHora[h]||0; const cafe=ehCafe(h);
     return `<div class="ppd-hbar"><div class="ppd-hbar-v">${v>0?v.toLocaleString('pt-BR'):''}</div><div class="ppd-hbar-fill${cafe?' cafe':''}" style="height:${v>0?Math.max(Math.round(v/mxH*54),3):2}px"></div><div class="ppd-hbar-h">${h}${cafe?' ☕':''}${h===HORA_FECHA_NOITE&&temNoiteJunta?' *':''}</div></div>`;
   }).join('') + '';
-  const notaNoite = temNoiteJunta ? `<div class="ppd-nota">* 22:00 junta as 4 horas da noite (18h, 20h, 21h e 22h): a barra mostra as peças das 4 horas e nas médias ela conta como 4 horas.</div>` : '';
+  const notaNoite = (temNoiteJunta ? `<div class="ppd-nota">* 22:00 junta as 4 horas da noite (18h, 20h, 21h e 22h): a barra mostra as peças das 4 horas e nas médias ela conta como 4 horas.</div>` : '')
+    + (temFds ? `<div class="ppd-nota">Sábado e domingo: as peças entram no total e no gráfico, mas ficam fora das médias, da meta e do melhor/menor dia.</div>` : '');
   // a lista de robôs mostra sempre todos (com o escolhido destacado); clicar num cartão filtra por ele
   const robHTML = robosTodos.length ? `<div class="ppd-rob-grid">${robosTodos.map(([robo,qtd])=>{ const pctR=Math.round(qtd/dTodos.total*100);
     const multi=robosTodos.length>1, sel=roboSel===robo;
@@ -4245,7 +4265,7 @@ function removerFuncionario(nome){ if(!isHost) return;
 // Agrega desempenho por funcionário no período (ano, mes; mes=null => ano inteiro)
 function desempenhoFunc(ano,mes){
   const res={};
-  const garante=n=>{ if(!res[n]) res[n]={nome:n,pecas:0,horas:0,metasOk:0,horasMeta:0,just:0,dias:new Set(),diaPecas:{},robos:new Set()}; return res[n]; };
+  const garante=n=>{ if(!res[n]) res[n]={nome:n,pecas:0,horas:0,pecasU:0,horasU:0,metasOk:0,horasMeta:0,just:0,dias:new Set(),diaPecas:{},robos:new Set()}; return res[n]; };
   funcionarios().forEach(n=>garante(n));
   const md=prod().metas_dias||{};
   Object.entries(md).forEach(([chave,dia])=>{
@@ -4258,7 +4278,8 @@ function desempenhoFunc(ano,mes){
         const nome=rd["func_"+campo]; if(!nome) return;
         const o=garante(nome), n=horasDaCelula(hr,rd);
         o.pecas+=val; o.horas+=n; o.dias.add(chave); o.robos.add(rk);
-        o.diaPecas[chave]=(o.diaPecas[chave]||0)+val;
+        // média/hora e melhor dia: só dia útil (sábado/domingo só somam as peças)
+        if(!ehFdsChave(chave)){ o.pecasU+=val; o.horasU+=n; o.diaPecas[chave]=(o.diaPecas[chave]||0)+val; }
         const metaEf=metaHora(meta,hr,rd);
         if(metaEf>0){ o.horasMeta+=n; if(val>=metaEf) o.metasOk+=n; }
         else if(meta>0 && horaAjuste(rd,hr)) o.just+=n; // # = parada justificada
@@ -4266,7 +4287,7 @@ function desempenhoFunc(ano,mes){
     });
   });
   return Object.values(res).map(o=>{
-    const media = o.horas>0 ? Math.round(o.pecas/o.horas) : 0;
+    const media = o.horasU>0 ? Math.round(o.pecasU/o.horasU) : 0;
     const taxa = o.horasMeta>0 ? Math.round((o.metasOk/o.horasMeta)*100) : 0;
     let melhorDia=null, melhorPecas=0;
     Object.entries(o.diaPecas).forEach(([ch,v])=>{ if(v>melhorPecas){ melhorPecas=v; melhorDia=ch; } });
@@ -4292,7 +4313,8 @@ function viewFuncionarios(){
   // KPIs da equipe
   const totalPecas=comDados.reduce((s,f)=>s+f.pecas,0);
   const totalHoras=comDados.reduce((s,f)=>s+f.horas,0);
-  const mediaEquipe=totalHoras>0?Math.round(totalPecas/totalHoras):0;
+  const _hU=comDados.reduce((s,f)=>s+f.horasU,0), _pU=comDados.reduce((s,f)=>s+f.pecasU,0);
+  const mediaEquipe=_hU>0?Math.round(_pU/_hU):0; // só dia útil
   const lider=comDados[0];
 
   let head=pageHead(IC.func,"Funcionários","Desempenho da equipe — "+periodoTxt, isHost?`<button type="button" class="btn primary tiny" onclick="addFuncionario()">+ Adicionar funcionário</button>`:'')
@@ -4390,7 +4412,7 @@ function desempenhoFuncDetalhe(nome,ano,mes){
   const md=prod().metas_dias||{};
   const porRobo={}; ROBOS.forEach(r=>porRobo[String(r)]={pecas:0,horas:0,metasOk:0,horasMeta:0});
   const porDia={};
-  let pecas=0,horas=0,metasOk=0,horasMeta=0,just=0;
+  let pecas=0,horas=0,metasOk=0,horasMeta=0,just=0,pecasU=0,horasU=0;
   Object.entries(md).forEach(([chave,dia])=>{
     const p=chave.split('_').map(Number); if(p.length!==3) return;
     if(p[0]!==ano) return; if(mes!=null && p[1]!==mes) return;
@@ -4400,23 +4422,23 @@ function desempenhoFuncDetalhe(nome,ano,mes){
         if(rd["func_"+campo]!==nome) return;
         const val=parseCelVal(rd[campo]||'').num; if(val<=0) return;
         const n=horasDaCelula(hr,rd);
-        pecas+=val; horas+=n;
+        pecas+=val; horas+=n; const util=!ehFdsChave(chave); if(util){ pecasU+=val; horasU+=n; }
         porRobo[rk].pecas+=val; porRobo[rk].horas+=n;
         if(!porDia[chave]) porDia[chave]={pecas:0,horas:0,metasOk:0,horasMeta:0,just:0,itens:[]};
         porDia[chave].pecas+=val; porDia[chave].horas+=n;
         const metaEf=metaHora(meta,hr,rd), ehJust=metaEf<=0 && meta>0 && horaAjuste(rd,hr);
         if(ehJust){ just+=n; porDia[chave].just+=n; }
-        porDia[chave].itens.push({h:hr, robo:rk, val, meta:metaEf, n, just:ehJust, motivo:ehJust?_justTxt(rd,campo):'', motivoPor:(ehJust&&_justObj(rd,campo))?_justAutor(_justObj(rd,campo).por):'', cod:String(rd.cod||'').trim()});
+        porDia[chave].itens.push({h:hr, robo:rk, val, meta:metaEf, n, fds:!util, just:ehJust, motivo:ehJust?_justTxt(rd,campo):'', motivoPor:(ehJust&&_justObj(rd,campo))?_justAutor(_justObj(rd,campo).por):'', cod:String(rd.cod||'').trim()});
         if(metaEf>0){ horasMeta+=n; porRobo[rk].horasMeta+=n; porDia[chave].horasMeta+=n;
           if(val>=metaEf){ metasOk+=n; porRobo[rk].metasOk+=n; porDia[chave].metasOk+=n; } }
       });
     });
   });
-  const media=horas>0?Math.round(pecas/horas):0;
+  const media=horasU>0?Math.round(pecasU/horasU):0; // só dia útil
   const taxa=horasMeta>0?Math.round(metasOk/horasMeta*100):0;
   const robosList=Object.entries(porRobo).filter(([k,v])=>v.horas>0).map(([k,v])=>({robo:k,...v})).sort((a,b)=>b.pecas-a.pecas);
   const diasList=Object.keys(porDia).map(ch=>{const p=ch.split('_').map(Number);return {chave:ch,ano:p[0],mes:p[1],dia:p[2],...porDia[ch]};}).sort((a,b)=>b.ano-a.ano||b.mes-a.mes||b.dia-a.dia);
-  let melhorDia=null,melhorP=0; diasList.forEach(d=>{ if(d.pecas>melhorP){melhorP=d.pecas;melhorDia=d;} });
+  let melhorDia=null,melhorP=0; diasList.forEach(d=>{ if(!ehFds(d.ano,d.mes,d.dia) && d.pecas>melhorP){melhorP=d.pecas;melhorDia=d;} });
   return {nome,pecas,horas,media,metasOk,horasMeta,just,taxa,dias:diasList.length,robos:robosList.length,robosList,diasList,melhorDia,melhorP};
 }
 function abrirFuncDetalhe(nomeEnc){
@@ -4529,7 +4551,7 @@ function _funcVerDia(ch,rolar){
       ${i.just
         ? `<span class="fdet-m fdet-jm" title="Parada justificada — ${esc(i.motivo||'sem motivo informado')}">⏸ justific.<button type="button" class="fdet-x${i.motivo?'':' vazio'}" aria-label="Ver o motivo da parada" onclick="event.stopPropagation();this.closest('.fdet-r').classList.toggle('abre')">!</button></span>
            <div class="fdet-mot"><b>⏸ Motivo da parada:</b> ${i.motivo?esc(i.motivo):'<i>sem motivo informado</i>'}${i.motivoPor?`<span>— escrito por ${esc(i.motivoPor)}</span>`:''}</div>`
-        : `<span class="fdet-m">${i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:'sem meta'}${i.n>1?' · '+i.n+'h (média '+(Math.round(i.val/i.n*10)/10).toLocaleString('pt-BR')+'/h)':''}</span>`}
+        : `<span class="fdet-m">${i.meta>0?(ok?'✓':'✗')+' meta '+i.meta:(i.fds?'sáb/dom · só peças':'sem meta')}${i.n>1?' · '+i.n+'h'+(i.fds?'':' (média '+(Math.round(i.val/i.n*10)/10).toLocaleString('pt-BR')+'/h)'):''}</span>`}
     </div>`; }).join('');
   box.innerHTML=`<div class="fdet-top" style="--fc:${cor}">
       <div><div class="fdet-data">${dataFmt}</div><div class="fdet-sem">${sem}</div></div>
@@ -5220,14 +5242,18 @@ function _relCalcular(codigoPeca,chaves){
         if(horasDaCelula(h,rd)>1) HORAS_NOITE.forEach(hn=>horasComProd.add(chave+'_'+hn)); } });
     });
   });
+  // médias e melhor/pior dia: só dia útil — sábado/domingo só somam as peças no total
   let melhorDia=null,piorDia=null;
-  Object.entries(porDia).forEach(([k,v])=>{ if(!melhorDia||v>melhorDia.total) melhorDia={chave:k,total:v}; if(!piorDia||v<piorDia.total) piorDia={chave:k,total:v}; });
-  const numDiasProd=diasComProd.size, diasSemProd=chaves.length-numDiasProd, horasTrabalhadas=horasComProd.size;
-  const mediaHora=horasTrabalhadas?Math.round(totalPecas/horasTrabalhadas):0;
-  const mediaMin=horasTrabalhadas?+(totalPecas/(horasTrabalhadas*60)).toFixed(2):0;
-  const mediaDia=numDiasProd?Math.round(totalPecas/numDiasProd):0;
+  Object.entries(porDia).forEach(([k,v])=>{ if(ehFdsChave(k)) return; if(!melhorDia||v>melhorDia.total) melhorDia={chave:k,total:v}; if(!piorDia||v<piorDia.total) piorDia={chave:k,total:v}; });
+  const numDiasProd=diasComProd.size, diasSemProd=chaves.length-numDiasProd;
+  const _hU=[...horasComProd].filter(x=>!ehFdsChave(x.split('_').slice(0,3).join('_')));
+  const horasTrabalhadas=_hU.length, diasU=[...diasComProd].filter(k=>!ehFdsChave(k));
+  const totalU=diasU.reduce((s,k)=>s+(porDia[k]||0),0);
+  const mediaHora=horasTrabalhadas?Math.round(totalU/horasTrabalhadas):0;
+  const mediaMin=horasTrabalhadas?+(totalU/(horasTrabalhadas*60)).toFixed(2):0;
+  const mediaDia=diasU.length?Math.round(totalU/diasU.length):0;
   const porRoboArr=Object.entries(porRobo).map(([nome,d])=>({nome,total:d.total,dias:d.dias.size,pct:totalPecas>0?Math.round(d.total/totalPecas*100):0})).sort((a,b)=>b.total-a.total);
-  return { codigo:cod, totalPecas, porDia, porHora, porRobo:porRoboArr, melhorDia, piorDia, diasSemProd, numDiasProd, mediaHora, mediaMin, mediaDia, horasTrabalhadas, totalDiasPeriodo:chaves.length, chaves };
+  return { codigo:cod, totalPecas, porDia, porHora, porRobo:porRoboArr, melhorDia, piorDia, diasSemProd, numDiasProd, numDiasU:diasU.length, mediaHora, mediaMin, mediaDia, horasTrabalhadas, totalDiasPeriodo:chaves.length, chaves };
 }
 function _relDiasCriticos(r){
   const nomesDia=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
@@ -5254,7 +5280,7 @@ function _relResultadoHTML(){
     {ic:'📦',lbl:'Total no período',val:_relFormatarNum(r.totalPecas),sub:'peças produzidas',cor:'#00e87a'},
     {ic:'⏱',lbl:'Média por hora',val:_relFormatarNum(r.mediaHora),sub:r.horasTrabalhadas+' horas efetivas',cor:'#3d9eff'},
     {ic:'⚡',lbl:'Média por minuto',val:String(r.mediaMin).replace('.',','),sub:'peça/min médio',cor:'#a78bfa'},
-    {ic:'📅',lbl:'Média por dia',val:_relFormatarNum(r.mediaDia),sub:r.numDiasProd+' dias produtivos',cor:'#ffb300'},
+    {ic:'📅',lbl:'Média por dia',val:_relFormatarNum(r.mediaDia),sub:(r.numDiasU??r.numDiasProd)+' dias úteis'+((r.numDiasU!=null&&r.numDiasU<r.numDiasProd)?' (sem sáb/dom)':''),cor:'#ffb300'},
     {ic:'🏆',lbl:'Melhor dia',val:r.melhorDia?_relFormatarNum(r.melhorDia.total):'—',sub:r.melhorDia?_relFormatData(r.melhorDia.chave):'sem produção',cor:'#00e87a'},
     {ic:'📉',lbl:'Pior dia (com prod.)',val:r.piorDia?_relFormatarNum(r.piorDia.total):'—',sub:r.piorDia?_relFormatData(r.piorDia.chave):'sem produção',cor:'#ff6b6b'},
     {ic:'⚪',lbl:'Dias sem produção',val:String(r.diasSemProd),sub:'de '+r.totalDiasPeriodo+' dias no período',cor:'#7a8698'},
@@ -6372,7 +6398,7 @@ const GUIA = [
       {t:'Como usar', passos:['Escolha o <b>Mês</b> e o <b>Ano</b>.','Cada quadrado é um dia com o total de peças de todos os robôs.']},
       {t:'O que significa', defs:[
         ['Dias com produção','Quantos dias do mês tiveram alguma peça lançada.'],
-        ['Média diária','Total do mês dividido pelos dias com produção (dias parados não contam).']]}
+        ['Média diária','Peças dos dias úteis divididas pelos dias úteis com produção (dias parados, sábado e domingo não contam — no fim de semana só as peças entram no total).']]}
     ]},
   { id:'meta', titulo:'Meta Diária', ico:'meta', quem:'Todos (lançar: HOST e Gestor)', ir:'meta',
     resumo:'Onde a produção é apontada, hora a hora e robô a robô. Todas as outras telas leem daqui.',

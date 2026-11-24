@@ -1568,6 +1568,42 @@ body.ap-on #app{zoom:1}
 /* controle remoto: o item selecionado fica bem marcado */
 .is-tv :focus{outline:3px solid #f9f871!important;outline-offset:3px;box-shadow:0 0 0 6px rgba(249,248,113,.18),0 0 22px -4px #f9f871!important}
 .is-tv .nav-item:focus{background:rgba(249,248,113,.08)}
+/* ===== Contagem Automática dos robôs (só HOST, 24/11/2026) ===== */
+.ct-aviso{display:flex;gap:10px;align-items:flex-start;padding:12px 15px;border:1px solid rgba(249,248,113,.35);background:rgba(249,248,113,.06);border-radius:8px;font-size:13.5px;line-height:1.5;color:var(--txt)}
+.ct-aviso b{color:var(--ny)}
+.ct-ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ct-ctl .inp{width:auto;min-width:150px}
+.ct-live{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--mut);white-space:nowrap}
+.ct-live i{width:9px;height:9px;border-radius:50%;background:#4a5a7a;flex-shrink:0}
+.ct-live.on{color:#00ffae}.ct-live.on i{background:#00ffae;box-shadow:0 0 9px #00ffae}
+.ct-live.err{color:var(--danger)}.ct-live.err i{background:var(--danger)}
+.ct-robos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.ct-rb{text-align:left;font:inherit;color:var(--txt);background:var(--glass);border:1px solid rgba(0,240,255,.18);border-radius:8px;padding:12px 14px;cursor:pointer;min-width:0}
+.ct-rb:hover{border-color:rgba(0,240,255,.5)}
+.ct-rb.on{border-color:var(--nc);box-shadow:0 0 16px -6px var(--nc);background:rgba(0,240,255,.08)}
+.ct-rb .n{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700}
+.ct-rb .n i{width:8px;height:8px;border-radius:50%;background:#4a5a7a;flex-shrink:0}
+.ct-rb.vivo .n i{background:#00ffae;box-shadow:0 0 8px #00ffae}
+.ct-rb .q{font-family:'Orbitron',sans-serif;font-size:25px;font-weight:700;color:var(--nc);margin:5px 0 2px;line-height:1.1}
+.ct-rb .u{font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ct-grp{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 2px 7px;border-bottom:1px solid rgba(0,240,255,.2);margin-top:4px}
+.ct-grp b{font-size:14px;color:#fff}.ct-grp span{font-size:12px;color:var(--mut)}
+.ct-grp em{font-style:normal;font-weight:800;font-size:13px;color:#00ffae}
+.ct-grp em small{font-weight:600;color:var(--mut);margin-left:8px}
+.ct-row{display:grid;grid-template-columns:86px 62px 1fr auto;gap:10px;align-items:center;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.05);font-size:13.5px}
+.ct-row .t{font-family:'Share Tech Mono',monospace;font-size:15px;color:#fff}
+.ct-row .r{font-weight:700}
+.ct-row .p b{color:#00ffae}.ct-row .p small,.ct-row .x{font-size:11.5px;color:var(--mut)}
+.ct-row .p small{margin-left:8px}.ct-row .x{white-space:nowrap;text-align:right}
+.ct-tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:5px;padding:2px 7px;margin-left:8px}
+.ct-tag.ver{background:rgba(255,176,0,.16);color:#ffc95c}.ct-tag.zer{background:rgba(0,240,255,.14);color:#8ff6ff}
+.ct-row.novo{animation:ctNovo 2.4s ease-out}
+@keyframes ctNovo{from{background:rgba(0,255,174,.22)}to{background:transparent}}
+@media(prefers-reduced-motion:reduce){.ct-row.novo{animation:none}}
+.ct-msg{padding:26px 14px;text-align:center;color:var(--mut);font-size:14px;line-height:1.6}
+.ct-msg.err{color:#ffb3c0}
+.ct-mais{display:flex;margin:16px auto 0}
+@media(max-width:560px){.ct-robos{grid-template-columns:repeat(2,minmax(0,1fr))}.ct-row{grid-template-columns:78px 54px 1fr;gap:8px}.ct-row .x{grid-column:1/-1;text-align:left;padding-left:86px;margin-top:-4px}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -2062,6 +2098,7 @@ const IC = {
 };
 IC.guia = '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7M9 12h5"/>';
 IC.apostila = '<path d="M12 6.5C10.3 5 7.8 4.5 4 4.5v14c3.8 0 6.3.5 8 2 1.7-1.5 4.2-2 8-2v-14c-3.8 0-6.3.5-8 2z"/><path d="M12 6.5v14"/>';
+IC.contagem = '<path d="M3 12h4l2-7 4 14 2-7h6"/><circle cx="20" cy="5" r="2"/>';
 const PAINEIS = [
   {id:"painel",    nome:"Painel",           sub:"Visão geral",           ico:IC.painel,  built:true},
   {id:"mensal",    nome:"Produção Mensal",  sub:"Total por dia do mês",  ico:IC.mensal,  built:true},
@@ -2074,6 +2111,7 @@ const PAINEIS = [
   {id:"func",      nome:"Funcionários",     sub:"Desempenho da equipe",  ico:IC.func,    built:true},
   {id:"relat",     nome:"Relatórios",       sub:"Período e exportação",   ico:IC.relat,   built:true},
   {id:"ger",       nome:"Gerenciar",        sub:"Configurações do host", ico:IC.ger,     built:true, host:true},
+  {id:"contagem",  nome:"Contagem Automática",sub:"Só HOST · em preparação",ico:IC.contagem,built:true, host:true, soHost:true},
   {id:"apostila",  nome:"Apostila",         sub:"Treinamento dos robôs", ico:IC.apostila,built:true},
   {id:"guia",      nome:"Guia",             sub:"Como usar o sistema",   ico:IC.guia,    built:true},
 ];
@@ -2423,7 +2461,7 @@ function enterApp(){
   if(isGerente){ badge.textContent="⚙ GESTOR"; badge.classList.add("host"); document.getElementById("btnConfig").style.display="none"; }
   else if(isHost){ badge.textContent="⚙ HOST"; badge.classList.add("host"); document.getElementById("btnConfig").style.display=""; }
   else{ badge.textContent="Visualizador"; badge.classList.remove("host"); document.getElementById("btnConfig").style.display="none"; }
-  if(nav.sec==="painel"){ const p=PAINEIS.find(x=>x.id===nav.id); if(p&&((p.host&&!isHost)||(p.id==="ger"&&isGerente))) nav={sec:"painel",id:"mensal"}; }
+  if(nav.sec==="painel"){ const p=PAINEIS.find(x=>x.id===nav.id); if(p&&((p.host&&!isHost)||((p.id==="ger"||p.soHost)&&isGerente))) nav={sec:"painel",id:"mensal"}; }
   loadFromAPI();
   clearInterval(pollTimer); pollTimer=setInterval(loadFromAPI,5000);
 }
@@ -2446,7 +2484,7 @@ function renderNav(){
   let h=`<div class="side-sec">Painéis</div>`;
   PAINEIS.forEach(p=>{
     if(p.host&&!isHost) return;
-    if(p.id==="ger"&&isGerente) return;
+    if((p.id==="ger"||p.soHost)&&isGerente) return;
     const on=nav.sec==="painel"&&nav.id===p.id;
     h+=`<div class="nav-item nav-pn ${on?'active':''}" title="${p.sub}" onclick="goto('painel','${p.id}')">
       <div class="nav-ico"><svg viewBox="0 0 24 24">${p.ico}</svg></div>
@@ -2465,11 +2503,13 @@ function renderNav(){
 
 function renderMain(){
   const box=document.getElementById("main"); if(!box) return;
+  if(nav.sec==="painel" && nav.id==="contagem" && !_ehHostPleno()) nav={sec:"painel",id:"painel"};   // só HOST (nem Gestor, nem Visualizador)
   let sig=nav.sec+":"+nav.id+"|"+isHost+"|";
   if(nav.sec==="robo") sig+=JSON.stringify(robos()[nav.id]||{});
   else sig+=selDia+"_"+selMes+"_"+selAno+"|"+pecaBusca+_ppmModo+_ppmMes+_ppmAno+_ppmDataDia+_ppmDataSemana+_ppmDataIni+_ppmDataFim+"|"+JSON.stringify(prod().metas_dias)+"|"+JSON.stringify(Object.keys(robos()).map(k=>robos()[k].nome+robos()[k].meta_hora+robos()[k].status))+"|P"+Object.keys(pecasObj()).length+":"+JSON.stringify(Object.keys(pecasObj()).map(c=>c+(pecasObj()[c].foto?'1':'0')))+"|"+_manutFiltro+_manutRobo+JSON.stringify(chamados())+"|MP"+JSON.stringify(mapaObj().pos||{})+"|R"+_relModo+_relDia+_relSemana+_relIni+_relFim+"|D"+(divisaoAtiva()?1:0)+"|F"+JSON.stringify(funcionarios());
   if(nav.sec==="painel" && nav.id==="painel") sig+="|H"+new Date().toDateString(); // virou o dia: o Painel redesenha com o dia novo
   if(nav.sec==="painel" && nav.id==="guia") sig="painel:guia|"+isHost+"|"+isGerente;
+  if(nav.sec==="painel" && nav.id==="contagem") sig="painel:contagem";   // a tela se atualiza sozinha (_ctPinta)
   document.body.classList.toggle("ap-on", nav.sec==="painel" && nav.id==="apostila"); // sem as linhas de CRT sobre as páginas brancas
   if(nav.sec==="painel" && nav.id==="apostila") sig="painel:apostila|"+isHost+"|"+isGerente+"|"+(!!_apSenha)+"|"+(_apInfo?_apInfo.versao:0);
   if(_apFlip && !(nav.sec==="painel" && nav.id==="apostila") && sig!==_mainSig){ if(document.querySelector('.ap-zoom')) _apZFechar(); if(document.querySelector('.ap-fs')) _apSaiFsCss(); try{ _apFlip.destroy(); }catch(e){} _apFlip=null; if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
@@ -2488,6 +2528,7 @@ function renderMain(){
   else if(p.id==="ger") box.innerHTML=isGerente?viewRelatBloqueado("ger"):viewGerenciar();
   else if(p.id==="manut") box.innerHTML=viewManutencao();
   else if(p.id==="func") box.innerHTML=viewFuncionarios();
+  else if(p.id==="contagem"){ box.innerHTML=viewContagem(); _ctIniciar(); }
   else if(p.id==="guia") box.innerHTML=viewGuia();
   else if(p.id==="apostila"){ if(_apFlip){ try{ _apFlip.destroy(); }catch(e){} _apFlip=null; } box.innerHTML=viewApostila(); if(_apSenha&&_apInfo) setTimeout(_apMontar,0); }
   else if(p.id==="relat"){ if(isHost && !isGerente){ box.innerHTML=pageHead(IC.relat,"Relatórios","Relatório executivo por peça")+`<div id="relHostWrap" class="relhost"></div>`; renderRelatoriosApp(); } else { box.innerHTML=viewRelatBloqueado("relat"); } }
@@ -6777,6 +6818,161 @@ function _ajudaBtn(id){ return `<button type="button" class="help-btn" onclick="
   function iniciar(){ varrer(); mo.observe(document.body, {childList:true, subtree:true}); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();
+
+/* ============================================================
+   CONTAGEM AUTOMÁTICA DOS ROBÔS (24/11/2026) — SÓ HOST
+   Mostra peça a peça o que o Python da fábrica manda para a tabela producao_robos.
+   SÓ LÊ: não grava nada, não mexe na Meta Diária. Lê o banco só com esta aba aberta.
+   ============================================================ */
+const CT_PAG = 300;
+const _ct = { dia:'', seguir:true, robo:null, rows:[], fim:false, carregado:false, carregando:false, erro:'', semTabela:false, totRobo:{}, totSlot:{}, maxId:0, novos:new Set(), timer:null, tick:0, seq:0, okEm:0, sig:'' };
+function _ehHostPleno(){ return isHost && !isGerente; }
+function _ctNaTela(){ return _ehHostPleno() && nav.sec==='painel' && nav.id==='contagem' && document.getElementById('app').style.display!=='none' && !document.body.classList.contains('dash-on'); }
+function _ctIso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function _ctHoje(){ return _ctIso(new Date()); }
+function _ctMaisDia(iso,n){ const p=iso.split('-').map(Number); return _ctIso(new Date(p[0],p[1]-1,p[2]+n)); }
+function _ctChave(iso){ const p=iso.split('-').map(Number); return chaveData(p[0],p[1]-1,p[2]); }
+function _ctT(x){ return new Date(x.data_hora).getTime(); }
+function _ctNum(n){ return (n||0).toLocaleString('pt-BR'); }
+function _ctHora(x){ return new Date(x.data_hora).toLocaleTimeString('pt-BR',{hour12:false}); }
+// coluna da Meta Diária em que a peça cai — mesma regra da função cromo_slot do banco (rótulo = FIM da hora)
+function _ctSlot(d){ const h=d.getHours(); return ((h>=7&&h<=17)||(h>=19&&h<=21)) ? campoH(String(h+1).padStart(2,'0')+':00') : 'fora'; }
+function _ctDur(s){ s=Math.round(s); if(s<60) return s+' s';
+  if(s<3600) return Math.floor(s/60)+' min'+(s%60?' '+String(s%60).padStart(2,'0')+' s':'');
+  return Math.floor(s/3600)+' h '+String(Math.floor(s%3600/60)).padStart(2,'0')+' min'; }
+async function _ctGet(q){
+  const r=await fetch(SUPABASE_URL+'/rest/v1/'+q,{headers:HEADERS_SB,cache:'no-store',signal:AbortSignal.timeout(12000)});
+  if(!r.ok){ const e=new Error('HTTP '+r.status); e.status=r.status; throw e; }
+  return r.json();
+}
+const _CT_CAMPOS='id,robo,valor_registrador,pecas,obs,data_hora';
+function _ctFiltroDia(iso){ return '&data_hora=gte.'+encodeURIComponent(iso+'T00:00:00-03:00')+'&data_hora=lt.'+encodeURIComponent(_ctMaisDia(iso,1)+'T00:00:00-03:00'); }
+function _ctOrdena(){ _ct.rows.sort((a,b)=>(_ctT(b)-_ctT(a))||(b.id-a.id)); }
+async function _ctTotais(dia,seq){
+  const s=await _ctGet('producao_por_slot?dia=eq.'+dia+'&select=robo,campo,pecas');
+  if(seq!==_ct.seq) return;
+  _ct.totRobo={}; _ct.totSlot={};
+  s.forEach(x=>{ const p=parseInt(x.pecas)||0; _ct.totRobo[x.robo]=(_ct.totRobo[x.robo]||0)+p; _ct.totSlot[x.robo+'|'+x.campo]=(_ct.totSlot[x.robo+'|'+x.campo]||0)+p; });
+}
+function _ctFalhou(e){
+  _ct.semTabela=!!(e&&e.status===404); _ct.okEm=0;
+  _ct.erro=_ct.semTabela?'A tabela da contagem ainda não foi criada no banco da Cromo.':'Não consegui ler a contagem agora. Vou tentar de novo sozinho.';
+}
+// modo: 'inicio' (trocou o dia ou o robô) | 'mais' (peças mais antigas) | 'rever' (relê a 1ª página sem perder o que já abriu)
+async function _ctCarregar(modo){
+  if(modo==='inicio') _ct.seq++;
+  else if(_ct.carregando) return;
+  const seq=_ct.seq, dia=_ct.dia; _ct.carregando=true;
+  try{
+    if(modo==='inicio'){ const u=await _ctGet('producao_robos?select=id&order=id.desc&limit=1'); if(seq!==_ct.seq) return; _ct.maxId=u[0]?u[0].id:0; }
+    // 'mais': continua da hora da peça mais antiga já aberta (não pula nem repete se entrar peça nova no meio)
+    const ult=modo==='mais'?_ct.rows[_ct.rows.length-1]:null;
+    const lin=await _ctGet('producao_robos?select='+_CT_CAMPOS+_ctFiltroDia(dia)+(_ct.robo?'&robo=eq.R-'+_ct.robo:'')
+      +(ult?'&data_hora=lte.'+encodeURIComponent(ult.data_hora):'')+'&order=data_hora.desc,id.desc&limit='+CT_PAG);
+    if(seq!==_ct.seq) return;
+    const ja=new Set(_ct.rows.map(x=>x.id));
+    _ct.rows=_ct.rows.concat(lin.filter(x=>!ja.has(x.id))); _ctOrdena();
+    if(modo!=='rever') _ct.fim=lin.length<CT_PAG;
+    if(modo!=='mais') await _ctTotais(dia,seq);
+    if(seq!==_ct.seq) return;
+    _ct.erro=''; _ct.semTabela=false; _ct.carregado=true; _ct.okEm=Date.now();
+  }catch(e){ if(seq===_ct.seq) _ctFalhou(e); }
+  finally{ if(seq===_ct.seq){ _ct.carregando=false; _ctPinta(); } }
+}
+// de 5 em 5 s: só as peças que chegaram depois da última vista
+async function _ctNovas(){
+  if(_ct.carregando) return;
+  const seq=_ct.seq; _ct.carregando=true;
+  try{
+    const lin=await _ctGet('producao_robos?select='+_CT_CAMPOS+'&id=gt.'+_ct.maxId+'&order=id.asc&limit=500');
+    if(seq!==_ct.seq) return;
+    if(lin.length){
+      await _ctTotais(_ct.dia,seq); if(seq!==_ct.seq) return;
+      _ct.maxId=lin[lin.length-1].id;
+      const ja=new Set(_ct.rows.map(x=>x.id));
+      lin.forEach(x=>{ if(ja.has(x.id) || _ctIso(new Date(x.data_hora))!==_ct.dia || (_ct.robo && x.robo!=='R-'+_ct.robo)) return;
+        _ct.rows.push(x); _ct.novos.add(x.id); setTimeout(()=>_ct.novos.delete(x.id),2600); });
+      _ctOrdena();
+    }
+    _ct.erro=''; _ct.semTabela=false; _ct.okEm=Date.now();
+  }catch(e){ if(seq===_ct.seq) _ctFalhou(e); }
+  finally{ if(seq===_ct.seq){ _ct.carregando=false; _ctPinta(); } }
+}
+function _ctZera(){ _ct.rows=[]; _ct.fim=false; _ct.carregado=false; _ct.erro=''; _ct.semTabela=false; _ct.novos.clear(); _ct.sig=''; _ctPinta(); _ctCarregar('inicio'); }
+function _ctSetDia(v){
+  if(!v || v>_ctHoje() || v<'2026-01-01'){ const c=document.getElementById('ctCtl'); if(c) c.dataset.dia=''; _ctPinta(); return; }
+  if(v===_ct.dia) return;
+  _ct.dia=v; _ct.seguir=(v===_ctHoje()); _ct.totRobo={}; _ct.totSlot={}; _ctZera();
+}
+function _ctSetRobo(r){ r=r||null; if(r===_ct.robo) return; _ct.robo=r; _ctZera(); }
+function _ctTick(){
+  if(!_ctNaTela()){ clearInterval(_ct.timer); _ct.timer=null; _ct.seq++; _ct.carregando=false; return; }   // saiu da aba: para de ler o banco
+  if(document.hidden) return;
+  _ct.tick++;
+  if(_ct.seguir && _ct.dia!==_ctHoje()){ _ctSetDia(_ctHoje()); return; }   // virou o dia
+  if(!_ct.carregado){ if(!_ct.carregando && _ct.tick%2===0) _ctCarregar('inicio'); return; }
+  if(_ct.dia!==_ctHoje() && _ct.tick%6) return;                             // dia passado: olha só a cada 30 s
+  if(_ct.tick%12===0) _ctCarregar('rever'); else _ctNovas();
+}
+function viewContagem(){
+  return pageHead(IC.contagem,"Contagem Automática","Peças contadas pelos robôs",`<div class="ct-ctl" id="ctCtl"></div>`)
+    + `<div class="ct-aviso"><span>🔒</span><div><b>Em preparação — só o HOST vê esta tela.</b> Aqui aparece cada peça que os robôs mandarem. Nada daqui vai para a Meta Diária: o apontamento continua manual.</div></div>`
+    + `<div id="ctWrap"></div>`;
+}
+function _ctIniciar(){
+  if(!_ctNaTela()) return;
+  if(!_ct.dia || _ct.seguir){ _ct.dia=_ctHoje(); _ct.seguir=true; }
+  _ct.tick=0; _ct.okEm=0; _ct.totRobo={}; _ct.totSlot={};
+  if(_ct.timer) clearInterval(_ct.timer);
+  _ct.timer=setInterval(_ctTick,5000);
+  _ctZera();
+}
+function _ctPinta(){
+  const w=document.getElementById('ctWrap'), ctl=document.getElementById('ctCtl'); if(!w || !ctl || !_ctNaTela()) return;
+  const hoje=_ctHoje(), ehHoje=_ct.dia===hoje, chave=_ctChave(_ct.dia), dataTxt=_ct.dia.split('-').reverse().join('/');
+  // o campo de data só é recriado quando muda o dia, para não fechar o calendário
+  if(ctl.dataset.dia!==_ct.dia+hoje){ ctl.dataset.dia=_ct.dia+hoje;
+    ctl.innerHTML=`<span class="ct-live" id="ctLive"><i></i><span></span></span><input type="date" class="inp" value="${_ct.dia}" max="${hoje}" aria-label="Dia" onchange="this.blur();_ctSetDia(this.value)">${ehHoje?'':`<button type="button" class="btn ghost tiny" onclick="_ctSetDia('${hoje}')">Hoje</button>`}`; }
+  const lv=document.getElementById('ctLive'), vivo=_ct.okEm && Date.now()-_ct.okEm<40000;
+  if(lv){ lv.className='ct-live'+(_ct.erro?' err':(vivo?' on':'')); lv.lastElementChild.textContent=_ct.erro?'Sem leitura':(vivo?(ehHoje?'Ao vivo':'Conectado'):'Conectando…'); }
+
+  const rows=_ct.rows, intv={}, ultPor={};
+  for(let i=rows.length-1;i>=0;i--){ const x=rows[i], t=_ctT(x); if(ultPor[x.robo]) intv[x.id]=(t-_ctT(ultPor[x.robo]))/1000; ultPor[x.robo]=x; }
+  const lista=[...new Set([...Object.keys(robos()).filter(k=>/^8[0-9]{2}$/.test(k)),...Object.keys(_ct.totRobo)])].sort();
+  const contando=r=>ehHoje && ultPor['R-'+r] && Date.now()-_ctT(ultPor['R-'+r])<5*60000;
+  const maoRd=_ct.robo?((prod().metas_dias[chave]||{})[_ct.robo]||{}):{};
+  const sig=JSON.stringify([_ct.dia,ehHoje,_ct.robo,rows.length,rows[0]&&rows[0].id,_ct.erro,_ct.carregado,_ct.fim,_ct.totRobo,_ct.totSlot,lista.map(r=>contando(r)?1:0),maoRd]);
+  if(sig===_ct.sig && w.firstElementChild) return;
+  _ct.sig=sig;
+
+  const totDia=lista.reduce((s,r)=>s+(_ct.totRobo[r]||0),0);
+  const cards=`<div class="ct-robos">
+    <button type="button" class="ct-rb ${_ct.robo?'':'on'}" onclick="_ctSetRobo(null)"><div class="n">Todos</div><div class="q">${_ctNum(totDia)}</div><div class="u">peças ${ehHoje?'hoje':'em '+dataTxt}</div></button>
+    ${lista.map(r=>{ const u=ultPor['R-'+r], t=_ct.totRobo[r]||0;
+      return `<button type="button" class="ct-rb ${_ct.robo===r?'on':''} ${contando(r)?'vivo':''}" onclick="_ctSetRobo('${esc(r)}')"><div class="n"><i></i>Robô ${esc(r)}</div><div class="q">${_ctNum(t)}</div><div class="u">${u?'última '+_ctHora(u):(t?'toque para ver':'nenhuma peça')}</div></button>`; }).join('')}</div>`;
+
+  let corpo='';
+  if(_ct.erro && !_ct.carregado) corpo=`<div class="ct-msg err">${esc(_ct.erro)}${_ct.semTabela?'<br>O resto do site não depende disso e continua normal.':''}</div>`;
+  else if(!_ct.carregado) corpo=`<div class="ct-msg">Carregando…</div>`;
+  else if(!rows.length) corpo=`<div class="ct-msg">Nenhuma peça ${_ct.robo?'do robô '+esc(_ct.robo)+' ':''}em ${dataTxt}.${ehHoje?'<br>Quando o Python da fábrica mandar a primeira, ela aparece aqui em alguns segundos.':''}</div>`;
+  else{
+    let g=null, h='';
+    rows.forEach(x=>{
+      const campo=_ctSlot(new Date(x.data_hora));
+      if(campo!==g){ g=campo;
+        const tot=(_ct.robo?[_ct.robo]:lista).reduce((s,r)=>s+(_ct.totSlot[r+'|'+campo]||0),0);
+        const hr=campo==='fora'?'':campo.slice(1,3)+':'+campo.slice(3);
+        // com um robô escolhido, mostra ao lado o que foi lançado à mão, para conferir se a contagem bate
+        const mao=hr?String(maoRd[campo]||'').replace('#',''):'';
+        h+=`<div class="ct-grp"><div><b>${hr?'Coluna '+hr:'Fora das colunas'}</b> <span>${hr?'das '+String(parseInt(hr)-1).padStart(2,'0')+':00 às '+hr:'antes das 07:00, das 18:00 às 19:00 ou depois das 22:00'}</span></div><em>${_ctNum(tot)} peça${tot===1?'':'s'}${mao!==''?`<small>lançado à mão: ${esc(mao)}</small>`:''}</em></div>`; }
+      const p=parseInt(x.pecas)||0, iv=intv[x.id];
+      const tag=(x.obs==='VERIFICAR'?'<span class="ct-tag ver" title="O contador pulou 2 ou mais de uma vez">⚠ verificar</span>':'')+(x.obs==='ZERADO'?'<span class="ct-tag zer" title="O contador do robô foi zerado e voltou a contar">↺ zerado</span>':'');
+      h+=`<div class="ct-row${_ct.novos.has(x.id)?' novo':''}"><span class="t">${_ctHora(x)}</span><span class="r">${esc(x.robo)}</span><span class="p"><b>+${_ctNum(p)}</b> peça${p===1?'':'s'}${x.valor_registrador!=null?`<small>contador ${esc(x.valor_registrador)}</small>`:''}${tag}</span><span class="x">${iv!=null?_ctDur(iv)+' depois da anterior':''}</span></div>`;
+    });
+    corpo=h+(_ct.fim?'':`<button type="button" class="btn ghost tiny ct-mais" onclick="_ctCarregar('mais')">Mostrar peças mais antigas</button>`);
+  }
+  w.innerHTML=cards+(_ct.erro&&_ct.carregado?`<div class="ct-msg err">${esc(_ct.erro)}</div>`:'')+`<div class="card glass">${corpo}</div>`;
+}
 
 precarregarConfig();
 </script>
